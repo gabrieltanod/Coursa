@@ -1,13 +1,13 @@
 //
-//  FicoUITests.swift
-//  FicoUITests
+//  CoursaWatch_Watch_AppUITests.swift
+//  CoursaWatch Watch AppUITests
 //
-//  Created by Gabriel Tanod on 13/10/25.
+//  Created by Gabriel Tanod on 23/10/25.
 //
 
 import XCTest
 
-final class FicoUITests: XCTestCase {
+final class CoursaWatch_Watch_AppUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
