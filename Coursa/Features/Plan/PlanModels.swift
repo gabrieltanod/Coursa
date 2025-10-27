@@ -1,0 +1,127 @@
+//
+//  PlanModels.swift
+//  Coursa
+//
+//  Created by Gabriel Tanod on 27/10/25.
+//
+
+import Foundation
+
+// MARK: - Plan Enum
+enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
+    case baseBuilder = "Base Builder"
+    case fiveKTimeTrial = "5K Time Trial"
+    case tenKImprover = "10K Improver"
+    case halfMarathonPrep = "Half Marathon Prep"
+    
+    var id: String { rawValue }
+}
+
+// MARK: - Core Run Types
+
+enum RunKind: String, Codable, CaseIterable, Identifiable {
+    case easy, long, tempo, intervals, recovery
+    var id: String { rawValue }
+}
+
+enum RunFocus: String, Codable, CaseIterable, Identifiable {
+    case endurance, speed, base
+    var id: String { rawValue }
+}
+
+enum HRZone: Int, Codable, CaseIterable, Identifiable {
+    case z1 = 1, z2, z3, z4, z5
+    var id: Int { rawValue }
+}
+
+// MARK: - Run Templates & Sessions
+
+struct RunTemplate: Codable, Hashable, Identifiable {
+    var id: String = UUID().uuidString
+    var name: String
+    var kind: RunKind
+    var focus: RunFocus
+    var targetDurationSec: Int?
+    var targetDistanceKm: Double?
+    var targetHRZone: HRZone?
+    var notes: String?
+}
+
+enum RunStatus: String, Codable {
+    case planned, inProgress, completed, skipped
+}
+
+struct RunMetrics: Codable, Hashable {
+    var elapsedSec: Int?
+    var distanceKm: Double?
+    var avgPaceSecPerKm: Int?
+    var avgHR: Int?
+}
+
+struct ScheduledRun: Identifiable, Codable {
+    var id: String = UUID().uuidString
+    var date: Date
+    var template: RunTemplate
+    var status: RunStatus = .planned
+    var actual: RunMetrics = .init()
+    
+    var title: String { template.name }
+    var subtitle: String {
+        var parts: [String] = []
+        if let d = template.targetDurationSec { parts.append(Self.mmss(d)) }
+        if let km = template.targetDistanceKm { parts.append("\(km.clean) km") }
+        if let z = template.targetHRZone { parts.append("HR Zone \(z.rawValue)") }
+        return parts.joined(separator: "  •  ")
+    }
+    
+    private static func mmss(_ sec: Int) -> String {
+        let m = sec / 60, s = sec % 60
+        return String(format: "%d:%02d", m, s)
+    }
+}
+
+private extension Double {
+    var clean: String {
+        truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", self) : String(self)
+    }
+}
+
+// MARK: - Plan & User Ownership
+
+struct TrainingPlan: Codable, Hashable, Identifiable {
+    var id: String = UUID().uuidString
+    var name: String
+    var focus: RunFocus
+    var durationWeeks: Int
+    var library: [RunTemplate]
+}
+
+struct PlanInstance: Codable, Identifiable {
+    var id: String = UUID().uuidString
+    var plan: TrainingPlan
+    var startDate: Date
+    var scheduled: [ScheduledRun]
+    var canceledAt: Date? = nil
+
+    var completedCount: Int { scheduled.filter { $0.status == .completed }.count }
+    var totalCount: Int { scheduled.count }
+    var progress: Double { totalCount == 0 ? 0 : Double(completedCount) / Double(totalCount) }
+}
+
+extension PlanInstance: Equatable {
+    static func == (lhs: PlanInstance, rhs: PlanInstance) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+extension PlanInstance: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+struct UserProfile: Codable, Hashable, Identifiable {
+    var id: String = UUID().uuidString
+    var name: String
+    var activePlan: PlanInstance?
+}

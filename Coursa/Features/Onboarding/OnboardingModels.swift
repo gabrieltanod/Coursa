@@ -37,15 +37,7 @@ struct PersonalBest: Codable, Hashable {
     }
 }
 
-// MARK: - Plan Enum
-enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
-    case baseBuilder = "Base Builder"
-    case fiveKTimeTrial = "5K Time Trial"
-    case tenKImprover = "10K Improver"
-    case halfMarathonPrep = "Half Marathon Prep"
-    
-    var id: String { rawValue }
-}
+
 
 // MARK: - Onboarding Data
 struct OnboardingData: Codable, Hashable {
