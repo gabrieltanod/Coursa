@@ -18,6 +18,9 @@ final class OnboardingViewModel: ObservableObject {
         .chooseStartDate,
         .home
     ]
+    var index: Int {
+        steps.firstIndex(of: step) ?? 0
+    }
     
     // MARK: - Navigation Methods
     
