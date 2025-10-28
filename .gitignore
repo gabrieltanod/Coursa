@@ -1,0 +1,53 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# iOS Artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Logs / temp
+*.log
+*.tmp
+
+# Environment / secrets
+.env
+GoogleService-Info.plist
+*.mobileprovision
+
+# Misc
+*.lock
+*.swp
+*.moved-aside
+*.xccheckout
