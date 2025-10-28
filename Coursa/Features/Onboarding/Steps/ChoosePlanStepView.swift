@@ -67,10 +67,10 @@ struct ChoosePlanStepView: View {
         switch plan {
         case .baseBuilder:
             return "Build a solid running foundation"
-        case .fiveKTimeTrial:
-            return "Improve your 5K time and speed"
-        case .tenKImprover:
-            return "Enhance your 10K performance"
+        case .endurance:
+            return "Improve your endurance"
+        case .speed:
+            return "kenceng laik useynbold"
         case .halfMarathonPrep:
             return "Prepare for half marathon distance"
         }
