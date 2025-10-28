@@ -1,1 +1,13 @@
+# macOS
 .DS_Store
+
+# Xcode user state
+*.xcuserstate
+xcuserdata/
+
+# Common build junk
+DerivedData/
+build/
+.swiftpm/
+.build/
+Pods/
