@@ -14,10 +14,10 @@ enum PlanLibrary {
         switch goal {
         case .runConsistently:
             return .baseBuilder
-        case .improve5K:
-            return .fiveKTimeTrial
-        case .improve10K:
-            return .tenKImprover
+        case .improveEndurance:
+            return .endurance
+        case .improveSpeed:
+            return .speed
         case .halfMarathon:
             return .halfMarathonPrep
         }

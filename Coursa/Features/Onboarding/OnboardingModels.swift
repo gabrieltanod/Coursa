@@ -1,10 +1,12 @@
+// ABSTRACT: Ini data models for personalization
+
 import Foundation
 
 // MARK: - Goal Enum
 enum Goal: String, CaseIterable, Identifiable, Codable {
-    case runConsistently = "Run Consistently"
-    case improve5K = "Improve 5K"
-    case improve10K = "Improve 10K"
+    case runConsistently = "General Training"
+    case improveEndurance = "Endurance"
+    case improveSpeed = "Speed"
     case halfMarathon = "Half Marathon"
     
     var id: String { rawValue }
