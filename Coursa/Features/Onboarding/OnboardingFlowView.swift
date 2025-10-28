@@ -3,7 +3,7 @@ import SwiftUI
 struct OnboardingFlowView: View {
     @StateObject private var vm = OnboardingViewModel()
     let onFinished: (OnboardingData) -> Void
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -16,7 +16,7 @@ struct OnboardingFlowView: View {
                             vm.next()
                         })
                     case .personalInfo:
-                        
+
                         PersonalInfoStepView(onContinue: { personalInfo in
                             vm.setPersonalInfo(personalInfo)
                             vm.next()
@@ -32,17 +32,22 @@ struct OnboardingFlowView: View {
                             vm.next()
                         })
                     case .personalBest:
-                        PersonalBestStepView(onContinue: { distanceKm, durationText in
-                            vm.setPersonalBest(distanceKm: distanceKm, durationText: durationText)
+                        PersonalBestStepView(onContinue: {
+                            distanceKm,
+                            durationText in
+                            vm.setPersonalBest(
+                                distanceKm: distanceKm,
+                                durationText: durationText
+                            )
                             vm.updateRecommendedPlan()
                             vm.next()
                         })
                     case .recommendedPlan:
-//                        RecommendedPlanStepView(
-//                            recommendedPlan: vm.data.recommendedPlan ?? .baseBuilder,
-//                            onContinue: { vm.next() },
-//                            onChooseDifferent: { vm.next() }
-//                        )
+                        //                        RecommendedPlanStepView(
+                        //                            recommendedPlan: vm.data.recommendedPlan ?? .baseBuilder,
+                        //                            onContinue: { vm.next() },
+                        //                            onChooseDifferent: { vm.next() }
+                        //                        )
                         PlanView(vm: PlanViewModel(data: vm.data))
                     case .choosePlan:
                         ChoosePlanStepView(onContinue: { plan in
@@ -59,8 +64,6 @@ struct OnboardingFlowView: View {
                         HomeView()
                     }
                 }
-                
-                .navigationTitle(vm.step.title)
                 .navigationBarTitleDisplayMode(.large)
             }
             .toolbar {
@@ -71,8 +74,13 @@ struct OnboardingFlowView: View {
                         }
                     }
                 }
+                ToolbarItem(
+                    placement: .principal,
+                    content: {
+                        CarouselIndicator(currentIndex: vm.index)
+                    }
+                )
             }
         }
     }
 }
-
