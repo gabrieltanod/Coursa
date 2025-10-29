@@ -16,20 +16,7 @@ struct ChooseStartDateStepView: View {
             Spacer()
             
             VStack(spacing: 16) {
-                DatePicker(
-                    "Start Date",
-                    selection: $selectedDate,
-                    in: Date()...,
-                    displayedComponents: [.date]
-                )
-                .datePickerStyle(.graphical)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
                 
-                Text("Selected: \(selectedDate, style: .date)")
-                    .font(.body)
-                    .foregroundColor(.secondary)
             }
             .padding(.horizontal)
             
