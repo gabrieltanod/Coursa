@@ -6,7 +6,7 @@ struct GoalsStepView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
-                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determines the best plan for you based on your goals.")
                     .padding(.bottom, 40)
 
                 LazyVStack(spacing: 12) {

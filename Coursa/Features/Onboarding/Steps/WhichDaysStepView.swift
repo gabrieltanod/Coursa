@@ -11,10 +11,23 @@ struct WhichDaysStepView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
-                OnboardingHeaderQuestion(
-                    question: "Which Days You’re Free to Run?",
-                    caption: ""
-                )
+                VStack(alignment: .leading) {
+                    OnboardingHeaderQuestion(
+                        question: "Which Days You’re Free to Run?",
+                        caption:
+                            "Space out your available days to ensure balanced rest and training days."
+                    )
+                    .padding(.bottom, 8)
+
+                    if selectedDays.count < 3 {
+                        Text("Please select at least 3 days.")
+                            .font(Font.custom("Helvetica Neue", size: 17))
+                            .font(.body)
+                            .fontWeight(.regular)
+                            .foregroundStyle(Color("green-500"))
+                    }
+                }
+                .padding(.bottom, 24)
 
                 LazyVStack(spacing: 12) {
                     ForEach(Array(weekdayIndices.enumerated()), id: \.offset) {
@@ -41,7 +54,9 @@ struct WhichDaysStepView: View {
                                     .overlay {
                                         if selectedDays.contains(weekdayIndex) {
                                             Image(systemName: "checkmark")
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(
+                                                    Color("green-500")
+                                                )
                                                 .fontWeight(.semibold)
                                         } else {
                                             EmptyView()

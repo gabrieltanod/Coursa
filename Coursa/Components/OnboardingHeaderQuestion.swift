@@ -21,7 +21,7 @@ struct OnboardingHeaderQuestion: View {
                 .padding(.bottom, 8)
             
             Text(caption)
-                .font(.caption)
+                .font(.body)
                 .font(.custom("Helvetica neue", size: 22))
                 .fontWeight(.medium)
                 .foregroundStyle(Color("white-800"))
