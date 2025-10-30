@@ -16,7 +16,6 @@ struct OnboardingFlowView: View {
                             vm.next()
                         })
                     case .personalInfo:
-
                         PersonalInfoStepView(onContinue: { personalInfo in
                             vm.setPersonalInfo(personalInfo)
                             vm.next()

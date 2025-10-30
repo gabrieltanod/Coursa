@@ -2,43 +2,46 @@ import SwiftUI
 
 struct GoalsStepView: View {
     let onGoalSelected: (Goal) -> Void
-    
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("What's your main goal?")
-                .font(.title2)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .padding(.top)
-            
-            Spacer()
-            
-            LazyVStack(spacing: 12) {
-                ForEach(Goal.allCases) { goal in
-                    Button(action: {
-                        onGoalSelected(goal)
-                    }) {
-                        HStack {
-                            Text(goal.rawValue)
-                                .font(.body)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
+            VStack(alignment: .leading) {
+                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determines the best plan for you based on your goals.")
+                    .padding(.bottom, 40)
+
+                LazyVStack(spacing: 12) {
+                    ForEach(Goal.allCases) { goal in
+                        Button(action: {
+                            onGoalSelected(goal)
+                        }) {
+                            HStack {
+                                Text(goal.rawValue)
+                                    .font(.body)
+                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .foregroundColor(Color("white-500"))
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Color("white-500"))
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .background(Color("black-400"))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color("grey-70"), lineWidth: 1.5)
+                            )
+                            .cornerRadius(20)
                         }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
                 }
+
+                Spacer()
             }
-            .padding(.horizontal)
-            
-            Spacer()
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         }
     }
 }

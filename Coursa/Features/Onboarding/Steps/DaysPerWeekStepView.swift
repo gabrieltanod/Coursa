@@ -2,56 +2,51 @@ import SwiftUI
 
 struct DaysPerWeekStepView: View {
     let onContinue: (Int) -> Void
-    
+
     @State private var selectedDays = 2
-    
+
     private let daysOptions = [2, 3, 4, 5, 6]
-    
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("How many days per week?")
-                .font(.title2)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .padding(.top)
-            
-            Spacer()
-            
-            LazyVStack(spacing: 12) {
-                ForEach(daysOptions, id: \.self) { days in
-                    Button(action: {
-                        selectedDays = days
-                    }) {
-                        HStack {
-                            Text("\(days) days")
-                                .font(.body)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            if selectedDays == days {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
-                                    .fontWeight(.semibold)
+            VStack(alignment: .leading) {
+                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determines the best plan for you based on your goals.")
+                    .padding(.bottom, 24)
+
+
+                LazyVStack(spacing: 12) {
+                    ForEach(daysOptions, id: \.self) { days in
+                        Button(action: {
+                            onContinue(days)
+                        }) {
+                            HStack {
+                                Text("\(days) days")
+                                    .font(.body)
+                                    .foregroundColor(Color("white-500"))
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Color("white-500"))
+                                    .font(.caption)
                             }
+                            .padding()
+                            .background(Color("black-400"))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color("grey-70"), lineWidth: 1.5)
+                            )
+                            .cornerRadius(20)
                         }
-                        .padding()
-                        .background(selectedDays == days ? Color.blue.opacity(0.1) : Color(.systemGray6))
-                        .cornerRadius(12)
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
                 }
+
+                Spacer()
             }
-            .padding(.horizontal)
-            
-            Spacer()
-            
-            Button("Continue") {
-                onContinue(selectedDays)
-            }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
+            .padding(24)
         }
+        .background(Color("black-500"))
     }
 }
 
