@@ -7,41 +7,6 @@
 
 import SwiftUI
 
-//struct RunningSessionCardZikar: View {
-//    let run: ScheduledRun
-//    
-//    var body: some View {
-//        HStack{
-//            VStack(alignment: .leading){
-//                Text(run.date.formatted(date: .abbreviated, time: .omitted))
-//                    .font(.caption)
-//                    .padding(.vertical, 12)
-//                Text(run.title)
-//                    .font(.headline)
-//                    .padding(.bottom, 12)
-//                Text(run.subtitle)
-//                    .font(.caption)
-//                Text("HR Zone 2")
-//                    .font(.caption)
-//                    .padding(.bottom, 12)
-//            }
-//            .padding(.horizontal, 12)
-//            Spacer()
-//        }
-//        .background(Color.gray)
-//        .clipShape(RoundedRectangle(cornerRadius: 8))
-//        .frame(minWidth: 392, maxWidth: 302, minHeight: 114, maxHeight: .infinity)
-//    }
-//}
-
-//
-//  PlanView.swift
-//  Coursa
-//
-//  Created by Gabriel Tanod on 24/10/25.
-//
-
-
 // A simple cell that matches your lofi (title + specs)
 struct RunningSessionCard: View {
     let run: ScheduledRun
@@ -59,7 +24,13 @@ struct RunningSessionCard: View {
                         .padding(12)
                 }
                 .clipped()
-
+            
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        
+                        .strokeBorder(.white.opacity(0.5), lineWidth: 1.5)
+                )
+            
             VStack(alignment: .leading, spacing: 8) {
                 Text(formattedDate)
                     .font(.caption)
@@ -70,9 +41,8 @@ struct RunningSessionCard: View {
                     .bold()
                     .foregroundStyle(.white)
 
-                HStack(spacing: 8) {
+                HStack {
                     badge(run.subtitle)
-//                    badge(zoneText)
                 }
             }
             .padding(16)
@@ -82,7 +52,10 @@ struct RunningSessionCard: View {
     }
 
     private var formattedDate: String {
-        run.date.formatted(date: .abbreviated, time: .omitted)
+        run.date.formatted(.dateTime
+            .weekday(.abbreviated)   // "Sat"
+            .month(.wide)            // "October"
+            .day(.defaultDigits))    // "25"
     }
 
 //    private var zoneText: String { "HR Zone 2" }
@@ -114,9 +87,9 @@ struct RunningSessionCard: View {
     private func badge(_ text: String) -> some View {
         Text(text)
             .font(.caption)
-            .padding(.horizontal, 10)
+//            .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .foregroundStyle(.white)
-            .background(.white.opacity(0.15), in: Capsule())
+//            .background(.white.opacity(0.15), in: Capsule())
     }
 }
