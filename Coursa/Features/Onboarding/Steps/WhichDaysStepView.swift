@@ -17,6 +17,7 @@ struct WhichDaysStepView: View {
                         caption:
                             "Space out your available days to ensure balanced rest and training days."
                     )
+                    .frame(maxWidth: .infinity)
                     .padding(.bottom, 8)
 
                     if selectedDays.count < 3 {
@@ -27,6 +28,7 @@ struct WhichDaysStepView: View {
                             .foregroundStyle(Color("green-500"))
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, 24)
 
                 LazyVStack(spacing: 12) {

@@ -66,19 +66,26 @@ struct OnboardingFlowView: View {
                 .navigationBarTitleDisplayMode(.large)
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     if vm.canGoBack && !vm.isLastStep {
-                        Button("Back") {
-                            vm.back()
+                        Button(action: vm.back) {
+                            Image(systemName: "chevron.backward")
                         }
+                        .buttonStyle(.plain)  // keeps native look in nav bars
                     }
                 }
-                ToolbarItem(
-                    placement: .principal,
-                    content: {
+                ToolbarItem(placement: .principal) {
+                    if vm.step.usesProgress {
                         CarouselIndicator(currentIndex: vm.index)
+                            .frame(maxWidth: .infinity)
                     }
-                )
+                }
+                ToolbarItem {
+                    if vm.canGoBack && !vm.isLastStep {
+                        Text("Back")
+                            .foregroundStyle(.clear)
+                    }
+                }
             }
         }
     }

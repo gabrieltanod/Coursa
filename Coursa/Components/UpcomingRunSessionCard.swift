@@ -37,6 +37,26 @@ struct UpcomingRunSessionCard: View {
     }
 }
 
-#Preview {
-    UpcomingRunSessionCard()
+struct WeekSummaryCard: View {
+    let title: String
+    let runs: [ScheduledRun]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.title3).bold()
+            ForEach(runs) { run in
+                HStack(spacing: 12) {
+                    Text(weekday(run.date))
+                        .frame(width: .infinity, alignment: .leading)
+                        .foregroundStyle(.secondary)
+                    Text(run.title)
+                }
+            }
+        }
+        .frame(width: 392, alignment: .init(horizontal: .leading, vertical: .top))
+        .padding(16)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+    private func weekday(_ date: Date) -> String {
+        let df = DateFormatter(); df.setLocalizedDateFormatFromTemplate("EEE"); return df.string(from: date)
+    }
 }

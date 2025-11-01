@@ -28,7 +28,6 @@ struct PersonalInfoStepView: View {
 
     private var isValid: Bool {
         !gender.isEmpty && !weightKg.isEmpty && !heightCm.isEmpty
-//            && Int(weightKg) != nil && Int(heightCm) != nil
     }
 
     private let genderOptions = ["Male", "Female", "Other"]
@@ -37,98 +36,110 @@ struct PersonalInfoStepView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
                     question: "Personal data",
                     caption:
                         "Help Coursa determines the best plan for you based on your goals."
                 )
-                .padding(.bottom, 24)
+                .padding(.bottom, 40)
 
                 // DoB Button
-                Button(action: { activeSheet = .showDatePicker }) {
-                    HStack {
-                        Text("Date of Birth")
-                            .font(.body)
-                            .font(.custom("Helvetica Neue", size: 22))
-                            .foregroundColor(Color("white-500"))
-                        Spacer()
-                        Text(date.formatted(date: .abbreviated, time: .omitted))
+                LazyVStack(spacing: 12) {
+                    Button(action: { activeSheet = .showDatePicker }) {
+                        HStack {
+                            Text("Date of Birth")
+                                .font(.body)
+                                .font(.custom("Helvetica Neue", size: 22))
+                                .foregroundColor(Color("white-500"))
+                            Spacer()
+                            Text(
+                                date.formatted(
+                                    date: .abbreviated,
+                                    time: .omitted
+                                )
+                            )
                             .font(.custom("Helvetica Neue", size: 18))
                             .foregroundColor(Color("white-400"))
-                        Label("", systemImage: "calendar")
-                            .foregroundStyle(Color("white-500"))
+                            Label("", systemImage: "calendar")
+                                .foregroundStyle(Color("white-500"))
+                        }
+                        .customFrameModifier()
+                        .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    }
+                    .buttonStyle(.plain)
+
+                    // Gender Button
+                    Button(action: { activeSheet = .showGenderPicker }) {
+                        HStack {
+                            Text("Gender")
+                                .font(.body)
+                                .font(.custom("Helvetica Neue", size: 22))
+                                .foregroundColor(Color("white-500"))
+                            Spacer()
+                            if gender.isEmpty {
+                                Label("", systemImage: "figure")
+                                    .foregroundStyle(Color("white-500"))
+                            } else {
+                                Text(gender)
+                                    .font(.body)
+                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .foregroundColor(Color("white-500"))
+                            }
+                        }
+                        .customFrameModifier()
+                        .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    }
+                    .buttonStyle(.plain)
+
+                    // Weight Button
+                    Button(action: { activeSheet = .showWeightPicker }) {
+                        HStack {
+                            Text("Weight")
+                                .font(.body)
+                                .font(.custom("Helvetica Neue", size: 22))
+                                .foregroundColor(Color("white-500"))
+                            Spacer()
+                            if weightKg.isEmpty {
+                                Label("", systemImage: "scalemass.fill")
+                                    .foregroundStyle(Color("white-500"))
+                            } else {
+                                Text(weightKg)
+                                    .font(.body)
+                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .foregroundColor(Color("white-500"))
+                            }
+                        }
+                    }
+                    .customFrameModifier()
+                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+
+                    // Height Button
+                    Button(action: { activeSheet = .showHeightPicker }) {
+                        HStack {
+                            Text("Height")
+                                .font(.body)
+                                .font(.custom("Helvetica Neue", size: 22))
+                                .foregroundColor(Color("white-500"))
+                            Spacer()
+                            //                        TextField("75.0", text: $heightCm)
+                            //                            .keyboardType(.decimalPad)
+                            //                            .frame(width: 80)
+                            //                            .allowsHitTesting(false)
+                            if heightCm.isEmpty {
+                                Label("", systemImage: "ruler.fill")
+                                    .foregroundStyle(Color("white-500"))
+                            } else {
+                                Text(heightCm)
+                                    .font(.body)
+                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .foregroundColor(Color("white-500"))
+                            }
+                        }
                     }
                     .customFrameModifier()
                     .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                 }
-                .buttonStyle(.plain)
-
-                // Gender Button
-                Button(action: { activeSheet = .showGenderPicker }) {
-                    HStack {
-                        Text("Gender")
-                            .font(.body)
-                            .font(.custom("Helvetica Neue", size: 22))
-                            .foregroundColor(Color("white-500"))
-                        Spacer()
-                        if gender.isEmpty {
-                            Label("", systemImage: "figure")
-                                .foregroundStyle(Color("white-500"))
-                        } else {
-                            Text(gender)
-                                .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
-                                .foregroundColor(Color("white-500"))
-                        }
-                    }
-                    .customFrameModifier()
-                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
-                }
-                .buttonStyle(.plain)
-
-                // Weight Button
-                Button(action: { activeSheet = .showWeightPicker }) {
-                    HStack {
-                        Text("Weight")
-                            .font(.body)
-                            .font(.custom("Helvetica Neue", size: 22))
-                            .foregroundColor(Color("white-500"))
-                        Spacer()
-                        if weightKg.isEmpty {
-                            Label("", systemImage: "scalemass.fill")
-                                .foregroundStyle(Color("white-500"))
-                        } else {
-                            Text(weightKg)
-                                .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
-                                .foregroundColor(Color("white-500"))
-                        }
-                    }
-                }
-                .customFrameModifier()
-                .contentShape(Rectangle())  // This makes the whole area of HStack tappable
-
-                // Height Button
-                Button(action: { activeSheet = .showHeightPicker }) {
-                    HStack {
-                        Text("Height")
-                            .font(.body)
-                            .font(.custom("Helvetica Neue", size: 22))
-                            .foregroundColor(Color("white-500"))
-                        Spacer()
-                        TextField("75.0", text: $heightCm)
-                            .keyboardType(.decimalPad)
-                            .frame(width: 80)
-                            .allowsHitTesting(false)
-                        if heightCm.isEmpty {
-                            Label("", systemImage: "ruler.fill")
-                                .foregroundStyle(Color("white-500"))
-                        }
-                    }
-                }
-                .customFrameModifier()
-                .contentShape(Rectangle())  // This makes the whole area of HStack tappable
 
                 Spacer()
 
@@ -151,7 +162,7 @@ struct PersonalInfoStepView: View {
                 .buttonStyle(CustomButtonStyle())
                 .disabled(!isValid)
             }
-            .padding(24)
+            .padding(.horizontal, 24)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .showDatePicker:

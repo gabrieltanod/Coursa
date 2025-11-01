@@ -77,3 +77,14 @@ enum OnboardingStep: String, CaseIterable {
     
     var title: String { rawValue }
 }
+
+extension OnboardingStep {
+    var usesProgress: Bool {
+        switch self {
+        case .goals, .whichDays, .personalInfo, .personalBest, .daysPerWeek:
+            return true
+        default:
+            return false
+        }
+    }
+}

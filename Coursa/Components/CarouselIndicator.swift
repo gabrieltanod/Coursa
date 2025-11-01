@@ -15,7 +15,7 @@ struct CarouselIndicator: View {
         HStack(spacing: 4) {
             ForEach(0..<total, id: \.self) { i in
                 Rectangle()
-                    .fill(i < currentIndex ?  Color("green-500"): Color("black-400"))
+                    .fill(i < currentIndex+1 ?  Color("green-500"): Color("black-400"))
                     .frame(height: 4)
                     .frame(maxWidth: .infinity)
                     .clipShape(Capsule(style: .continuous))
@@ -26,5 +26,5 @@ struct CarouselIndicator: View {
 }
 
 #Preview {
-    CarouselIndicator(currentIndex: 3)
+    CarouselIndicator(currentIndex: 0)
 }
