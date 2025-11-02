@@ -14,7 +14,6 @@ struct PlanView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
-                // (keep your controls if you still want them in MVP)
                 header()
 
                 if let generated = vm.generatedPlan {
@@ -84,7 +83,7 @@ struct PlanView: View {
                 }
             }
             .padding(.horizontal)
-            //        .navigationTitle("Your Plan")
+//            .navigationTitle("Your Plan").foregroundStyle(Color("white-500"))
             .onAppear {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
                 if vm.generatedPlan == nil { vm.generatePlan() }
@@ -98,17 +97,18 @@ struct PlanView: View {
 
     @ViewBuilder
     private func header() -> some View {
-        if let plan = vm.recommendedPlan {
+//        if let plan = vm.recommendedPlan {
             VStack(alignment: .center, spacing: 4) {
 //                Text(plan.rawValue)
 //                    .font(.largeTitle)
 //                    .foregroundStyle(Color("white-500"))
                 Text("Your Plan")
                     .font(.system(size: 25))
+                    .foregroundStyle(Color("white-500"))
                     .fontWeight(.medium)
                 //                Text("Auto-generated from your onboarding").font(.caption).foregroundStyle(.secondary)
             }
-        }
+//        }
     }
 
     // group runs by [year, weekOfYear] so weeks don’t mix across years

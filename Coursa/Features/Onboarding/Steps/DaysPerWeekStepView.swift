@@ -10,7 +10,7 @@ struct DaysPerWeekStepView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
-                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determines the best plan for you based on your goals.")
+                OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determine the best plan for you based on your goals.")
                     .padding(.bottom, 24)
 
 
