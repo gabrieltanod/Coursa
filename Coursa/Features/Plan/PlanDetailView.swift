@@ -13,62 +13,79 @@ struct PlanDetailView: View {
     @State private var didComplete = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ZStack(alignment: .bottom) {
+                        Image("CoursaImages/Running_Easy")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 260)
+                            .clipped()
+                            .overlay(
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.9)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
 
-                // Hero / banner placeholder
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.15))
-                    .frame(height: 160)
-                    .overlay(Image(systemName: "triangle").font(.system(size: 40)).foregroundStyle(.gray))
+                        VStack(alignment: .center, spacing: 8) {
+                            Text(run.title)
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.white)
 
-                Text(run.title)
-                    .font(.largeTitle.bold())
-                    .padding(.top, 4)
-
-                // Specs row
-                HStack(spacing: 12) {
-                    if let dur = run.template.targetDurationSec {
-                        Label(Self.mmText(dur), systemImage: "clock")
+                            HStack(spacing: 12) {
+                                if let dur = run.template.targetDurationSec {
+                                    Label(Self.mmText(dur), systemImage: "clock")
+                                }
+                                if let z = run.template.targetHRZone {
+                                    Label("HR Zone \(z.rawValue)", systemImage: "heart")
+                                }
+                                Label(run.template.focus.rawValue.capitalized, systemImage: "bolt")
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.9))
+                        }
+                        .padding(.bottom, 20)
                     }
-                    if let z = run.template.targetHRZone {
-                        Label("HR Zone \(z.rawValue)", systemImage: "heart")
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(run.template.notes ?? "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et massa mi. Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla, mattis ligula consectetur, ultrices mauris. Maecenas vitae mattis tellus. Nullam quis imperdiet augue.")
+                            .font(.body)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+
+                        Spacer(minLength: 80)
                     }
-                    Label(run.template.focus.rawValue.capitalized, systemImage: "bolt")
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            }
 
-                // Notes / description
-                Text(run.template.notes ?? "This session targets \(run.template.focus.rawValue) using \(run.template.kind.rawValue) training. Keep it controlled and consistent.")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                    .padding(.top, 4)
-
-                Spacer(minLength: 24)
-
-                // CTA
+            // Fixed bottom CTA
+            VStack {
                 Button {
                     isRunning.toggle()
-                    // later: navigate to live workout / HealthKit
                 } label: {
-                    Text(didComplete ? "VIEW SUMMARY" : (isRunning ? "STOP" : "START RUNNING"))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
+                    Text(didComplete ? "View Summary" : (isRunning ? "Stop" : "Start Running"))
                         .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .foregroundColor(.black)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .padding(.horizontal)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(.bottom, 24)
             }
-            .padding()
         }
-        .navigationTitle(run.date.formatted(date: .abbreviated, time: .omitted))
-        .navigationBarTitleDisplayMode(.inline)
+        .ignoresSafeArea(edges: .top)
+        .background(Color("black-500").ignoresSafeArea())
+//        .preferredColorScheme(.dark)
     }
 
     private static func mmText(_ seconds: Int) -> String {
-        let m = seconds / 60, s = seconds % 60
-        return String(format: "%d min", m + (s > 0 ? 1 : 0))
+        let m = seconds / 60
+        return "\(m) min"
     }
 }

@@ -4,6 +4,7 @@
 //
 //  Created by Gabriel Tanod on 24/10/25.
 //
+
 import SwiftUI
 
 struct AppRootView: View {

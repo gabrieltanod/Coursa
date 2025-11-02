@@ -40,7 +40,7 @@ struct PersonalInfoStepView: View {
                 OnboardingHeaderQuestion(
                     question: "Personal data",
                     caption:
-                        "Help Coursa determines the best plan for you based on your goals."
+                        "Help Coursa determine the best plan for you based on your goals."
                 )
                 .padding(.bottom, 40)
 
