@@ -11,18 +11,13 @@ struct HomeView: View {
             Text("🏠 Home View")
                 .font(.title.bold())
 
-            Button("View My Plan") {
-                if let data = OnboardingStore.load() {
-                    router.path.append(Route.plan(data))
-                }
-            }
-
             Button("Reset App") {
                 router.reset()
             }
             .tint(.red)
         }
-        .navigationTitle("Home")
+        .preferredColorScheme(.dark)
+        .navigationTitle("Dashboard")
     }
 }
 
