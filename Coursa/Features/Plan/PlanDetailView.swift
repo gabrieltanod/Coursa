@@ -24,7 +24,7 @@ struct PlanDetailView: View {
                             .clipped()
                             .overlay(
                                 LinearGradient(
-                                    colors: [.clear, .black.opacity(0.9)],
+                                    colors: [.clear, Color("black-500")],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )

@@ -70,10 +70,8 @@ enum OnboardingStep: String, CaseIterable {
     case daysPerWeek = "Days Per Week"
     case whichDays = "Which Days"
     case personalBest = "Personal Best"
-    case recommendedPlan = "Recommended Plan"
-    case choosePlan = "Choose Plan"
+//    case choosePlan = "Choose Plan"
     case chooseStartDate = "Choose Start Date"
-    case home = "Home"
     
     var title: String { rawValue }
 }
