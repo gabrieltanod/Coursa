@@ -70,12 +70,12 @@ struct OnboardingFlowView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                ToolbarItem {
-                    if vm.canGoBack && !vm.isLastStep {
-                        Text("Back")
-                            .foregroundStyle(.clear)
-                    }
-                }
+//                ToolbarItem {
+//                    if vm.canGoBack && !vm.isLastStep {
+//                        Text("Back")
+//                            .foregroundStyle(.clear)
+//                    }
+//                }
             }
         }
     }
