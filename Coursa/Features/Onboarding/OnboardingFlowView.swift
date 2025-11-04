@@ -57,7 +57,7 @@ struct OnboardingFlowView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    if vm.canGoBack && !vm.isLastStep {
+                    if vm.canGoBack {
                         Button(action: vm.back) {
                             Image(systemName: "chevron.backward")
                         }
