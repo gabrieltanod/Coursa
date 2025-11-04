@@ -4,6 +4,7 @@
 //
 //  Created by Gabriel Tanod on 24/10/25.
 //
+
 import SwiftUI
 
 struct AppRootView: View {
@@ -12,25 +13,33 @@ struct AppRootView: View {
     var body: some View {
         NavigationStack(path: $router.path) {
             if router.didOnboard {
-                HomeView()
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                        case .plan(let data):
-                            PlanView(vm: PlanViewModel(data: data))
-                        case .home:
-                            HomeView()
+                if let existing = OnboardingStore.load() {
+                    CoreTabView(onboardingData: existing)
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                            case .coreApp(let data):
+                                CoreTabView(onboardingData: data)
+                            case .plan(let data):
+                                PlanView(vm: PlanViewModel(data: data))
+                            case .home:
+                                HomeView()
+                            }
                         }
-                    }
+                } else {
+                    Text("Failed to load onboarding data")
+                        .foregroundColor(.secondary)
+                }
             } else {
                 OnboardingFlowView { finishedData in
-                    router.goToPlan(with: finishedData)
+                    OnboardingStore.save(finishedData)
+                    router.goToCoreApp(with: finishedData)
                 }
             }
         }
         .task {
             if let existing = OnboardingStore.load() {
                 router.didOnboard = true
-                router.path.append(Route.plan(existing))
+                //                router.path.append(Route.coreApp(existing))
             }
         }
     }

@@ -5,14 +5,16 @@
 //  Created by Gabriel Tanod on 27/10/25.
 //
 
+// ABSTRACT : ini data model buat semua
+
 import Foundation
 
 // MARK: - Plan Enum
 enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
-    case baseBuilder = "Base Builder"
-    case fiveKTimeTrial = "5K Time Trial"
-    case tenKImprover = "10K Improver"
-    case halfMarathonPrep = "Half Marathon Prep"
+    case baseBuilder = "🏃🏿‍♂️ General Training"
+    case endurance = "🧡 Endurance"
+    case speed = "💨 Speed"
+    case halfMarathonPrep = "🏁 Half Marathon Prep"
     
     var id: String { rawValue }
 }
