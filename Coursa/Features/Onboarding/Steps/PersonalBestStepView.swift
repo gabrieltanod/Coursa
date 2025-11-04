@@ -133,7 +133,7 @@ struct PersonalBestStepView: View {
                     }
                     Spacer()
                 }
-                .customFrameModifier()
+                .customFrameModifier(isActivePage: false, isSelected: false)
                 .contentShape(Rectangle())  // This makes the whole area of HStack tappable
             }
             .buttonStyle(.plain)
