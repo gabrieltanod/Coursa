@@ -22,6 +22,7 @@ struct HomeView: View {
             }
             .tint(.red)
         }
+        .preferredColorScheme(.dark)
         .navigationTitle("Home")
     }
 }

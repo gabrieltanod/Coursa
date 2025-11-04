@@ -185,7 +185,7 @@ struct PlanView: View {
 
     return NavigationStack {
         PlanView(vm: PlanViewModel(data: onboarding))
-            .preferredColorScheme(.dark)
+//            .preferredColorScheme(.dark)
             .background(Color("black-500"))
     }
 }

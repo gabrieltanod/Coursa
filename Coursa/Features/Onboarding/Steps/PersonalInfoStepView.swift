@@ -64,7 +64,7 @@ struct PersonalInfoStepView: View {
                             Label("", systemImage: "calendar")
                                 .foregroundStyle(Color("white-500"))
                         }
-                        .customFrameModifier()
+                        .customFrameModifier(isActivePage: false, isSelected: false)
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                     }
                     .buttonStyle(.plain)
@@ -87,7 +87,7 @@ struct PersonalInfoStepView: View {
                                     .foregroundColor(Color("white-500"))
                             }
                         }
-                        .customFrameModifier()
+                        .customFrameModifier(isActivePage: false, isSelected: false)
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                     }
                     .buttonStyle(.plain)
@@ -111,7 +111,7 @@ struct PersonalInfoStepView: View {
                             }
                         }
                     }
-                    .customFrameModifier()
+                    .customFrameModifier(isActivePage: false, isSelected: false)
                     .contentShape(Rectangle())  // This makes the whole area of HStack tappable
 
                     // Height Button
@@ -137,7 +137,7 @@ struct PersonalInfoStepView: View {
                             }
                         }
                     }
-                    .customFrameModifier()
+                    .customFrameModifier(isActivePage: false, isSelected: false)
                     .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                 }
 
