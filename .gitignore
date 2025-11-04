@@ -1,13 +1,85 @@
+# -----------------------------
 # macOS
+# -----------------------------
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Xcode user state
-*.xcuserstate
-xcuserdata/
+# Thumbnails
+._*
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# Common build junk
+# -----------------------------
+# Xcode
+# -----------------------------
 DerivedData/
 build/
+*.xccheckout
+*.xcscmblueprint
+*.xcuserstate
+
+# Per-user Xcode settings (should never be tracked)
+xcuserdata/
+*.xcuserdatad/
+
+# Breakpoints and Schemes
+*.xcbkptlist
+xcschemes/*_Test.xcscheme
+
+# Swift Package Manager
+Packages/
+Package.pins
+Package.resolved
 .swiftpm/
-.build/
+
+# CocoaPods
 Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# -----------------------------
+# SwiftPM, Playground, etc.
+# -----------------------------
+.playground/
+*.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# -----------------------------
+# Git
+# -----------------------------
+*.orig
+*.rej
+*.swp
+*.swo
+*.tmp
+*~
+
+# -----------------------------
+# Custom (recommended)
+# -----------------------------
+# Ignore local environment or secret files
+.env
+.env.*
+
+# Ignore output or archives
+*.zip
+*.tar
+*.gz
+
+# Ignore local user files (if any)
+Coursa.xcodeproj/xcuserdata/
+Coursa.xcodeproj/project.xcworkspace/xcuserdata/

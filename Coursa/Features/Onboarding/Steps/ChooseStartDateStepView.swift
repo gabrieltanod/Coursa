@@ -108,7 +108,7 @@ struct ChooseStartDateStepView: View {
                             isActivePage: true,
                             isSelected: selectedId == 3
                         )
-                        .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                        .contentShape(Rectangle())  // This makes the whole area of HStack tappabl
                     }
                     .buttonStyle(.plain)
                 }
