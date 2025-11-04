@@ -12,27 +12,37 @@ struct OnboardingFlowView: View {
                 vm.setGoal(goal)
                 vm.next()
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         case .personalInfo:
             PersonalInfoStepView(onContinue: { personalInfo in
                 vm.setPersonalInfo(personalInfo)
                 vm.next()
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         case .daysPerWeek:
             DaysPerWeekStepView(onContinue: { days in
                 vm.setDaysPerWeek(days)
                 vm.next()
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         case .whichDays:
             WhichDaysStepView(onContinue: { days in
                 vm.setSelectedDays(days)
                 vm.next()
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         case .personalBest:
             PersonalBestStepView(onContinue: { distanceKm, durationText in
                 vm.setPersonalBest(distanceKm: distanceKm, durationText: durationText)
                 vm.updateRecommendedPlan()
                 vm.next()
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         // If you intend to keep choosePlan in the future, re-enable it here.
         // case .choosePlan:
         //     ChoosePlanStepView(onContinue: { plan in
@@ -45,6 +55,8 @@ struct OnboardingFlowView: View {
                 OnboardingStore.save(vm.data)
                 onFinished(vm.data)
             })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
         }
     }
 
@@ -62,6 +74,13 @@ struct OnboardingFlowView: View {
                             Image(systemName: "chevron.backward")
                         }
                         .buttonStyle(.plain)  // keeps native look in nav bars
+                    } else {
+                        Button(action: {}) {
+                            Image(systemName: "chevron.backward")
+                                .opacity(0) // invisible but takes space
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(true) // disable interaction on placeholder
                     }
                 }
                 ToolbarItem(placement: .principal) {

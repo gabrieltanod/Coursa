@@ -148,8 +148,6 @@ struct PersonalBestStepView: View {
             .buttonStyle(CustomButtonStyle())
             .disabled(!isValid && !distanceKm.isEmpty && !durationText.isEmpty)
         }
-        .padding(24)
-        .background(Color("black-500"))
         .sheet(
             isPresented: $showDurationWheel,
             content: {

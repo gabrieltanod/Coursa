@@ -11,26 +11,31 @@ struct WhichDaysStepView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 8) {
                     OnboardingHeaderQuestion(
                         question: "Which Days You’re Free to Run?",
                         caption:
-                            "Space out your available days to ensure balanced rest and training days."
+                            "Space out your available days to ensure balanced rest  and training days."
                     )
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 8)
-
+                    
                     if selectedDays.count < 3 {
                         Text("Please select at least 3 days.")
                             .font(Font.custom("Helvetica Neue", size: 17))
                             .font(.body)
                             .fontWeight(.regular)
                             .foregroundStyle(Color("green-500"))
+                    } else {
+                        Text("Please select at least 3 days.")
+                            .font(Font.custom("Helvetica Neue", size: 17))
+                            .font(.body)
+                            .fontWeight(.regular)
+                            .foregroundStyle(Color("green-500"))
+                            .opacity(0)
                     }
                 }
-                .frame(maxWidth: .infinity)
                 .padding(.bottom, 24)
 
+                
                 LazyVStack(spacing: 12) {
                     ForEach(Array(weekdayIndices.enumerated()), id: \.offset) {
                         index,
@@ -78,7 +83,6 @@ struct WhichDaysStepView: View {
                     }
                 }
             }
-            .padding(.horizontal, 24)
 
             Spacer()
 
@@ -87,9 +91,7 @@ struct WhichDaysStepView: View {
             }
             .buttonStyle(CustomButtonStyle())
             .disabled(selectedDays.isEmpty)
-            .padding(.horizontal)
         }
-        .background(Color("black-500"))
     }
 }
 

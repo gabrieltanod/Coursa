@@ -26,13 +26,7 @@ struct GoalsStepView: View {
                                     .foregroundColor(Color("white-500"))
                                     .font(.caption)
                             }
-                            .padding()
-                            .background(Color("black-400"))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color("grey-70"), lineWidth: 1.5)
-                            )
-                            .cornerRadius(20)
+                            .customFrameModifier(isActivePage: false, isSelected: false)
                         }
                         .contentShape(Rectangle())
                     }
@@ -40,8 +34,11 @@ struct GoalsStepView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 24)
-            .background(Color("black-500"))
+            
+            Button("Placeholder") {
+            }
+            .buttonStyle(CustomButtonStyle())
+            .opacity(0)
         }
     }
 }

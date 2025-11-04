@@ -31,8 +31,8 @@ struct PersonalInfoStepView: View {
     }
 
     private let genderOptions = ["Male", "Female", "Other"]
-    private let weightOptions = Array(60...150).map { "\($0) kg" }
-    private let heightOptions = Array(120...220).map { "\($0) cm" }
+    private let weightOptions = Array(30...200).map { "\($0) kg" }
+    private let heightOptions = Array(100...250).map { "\($0) cm" }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -112,7 +112,7 @@ struct PersonalInfoStepView: View {
                         }
                     }
                     .customFrameModifier(isActivePage: false, isSelected: false)
-                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    .contentShape(Rectangle())
 
                     // Height Button
                     Button(action: { activeSheet = .showHeightPicker }) {
@@ -138,11 +138,11 @@ struct PersonalInfoStepView: View {
                         }
                     }
                     .customFrameModifier(isActivePage: false, isSelected: false)
-                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    .contentShape(Rectangle())
                 }
 
                 Spacer()
-
+                
                 if !isValid {
                     Text("Please fill out all the fields first")
                         .font(.body)
@@ -161,8 +161,8 @@ struct PersonalInfoStepView: View {
                 }
                 .buttonStyle(CustomButtonStyle())
                 .disabled(!isValid)
+                
             }
-            .padding(.horizontal, 24)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .showDatePicker:
@@ -188,6 +188,9 @@ struct PersonalInfoStepView: View {
                         }
                         .pickerStyle(.wheel)
                     }
+                    .onAppear {
+                        if gender.isEmpty { gender = genderOptions.first ?? "" }
+                    }
                     .padding()
                     .presentationDetents([.medium])
                 case .showWeightPicker:
@@ -201,6 +204,9 @@ struct PersonalInfoStepView: View {
                             }
                         }
                         .pickerStyle(.wheel)
+                    }
+                    .onAppear {
+                        if weightKg.isEmpty { weightKg = weightOptions.first ?? "" }
                     }
                     .padding()
                     .presentationDetents([.medium])
@@ -216,12 +222,15 @@ struct PersonalInfoStepView: View {
                         }
                         .pickerStyle(.wheel)
                     }
+                    .onAppear {
+                        if heightCm.isEmpty { heightCm = heightOptions.first ?? "" }
+                    }
                     .padding()
                     .presentationDetents([.medium])
                 }
             }
-            .background(Color("black-500"))
-
+            
+            
         }
     }
 }
