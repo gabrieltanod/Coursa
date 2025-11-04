@@ -8,10 +8,17 @@
 import SwiftUI
 
 struct CustomFrameModifier: ViewModifier {
+    var isActivePage: Bool  // true only on the specified page
+    var isSelected: Bool  // true if this button is selected on that page
+
     func body(content: Content) -> some View {
         content
             .padding()
-            .background(Color("black-400"))
+            .background(
+                (isActivePage && isSelected)
+                    ? Color("black-300")  // selected button background on active page
+                    : Color("black-450")  // default background
+            )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
@@ -20,7 +27,6 @@ struct CustomFrameModifier: ViewModifier {
             .cornerRadius(20)
     }
 }
-
 struct CustomChipModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -37,10 +43,16 @@ struct CustomChipModifier: ViewModifier {
 }
 
 extension View {
-    func customFrameModifier() -> some View {
-        self.modifier(CustomFrameModifier())
+    func customFrameModifier(isActivePage: Bool, isSelected: Bool) -> some View
+    {
+        self.modifier(
+            CustomFrameModifier(
+                isActivePage: isActivePage,
+                isSelected: isSelected
+            )
+        )
     }
-    
+
     func customChipModifier() -> some View {
         self.modifier(CustomChipModifier())
     }
