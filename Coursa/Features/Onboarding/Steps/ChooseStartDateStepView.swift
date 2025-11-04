@@ -114,24 +114,27 @@ struct ChooseStartDateStepView: View {
                 }
 
                 Spacer()
-
+                
                 Button("Generate Plan") {
                     onFinish(selectedDate ?? Date())
                 }
-                .buttonStyle(CustomButtonStyle())
+                .buttonStyle(CustomButtonStyle(isDisabled: selectedDate == nil))
                 .controlSize(.large)
+                
             }
-            .padding(24)
-
         }
-        .background(Color("black-500"))
         .sheet(isPresented: $activeSheet) {
             DatePicker(
                 "Start Date",
                 selection: selectedDateBinding,
-                in: ...Date(),
+                in: Date()...,
                 displayedComponents: [.date]
             )
+            .onAppear {
+                if selectedDate == nil {
+                    selectedDateBinding.wrappedValue = Date()
+                }
+            }
             .datePickerStyle(.graphical)
             .padding()
             .cornerRadius(12)

@@ -20,21 +20,22 @@ struct PersonalBestStepView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 27) {
+            VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
                     question: "Your personal best",
                     caption: ""
                 )
+                Group {
+                    Text("Fill in your ")
+                        + Text("current PB")
+                        .foregroundStyle(Color("green-500"))
+                        + Text(" to determine your current performance.")
+                }
+                .foregroundStyle(Color("white-800"))
             }
 
-            Group {
-                Text("Fill in your ")
-                    + Text("current PB")
-                    .foregroundStyle(Color("green-500"))
-                    + Text(" to determine your current performance.")
-            }
-            .foregroundStyle(Color("white-800"))
+            
 
             HStack(spacing: 8) {
                 Button(action: {
@@ -96,7 +97,6 @@ struct PersonalBestStepView: View {
                 }
                 Spacer()
             }
-            .padding(.vertical, 28)
 
             Button(action: { showDurationWheel = true }) {
                 HStack {
@@ -145,11 +145,8 @@ struct PersonalBestStepView: View {
                 let duration = durationText.isEmpty ? nil : durationText
                 onContinue(distance, duration)
             }
-            .buttonStyle(CustomButtonStyle())
-            .disabled(!isValid && !distanceKm.isEmpty && !durationText.isEmpty)
+            .buttonStyle(CustomButtonStyle(isDisabled: !isValid && !distanceKm.isEmpty && !durationText.isEmpty))
         }
-        .padding(24)
-        .background(Color("black-500"))
         .sheet(
             isPresented: $showDurationWheel,
             content: {

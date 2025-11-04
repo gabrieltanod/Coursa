@@ -22,9 +22,12 @@ struct OnboardingHeaderQuestion: View {
             
             Text(caption)
                 .font(.body)
-                .font(.custom("Helvetica neue", size: 22))
+                .font(.custom("Helvetica neue", size: 17))
                 .fontWeight(.medium)
                 .foregroundStyle(Color("white-800"))
+                .multilineTextAlignment(.leading)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

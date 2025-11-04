@@ -18,9 +18,14 @@ enum WhatToShow: Identifiable {
 
 struct PersonalInfoStepView: View {
     let onContinue: (PersonalInfo) -> Void
-
-    // Fallback: Ini ribet ngatur date kosong
-    @State private var date: Date = Date()
+    
+    private var selectedDateBinding: Binding<Date> {
+        Binding<Date>(
+            get: { date ?? Date() },
+            set: { date = $0 }
+        )
+    }
+    @State private var date: Date?
     @State private var gender = ""
     @State private var weightKg = ""
     @State private var heightCm = ""
@@ -31,8 +36,8 @@ struct PersonalInfoStepView: View {
     }
 
     private let genderOptions = ["Male", "Female", "Other"]
-    private let weightOptions = Array(60...150).map { "\($0) kg" }
-    private let heightOptions = Array(120...220).map { "\($0) cm" }
+    private let weightOptions = Array(30...200).map { "\($0) kg" }
+    private let heightOptions = Array(100...250).map { "\($0) cm" }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -54,10 +59,10 @@ struct PersonalInfoStepView: View {
                                 .foregroundColor(Color("white-500"))
                             Spacer()
                             Text(
-                                date.formatted(
+                                date?.formatted(
                                     date: .abbreviated,
                                     time: .omitted
-                                )
+                                ) ?? ""
                             )
                             .font(.custom("Helvetica Neue", size: 18))
                             .foregroundColor(Color("white-400"))
@@ -112,7 +117,7 @@ struct PersonalInfoStepView: View {
                         }
                     }
                     .customFrameModifier(isActivePage: false, isSelected: false)
-                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    .contentShape(Rectangle())
 
                     // Height Button
                     Button(action: { activeSheet = .showHeightPicker }) {
@@ -138,11 +143,11 @@ struct PersonalInfoStepView: View {
                         }
                     }
                     .customFrameModifier(isActivePage: false, isSelected: false)
-                    .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+                    .contentShape(Rectangle())
                 }
 
                 Spacer()
-
+                
                 if !isValid {
                     Text("Please fill out all the fields first")
                         .font(.body)
@@ -152,26 +157,32 @@ struct PersonalInfoStepView: View {
 
                 Button("Continue") {
                     let personalInfo = PersonalInfo(
-                        age: convertDateToAge(date: date),
+                        age: convertDateToAge(date: date!),
                         gender: gender,
                         weightKg: Double(weightKg) ?? 0.0,
                         heightCm: Double(heightCm) ?? 0.0
                     )
                     onContinue(personalInfo)
                 }
-                .buttonStyle(CustomButtonStyle())
+                .buttonStyle(CustomButtonStyle(isDisabled: !isValid))
                 .disabled(!isValid)
+                
             }
-            .padding(.horizontal, 24)
+            .padding(.top, 36)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .showDatePicker:
                     DatePicker(
                         "Start Date",
-                        selection: $date,
+                        selection: selectedDateBinding,
                         in: ...Date(),
                         displayedComponents: [.date]
                     )
+                    .onAppear {
+                        if date == nil {
+                            selectedDateBinding.wrappedValue = Date()
+                        }
+                    }
                     .datePickerStyle(.graphical)
                     .padding()
                     .cornerRadius(12)
@@ -188,6 +199,9 @@ struct PersonalInfoStepView: View {
                         }
                         .pickerStyle(.wheel)
                     }
+                    .onAppear {
+                        if gender.isEmpty { gender = genderOptions.first ?? "" }
+                    }
                     .padding()
                     .presentationDetents([.medium])
                 case .showWeightPicker:
@@ -201,6 +215,9 @@ struct PersonalInfoStepView: View {
                             }
                         }
                         .pickerStyle(.wheel)
+                    }
+                    .onAppear {
+                        if weightKg.isEmpty { weightKg = weightOptions.first ?? "" }
                     }
                     .padding()
                     .presentationDetents([.medium])
@@ -216,12 +233,13 @@ struct PersonalInfoStepView: View {
                         }
                         .pickerStyle(.wheel)
                     }
+                    .onAppear {
+                        if heightCm.isEmpty { heightCm = heightOptions.first ?? "" }
+                    }
                     .padding()
                     .presentationDetents([.medium])
                 }
             }
-            .background(Color("black-500"))
-
         }
     }
 }

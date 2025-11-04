@@ -44,9 +44,12 @@ struct DaysPerWeekStepView: View {
 
                 Spacer()
             }
-            .padding(24)
+            
+            Button("Placeholder") {
+            }
+            .buttonStyle(CustomButtonStyle(isDisabled: false))
+            .opacity(0)
         }
-        .background(Color("black-500"))
     }
 }
 
