@@ -21,16 +21,10 @@ struct OnboardingFlowView: View {
             })
             .padding(.horizontal, 24)
             .background(Color("black-500"))
-        case .daysPerWeek:
-            DaysPerWeekStepView(onContinue: { days in
-                vm.setDaysPerWeek(days)
-                vm.next()
-            })
-            .padding(.horizontal, 24)
-            .background(Color("black-500"))
         case .whichDays:
             WhichDaysStepView(onContinue: { days in
                 vm.setSelectedDays(days)
+                vm.setDaysPerWeek(days.count)
                 vm.next()
             })
             .padding(.horizontal, 24)
@@ -75,12 +69,7 @@ struct OnboardingFlowView: View {
                         }
                         .buttonStyle(.plain)  // keeps native look in nav bars
                     } else {
-                        Button(action: {}) {
-                            Image(systemName: "chevron.backward")
-                                .opacity(0) // invisible but takes space
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(true) // disable interaction on placeholder
+                        EmptyView()
                     }
                 }
                 ToolbarItem(placement: .principal) {

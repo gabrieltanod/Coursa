@@ -4,7 +4,7 @@ struct GoalsStepView: View {
     let onGoalSelected: (Goal) -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack() {
             VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(question: "What is your goal?", caption: "Help Coursa determine the best plan for you based on your goals.")
                     .padding(.bottom, 40)
@@ -34,11 +34,11 @@ struct GoalsStepView: View {
 
                 Spacer()
             }
+            .padding(.top, 60)
             
             Button("Placeholder") {
             }
-            .buttonStyle(CustomButtonStyle())
-            .opacity(0)
+            .buttonStyle(CustomButtonStyle(isDisabled: true))
         }
     }
 }

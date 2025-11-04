@@ -47,7 +47,7 @@ struct DaysPerWeekStepView: View {
             
             Button("Placeholder") {
             }
-            .buttonStyle(CustomButtonStyle())
+            .buttonStyle(CustomButtonStyle(isDisabled: false))
             .opacity(0)
         }
     }
