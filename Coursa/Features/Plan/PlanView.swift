@@ -11,78 +11,113 @@ import SwiftUI
 struct PlanView: View {
     @StateObject var vm: PlanViewModel
 
+    // MARK: - Tab state and enum
+    private enum PlanInnerTab: String, CaseIterable { case plan = "Plan"; case activity = "Activity" }
+    @State private var selectedTab: PlanInnerTab = .plan
+    @State private var selectedWeekIndex: Int? = nil
+
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
                 header()
 
-                if let generated = vm.generatedPlan {
-                    let sorted = generated.runs.sorted { $0.date < $1.date }
-                    let allGroups = groupByWeek(sorted)
-                    let now = Date()
-                    // Pick the first plan week whose first run is today or in the future
-                    let currentIndex =
-                        allGroups.firstIndex { group in
-                            guard let first = group._value.first?.date else {
-                                return false
-                            }
-                            return first
-                                >= Calendar.current.startOfDay(for: now)
-                        } ?? 0
-                    let thisWeekGroup = allGroups[currentIndex]
-                    let thisWeekRuns = thisWeekGroup._value
-                    let upcomingGroups = Array(
-                        allGroups.dropFirst(currentIndex + 1)
-                    )
+                planTabs()
 
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 20) {
-                            // This Week header shows the plan week range (e.g., 2 Nov – 8 Nov)
-                            Text(
-                                "This Week"
-                            )
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 4)
-                            .foregroundStyle(Color("white-500"))
-
-                            ForEach(thisWeekRuns) { run in
-                                NavigationLink {
-                                    PlanDetailView(run: run)
-                                } label: {
-                                    RunningSessionCard(run: run)
+                if selectedTab == .plan {
+                    if let generated = vm.generatedPlan {
+                        let sorted = generated.runs.sorted { $0.date < $1.date }
+                        let allGroups = groupByWeek(sorted)
+                        let now = Date()
+                        
+                        // Determine default (current) week index
+                        let defaultIndex =
+                            allGroups.firstIndex { group in
+                                guard let first = group._value.first?.date else { return false }
+                                return first >= Calendar.current.startOfDay(for: now)
+                            } ?? 0
+                        
+                        // Bind selected index, defaulting to current week
+                        let bindingIndex = Binding<Int>(
+                            get: { selectedWeekIndex ?? defaultIndex },
+                            set: { selectedWeekIndex = max(0, min($0, max(allGroups.count - 1, 0))) }
+                        )
+                        let selectedIndex = bindingIndex.wrappedValue
+                        
+                        // Today runs (only if viewing current week)
+                        let todayRuns = sorted.filter { Calendar.current.isDate($0.date, inSameDayAs: now) }
+                        let selectedGroup = allGroups.isEmpty ? nil : allGroups[selectedIndex]
+                        let selectedRuns = selectedGroup?._value ?? []
+                        let selectedRunsExcludingToday = selectedRuns.filter { !Calendar.current.isDate($0.date, inSameDayAs: now) }
+                        let upcomingGroups = Array(allGroups.dropFirst(min(selectedIndex + 1, allGroups.count)))
+                        
+                        
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 20) {
+                                weekSelector(totalWeeks: allGroups.count, currentIndex: bindingIndex)
+                                    .padding(.bottom, 8)
+                                // Show Today only when looking at the current week
+                                if selectedIndex == defaultIndex, !todayRuns.isEmpty {
+                                    Text("Today")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.top, 4)
+                                        .foregroundStyle(Color("white-500"))
+                                    
+                                    ForEach(todayRuns) { run in
+                                        NavigationLink {
+                                            PlanDetailView(run: run)
+                                        } label: {
+                                            RunningSessionCard(run: run)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
                                 }
-                            }
-                            Divider().padding(.vertical, 4)
-
-                            if !upcomingGroups.isEmpty {
-                                Text("Upcoming")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
+                                
+                                Text("Week \(selectedIndex + 1) Sessions")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, 4)
                                     .foregroundStyle(Color("white-500"))
-
-                                ForEach(upcomingGroups, id: \._key) { group in
-                                    // Subheader shows date range for that plan week
-                                    WeekSummaryCard(
-                                        title: weekNumberTitle(for: group._value.first?.date),
-                                        runs: group._value,
-                                        subtitle: weekTitle(for: group._value.first?.date)   // ← date now inside card
-                                    )
+                                
+                                ForEach(selectedRunsExcludingToday) { run in
+                                    NavigationLink {
+                                        PlanDetailView(run: run)
+                                    } label: {
+                                        RunningSessionCard(run: run)
+                                    }
                                 }
+                                .padding(.vertical, -5)
                             }
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
+                    } else {
+                        Spacer()
+                        Text("No plan yet")
+                            .foregroundColor(.secondary)
+                            .foregroundStyle(Color("white-500"))
+                        Spacer()
                     }
                 } else {
-                    Spacer()
-                    Text("No plan yet")
-                        .foregroundColor(.secondary)
-                        .foregroundStyle(Color("white-500"))
-                    Spacer()
+                    // Activity placeholder
+                    VStack(spacing: 16) {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.system(size: 36, weight: .regular))
+                            .foregroundStyle(Color("white-500").opacity(0.8))
+                        Text("Activity will live here")
+                            .font(.headline)
+                            .foregroundStyle(Color("white-500"))
+                        Text("Your recent runs, stats, and trends will appear on this tab.")
+                            .font(.subheadline)
+                            .foregroundStyle(Color("white-500").opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 32)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 16)
+            .padding(.top, 20)
 //            .navigationTitle("Your Plan").foregroundStyle(Color("white-500"))
             .onAppear {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
@@ -92,23 +127,104 @@ struct PlanView: View {
         }
         .background(Color("black-500"))
     }
+    // MARK: - Tab bar
+    @ViewBuilder
+    private func planTabs() -> some View {
+        VStack(spacing: 8) {
+            HStack {
+                ForEach(PlanInnerTab.allCases, id: \.self) { tab in
+                    Button {
+                        selectedTab = tab
+                    } label: {
+                        Text(tab.rawValue)
+                            .font(.system(size: 17, weight: selectedTab == tab ? .semibold : .regular))
+                            .foregroundStyle(Color("white-500").opacity(selectedTab == tab ? 1.0 : 0.65))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 1)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // baseline + underline for selected tab
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color("white-500").opacity(0.15))
+                    .frame(height: 1)
+
+                HStack(spacing: 0) {
+                    Rectangle()
+                        .fill(selectedTab == .plan ? Color("white-500") : .clear)
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Rectangle()
+                        .fill(selectedTab == .activity ? Color("white-500") : .clear)
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func weekSelector(totalWeeks: Int, currentIndex: Binding<Int>) -> some View {
+        VStack(spacing: 10) {
+            HStack {
+                Button {
+                    if currentIndex.wrappedValue > 0 {
+                        currentIndex.wrappedValue -= 1
+                    }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 32, height: 32)
+                        
+                }
+                .buttonStyle(.plain)
+                
+                Text("Week \(currentIndex.wrappedValue + 1)")
+                    .font(.system(size: 17, weight: .medium))
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(Color.white)
+                
+                Button {
+                    if currentIndex.wrappedValue < totalWeeks - 1 {
+                        currentIndex.wrappedValue += 1
+                    }
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 17, weight: .medium))
+                        .frame(width: 32, height: 32)
+                        .foregroundStyle(Color.white)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color("black-450"))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color("white-500").opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
 
     // MARK: - Small pieces
 
     @ViewBuilder
     private func header() -> some View {
-//        if let plan = vm.recommendedPlan {
-            VStack(alignment: .center, spacing: 4) {
-//                Text(plan.rawValue)
-//                    .font(.largeTitle)
-//                    .foregroundStyle(Color("white-500"))
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Your Plan")
-                    .font(.system(size: 25))
+                    .font(.system(size: 35))
                     .foregroundStyle(Color("white-500"))
                     .fontWeight(.medium)
-                //                Text("Auto-generated from your onboarding").font(.caption).foregroundStyle(.secondary)
             }
-//        }
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // group runs by [year, weekOfYear] so weeks don’t mix across years
@@ -138,35 +254,6 @@ struct PlanView: View {
                 _value: groups[key]!.sorted { $0.date < $1.date }
             )
         }
-    }
-
-    private func weekTitle(for date: Date?) -> String {
-        guard let date else { return "This Week" }
-        let cal = Calendar.current
-        let start = cal.dateInterval(of: .weekOfYear, for: date)?.start ?? date
-        let end = cal.date(byAdding: .day, value: 6, to: start) ?? date
-        let df = DateFormatter()
-        df.setLocalizedDateFormatFromTemplate("d MMM")
-        return "\(df.string(from: start)) – \(df.string(from: end))"
-    }
-
-    private func weekNumberTitle(for date: Date?) -> String {
-        guard let date else { return "Week 1" }
-        let allRuns =
-            vm.generatedPlan?.runs.sorted(by: { $0.date < $1.date }) ?? []
-        let groups = groupByWeek(allRuns)
-        guard
-            let idx = groups.firstIndex(where: { group in
-                group._value.contains {
-                    Calendar.current.isDate(
-                        $0.date,
-                        equalTo: date,
-                        toGranularity: .weekOfYear
-                    )
-                }
-            })
-        else { return "Week 1" }
-        return "Week \(idx + 1)"
     }
 }
 

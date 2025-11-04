@@ -39,7 +39,7 @@ struct AppRootView: View {
         .task {
             if let existing = OnboardingStore.load() {
                 router.didOnboard = true
-                router.path.append(Route.coreApp(existing))
+                //                router.path.append(Route.coreApp(existing))
             }
         }
     }

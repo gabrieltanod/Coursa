@@ -14,7 +14,7 @@ struct CoreTabView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("Dashboard", systemImage: "house.fill")
                 }
 
             PlanView(vm: PlanViewModel(data: onboardingData))
