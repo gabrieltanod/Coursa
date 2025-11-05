@@ -157,7 +157,7 @@ struct PersonalInfoStepView: View {
 
                 Button("Continue") {
                     let personalInfo = PersonalInfo(
-                        age: convertDateToAge(date: date!),
+                        age: convertDateToAge(date: date ?? Date()),
                         gender: gender,
                         weightKg: Double(weightKg) ?? 0.0,
                         heightCm: Double(heightCm) ?? 0.0

@@ -120,6 +120,7 @@ struct ChooseStartDateStepView: View {
                 }
                 .buttonStyle(CustomButtonStyle(isDisabled: selectedDate == nil))
                 .controlSize(.large)
+                .disabled(selectedDate == nil)
                 
             }
         }

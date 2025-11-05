@@ -3,9 +3,9 @@ import SwiftUI
 struct PersonalBestStepView: View {
     let onContinue: (Double?, String?) -> Void
 
-    @State private var selectedHour = 0
-    @State private var selectedMinute = 0
-    @State private var selectedSecond = 0
+    @State private var selectedHour = -1
+    @State private var selectedMinute = -1
+    @State private var selectedSecond = -1
     @State private var distanceKm = ""
     @State private var durationText = ""
     @State private var showDurationWheel: Bool = false
@@ -100,8 +100,8 @@ struct PersonalBestStepView: View {
 
             Button(action: { showDurationWheel = true }) {
                 HStack {
-                    if selectedHour != 0 && selectedMinute != 0
-                        && selectedSecond != 0
+                    if selectedHour > 0 && selectedMinute > 0
+                        && selectedSecond > 0
                     {
                         Text(
                             "\(selectedHour)h : \(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
@@ -110,7 +110,7 @@ struct PersonalBestStepView: View {
                         .font(.custom("Helvetica Neue", size: 22))
                         .fontWeight(.regular)
                         .foregroundStyle(Color("white-500"))
-                    } else if selectedMinute != 0 && selectedSecond != 0 {
+                    } else if selectedMinute > 0 && selectedSecond > 0 {
                         Text(
                             "\(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
                         )
@@ -118,7 +118,7 @@ struct PersonalBestStepView: View {
                         .font(.custom("Helvetica Neue", size: 22))
                         .fontWeight(.regular)
                         .foregroundStyle(Color("white-500"))
-                    } else if selectedSecond != 0{
+                    } else if selectedSecond > 0{
                         Text("\(String(format: "%02d", selectedSecond))s")
                             .font(.body)
                             .font(.custom("Helvetica Neue", size: 22))
@@ -163,6 +163,11 @@ struct PersonalBestStepView: View {
                             durationText =
                                 "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
                         }
+                        .onAppear {
+                            if selectedHour < 0 {
+                                selectedHour = 1
+                            }
+                        }
 
                         Text(":")
 
@@ -176,6 +181,11 @@ struct PersonalBestStepView: View {
                         .onChange(of: selectedMinute) { _ in
                             durationText =
                                 "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedMinute < 0 {
+                                selectedMinute = 1
+                            }
                         }
 
                         Text(":")
@@ -191,28 +201,13 @@ struct PersonalBestStepView: View {
                             durationText =
                                 "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
                         }
+                        .onAppear {
+                            if selectedSecond < 0 {
+                                selectedSecond = 1
+                            }
+                        }
                     }
                     .labelsHidden()
-
-                    if selectedHour != 0 && selectedMinute != 0
-                        && selectedSecond != 0
-                    {
-                        Text(
-                            "\(selectedHour)h : \(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
-                        )
-                        .font(.title2)
-                        .padding(.top)
-                    } else if selectedMinute != 0 && selectedSecond != 0 {
-                        Text(
-                            "\(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
-                        )
-                        .font(.title2)
-                        .padding(.top)
-                    } else {
-                        Text("\(String(format: "%02d", selectedSecond))s")
-                            .font(.title2)
-                            .padding(.top)
-                    }
 
                 }
                 .presentationDetents([.medium])

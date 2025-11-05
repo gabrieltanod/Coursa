@@ -39,6 +39,7 @@ struct GoalsStepView: View {
             Button("Placeholder") {
             }
             .buttonStyle(CustomButtonStyle(isDisabled: true))
+            .hidden()
         }
     }
 }

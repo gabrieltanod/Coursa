@@ -97,6 +97,7 @@ struct WhichDaysStepView: View {
                 onContinue(selectedDays)
             }
             .buttonStyle(CustomButtonStyle(isDisabled: selectedDays.count < 3))
+            .disabled(selectedDays.count < 3)
         }
     }
 }
