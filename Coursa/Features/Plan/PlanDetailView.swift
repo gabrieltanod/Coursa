@@ -63,21 +63,21 @@ struct PlanDetailView: View {
             }
 
             // Fixed bottom CTA
-            VStack {
-                Button {
-                    isRunning.toggle()
-                } label: {
-                    Text(didComplete ? "View Summary" : (isRunning ? "Stop" : "Start Running"))
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .padding(.horizontal)
-                }
-                .padding(.bottom, 24)
-            }
+//            VStack {
+//                Button {
+//                    isRunning.toggle()
+//                } label: {
+//                    Text(didComplete ? "View Summary" : (isRunning ? "Stop" : "Start Running"))
+//                        .font(.headline)
+//                        .frame(maxWidth: .infinity)
+//                        .padding()
+//                        .background(Color.white)
+//                        .foregroundColor(.black)
+//                        .clipShape(RoundedRectangle(cornerRadius: 20))
+//                        .padding(.horizontal)
+//                }
+//                .padding(.bottom, 24)
+//            }
         }
         .ignoresSafeArea(edges: .top)
         .background(Color("black-500").ignoresSafeArea())

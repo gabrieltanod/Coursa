@@ -14,7 +14,7 @@ final class AppRouter: ObservableObject {
     @Published var didOnboard = false
 
     func goToCoreApp(with data: OnboardingData) {
-        path.append(Route.coreApp(data))
+        path = NavigationPath()
         didOnboard = true
     }
 

@@ -22,7 +22,7 @@ enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
 // MARK: - Core Run Types
 
 enum RunKind: String, Codable, CaseIterable, Identifiable {
-    case easy, long, tempo, intervals, recovery
+    case easy, long, tempo, intervals, recovery, maf
     var id: String { rawValue }
 }
 

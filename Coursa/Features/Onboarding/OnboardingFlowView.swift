@@ -31,7 +31,10 @@ struct OnboardingFlowView: View {
             .background(Color("black-500"))
         case .personalBest:
             PersonalBestStepView(onContinue: { distanceKm, durationText in
-                vm.setPersonalBest(distanceKm: distanceKm, durationText: durationText)
+                vm.setPersonalBest(
+                    distanceKm: distanceKm,
+                    durationText: durationText
+                )
                 vm.updateRecommendedPlan()
                 vm.next()
             })
@@ -55,35 +58,27 @@ struct OnboardingFlowView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Main content based on current step
-                stepContent
-                    .navigationBarTitleDisplayMode(.large)
+        ZStack {
+            // Main content based on current step
+            stepContent
+                .navigationBarTitleDisplayMode(.large)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if vm.canGoBack {
+                    Button(action: vm.back) {
+                        Image(systemName: "chevron.backward")
+                    }
+                    .buttonStyle(.plain)  // keeps native look in nav bars
+                } else {
+                    EmptyView()
+                }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if vm.canGoBack {
-                        Button(action: vm.back) {
-                            Image(systemName: "chevron.backward")
-                        }
-                        .buttonStyle(.plain)  // keeps native look in nav bars
-                    } else {
-                        EmptyView()
-                    }
+            ToolbarItem(placement: .principal) {
+                if vm.step.usesProgress {
+                    CarouselIndicator(currentIndex: vm.index)
+                        .frame(maxWidth: .infinity)
                 }
-                ToolbarItem(placement: .principal) {
-                    if vm.step.usesProgress {
-                        CarouselIndicator(currentIndex: vm.index)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-//                ToolbarItem {
-//                    if vm.canGoBack && !vm.isLastStep {
-//                        Text("Back")
-//                            .foregroundStyle(.clear)
-//                    }
-//                }
             }
         }
     }
