@@ -13,7 +13,7 @@ final class AppRouter: ObservableObject {
     @Published var path = NavigationPath()
     @Published var didOnboard = false
 
-    func goToCoreApp(with data: OnboardingData) {
+    func goToCoreApp() {
         path = NavigationPath()
         didOnboard = true
     }
