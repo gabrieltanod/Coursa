@@ -27,8 +27,14 @@ final class AppRouter: ObservableObject {
         path.append(Route.home)
     }
 
-    func reset() {
+    func reset(hard: Bool = true) {
         path = NavigationPath()
         didOnboard = false
+
+        guard hard else { return }
+
+        // Clear anything that re-triggers onboarding skip
+        OnboardingStore.clear()  // implement this to remove stored data
+        UserDefaults.standard.removeObject(forKey: "hasSeenWelcome")
     }
 }
