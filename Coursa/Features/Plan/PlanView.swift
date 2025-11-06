@@ -25,8 +25,32 @@ struct PlanView: View {
 
                 if selectedTab == .plan {
                     if let generated = vm.generatedPlan {
+                        // --- derive plan stats ---
+                        let runs = generated.runs.sorted { $0.date < $1.date }                      // your `generated.runs.sorted { $0.date < $1.date }`
+                        let totalSessions = generated.runs.count
+                        let completedSessions = generated.runs.filter { $0.status == .completed }.count
+                        let progress = totalSessions == 0 ? 0 : Double(completedSessions) / Double(totalSessions)
+
+                        // distance completed (prefer actual.distanceKm, fallback to template targetDistanceKm)
+                        let completedKm = runs
+                            .filter { $0.status == .completed }
+                            .reduce(0.0) { sum, run in
+                                if let d = run.actual.distanceKm { return sum + d }
+                                if let t = run.template.targetDistanceKm { return sum + t }
+                                return sum
+                            }
+
+                        // target distance = sum of template targets (ignore nils)
+                        let targetKm = runs
+                            .compactMap { $0.template.targetDistanceKm }
+                            .reduce(0, +)
+
+                        // weeks
+                        let allGroups = groupByWeek(runs)
+                        let weekTotal = max(allGroups.count, 1)
+                        let weekNow = (selectedWeekIndex ?? 0) + 1
+
                         let sorted = generated.runs.sorted { $0.date < $1.date }
-                        let allGroups = groupByWeek(sorted)
                         let now = Date()
                         
                         // Determine default (current) week index
@@ -50,9 +74,18 @@ struct PlanView: View {
                         let selectedRunsExcludingToday = selectedRuns.filter { !Calendar.current.isDate($0.date, inSameDayAs: now) }
                         let upcomingGroups = Array(allGroups.dropFirst(min(selectedIndex + 1, allGroups.count)))
                         
-                        
                         ScrollView {
+                            
                             LazyVStack(alignment: .leading, spacing: 20) {
+                                PlanProgressCard(
+                                    title: vm.recommendedPlan?.rawValue ?? "Base Endurance Plan",
+                                    progress: progress,
+                                    weekNow: weekNow,
+                                    weekTotal: weekTotal,
+                                    completedKm: completedKm,
+                                    targetKm: targetKm
+                                )
+                                
                                 weekSelector(totalWeeks: allGroups.count, currentIndex: bindingIndex)
                                     .padding(.bottom, 8)
                                 // Show Today only when looking at the current week
