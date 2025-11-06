@@ -1,19 +1,16 @@
 //
 //  HeaderTimerView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //
 
 import SwiftUI
-internal import Combine
+import Combine
 
 struct HeaderTimerView: View {
-    
-    let laps: Int = 3
     private let headerHeight: CGFloat = 100
     @Binding var timeElapsed: Double
-    @State private var currentTimeString = "00:00"
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -23,7 +20,7 @@ struct HeaderTimerView: View {
                     Circle()
                         .stroke(Color.yellow, lineWidth: 2)
                         .frame(width: 26, height: 26)
-                    Text("\(laps)")
+                    Text("3")
                         .foregroundColor(.white)
                         .font(.caption)
                         .fontWeight(.bold)

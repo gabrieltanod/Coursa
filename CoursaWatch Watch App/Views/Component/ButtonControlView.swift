@@ -1,6 +1,6 @@
 //
 //  ButtonControlView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //

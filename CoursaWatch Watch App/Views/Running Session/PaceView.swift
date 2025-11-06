@@ -1,6 +1,6 @@
 //
 //  PaceView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //
@@ -10,20 +10,21 @@ import SwiftUI
 struct PaceView : View {
     
     private let headerHeight: CGFloat = 105
+    @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
         VStack(alignment: .leading) {
             Spacer(minLength: headerHeight)
             HStack(alignment: .lastTextBaseline) {
                 MetricValueView(value: "7:30", unit: "/KM", color: "primary")
-                MetricLabelView(topText: "CUR", bottomText: "HR")
+                MetricLabelView(topText: "REC", bottomText: "PACE")
             }
             HStack(alignment: .lastTextBaseline) {
-                MetricValueView(value: "7:30", unit: "/KM", color: "primary")
-                MetricLabelView(topText: "AVG", bottomText: "HR")
+                MetricValueView(value: (formatPace(paceMinutes: workoutManager.pace)), unit: "/KM", color: "primary")
+                MetricLabelView(topText: "CUR", bottomText: "PACE")
             }
             HStack(alignment: .lastTextBaseline) {
-                MetricValueView(value: "7:30", unit: "/KM", color: "primary")
+                MetricValueView(value: (formatPace(paceMinutes: workoutManager.averagePace)), unit: "/KM", color: "primary")
                 MetricLabelView(topText: "AVG", bottomText: "PACE")
             }
             
@@ -35,8 +36,11 @@ struct PaceView : View {
         .ignoresSafeArea()
         .background(Color("app"))
     }
-}
-
-#Preview {
-    PaceView()
+    
+    func formatPace(paceMinutes: Double) -> String {
+        let minutes = Int(paceMinutes)
+        let secondsDecimal = paceMinutes.truncatingRemainder(dividingBy: 1)
+        let seconds = Int(secondsDecimal * 60)
+        return String(format: "%d:%02d", minutes, seconds)
+    }
 }

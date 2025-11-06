@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  RunningSessionView.swift
 //  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 24/10/25.
@@ -16,6 +16,8 @@ struct RunningSessionView: View {
     @State private var hasStarted: Bool = false
     
     @Binding var appState: AppState
+    @Binding var finalSummaryData: WorkoutSummary?
+    @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
         TabView(selection: $selectedHorizontalTab) {
@@ -23,7 +25,8 @@ struct RunningSessionView: View {
                 timeElapsed: $timeElapsed,
                 isRunning: $isRunning,
                 timer: $timer,
-                appState: $appState
+                appState: $appState,
+                finalSummaryData: $finalSummaryData
             )
             .tag(0)
             
@@ -62,9 +65,9 @@ struct RunningSessionView: View {
     }
     
     func start() {
-        isRunning = true // Set state
+        isRunning = true
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak timer] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) {_ in
             timeElapsed += 0.01
         }
         RunLoop.main.add(timer!, forMode: .common)
@@ -80,8 +83,5 @@ struct RunningSessionView: View {
         pause()
         timeElapsed = 0.0
     }
-}
 
-#Preview {
-    RunningSessionView(appState: .constant(.running))
 }

@@ -1,6 +1,6 @@
 //
 //  HomePageView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 26/10/25.
 //
@@ -8,39 +8,35 @@
 import SwiftUI
 
 struct PlanDetailsPageView: View {
-    // Variabel yang Anda teruskan (walaupun 'plan' sudah mencakupnya)
     let title: String
     let targetDistance: String
     let intensity: String
     let description: String
     
     let plan: Plan
-    
-//    @Binding var isRootSessionActive: Bool
     @State private var navPath = NavigationPath()
     @Binding var appState: AppState
     
     @State private var isCountingDown = false
     
-    // Enum untuk mengelola state countdown
     enum CountdownStep: Hashable {
         case idle
         case paceRec
         case number(Int)
         case start
         
-        // ID untuk "tipe" state, bukan nilainya
         var stateType: String {
             switch self {
             case .idle: return "idle"
             case .paceRec: return "pace"
-            case .number: return "number" // Kunci: Sama untuk 3, 2, 1
+            case .number: return "number"
             case .start: return "start"
             }
         }
     }
     
     @State private var countdownStep: CountdownStep = .idle
+    @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
         ZStack {
@@ -70,6 +66,7 @@ struct PlanDetailsPageView: View {
                     // Start Button
                     Button(action: {
                         startCountdownSequence()
+                        workoutManager.startWorkout()
                     }) {
                         Text("Start")
                             .font(.system(size: 16, weight: .semibold))
@@ -83,15 +80,14 @@ struct PlanDetailsPageView: View {
                     
                 }
                 .padding(.horizontal, 9)
-                .padding(.top, 10) // Padding kecil di atas
-                .padding(.bottom, 20) // Padding kecil di bawah
+                .padding(.top, 10)
+                .padding(.bottom, 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-//                .ignoresSafeArea(edges: .bottom) // Biarkan scroll view mengisi
             }
             .disabled(isCountingDown)
             
             
-            // --- COUNTDOWN OVERLAY (DI DEPAN) ---
+            // Countdown Overlay
             if isCountingDown {
                 Color.black
                     .ignoresSafeArea()
@@ -119,7 +115,7 @@ struct PlanDetailsPageView: View {
                         
                     case .number(let num):
                         VStack{
-                            Text("\(num)") // Tampilkan angkanya
+                            Text("\(num)")
                                 .font(.system(size: 96, weight: .semibold))
                                 .foregroundColor(.orange)
                                 .padding(.bottom, 20)
@@ -146,15 +142,12 @@ struct PlanDetailsPageView: View {
         .navigationBarBackButtonHidden(isCountingDown)
     }
     
-    
-    // Fungsi helper (Anda harus menambahkannya)
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE, d MMM yy"
         return formatter.string(from: date)
     }
     
-    // Fungsi Countdown (Tidak berubah)
     func startCountdownSequence() {
         Task {
             isCountingDown = true

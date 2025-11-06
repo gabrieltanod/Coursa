@@ -1,6 +1,6 @@
 //
-//  HeartRateView.swift
-//  TestCoursa
+//  SummaryPaceElevationView.swift
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //
@@ -8,18 +8,19 @@
 import SwiftUI
 
 struct SummaryPaceElevationView: View {
+    @StateObject var viewModel: SummaryPageViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8){
             Text("Average Pace:")
                 .font(.system(size: 14, weight: .semibold))
             
-            MetricValueView(value: "7:28", unit: "/KM", color: "secondary")
+            MetricValueView(value: viewModel.formattedAveragePace, unit: "/KM", color: "secondary")
                 
             Text("Elevation Gain:")
                 .font(.system(size: 14, weight: .semibold))
             
-            MetricValueView(value: "7", unit: "M", color: "secondary")
+            MetricValueView(value: viewModel.formattedElevationGain, unit: "M", color: "secondary")
             
             Spacer()
         }
@@ -27,9 +28,4 @@ struct SummaryPaceElevationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color("app"))
     }
-}
-
-
-#Preview {
-    SummaryPaceElevationView()
 }

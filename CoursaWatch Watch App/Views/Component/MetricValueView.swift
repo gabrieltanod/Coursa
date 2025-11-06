@@ -1,6 +1,6 @@
 //
-//  MetricsNoteView.swift
-//  TestCoursa
+//  MetricValueView.swift
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 26/10/25.
 //
@@ -23,7 +23,6 @@ struct MetricValueView: View {
         }
     }
 }
-
 
 #Preview {
     MetricValueView(value: "333", unit: "BPM", color: "primary")

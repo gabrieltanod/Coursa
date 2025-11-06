@@ -1,6 +1,6 @@
 //
 //  ButtonControlView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //
@@ -34,10 +34,8 @@ struct PlanCardView: View {
         .cornerRadius(8)
     }
     
-    // Fungsi helper untuk memformat 'date'
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        // Format: "Sun, 26 Oct 25"
         formatter.dateFormat = "EEE, d MMM yy"
         return formatter.string(from: date)
     }

@@ -1,6 +1,6 @@
 //
 //  ControlPageView.swift
-//  TestCoursa
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
 //
@@ -13,6 +13,8 @@ struct ControlPageView: View {
     @Binding var timer: Timer?
     @Binding var appState: AppState
     @State private var showingConfirmation = false
+    @Binding var finalSummaryData: WorkoutSummary?
+    @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
         HStack(spacing: 46) {
@@ -26,16 +28,12 @@ struct ControlPageView: View {
                 status: "END"
             )
             .confirmationDialog(
-                "Do you want to end?", // Judul
+                "Do you want to end?",
                 isPresented: $showingConfirmation,
                 titleVisibility: .visible
             ) {
                 Button("End Workout", role: .destructive) {
-                    if timeElapsed < 60 {
-                        appState = .planning
-                    } else {
-                        appState = .summary
-                    }
+                    endSessionAndSaveData()
                     reset()
                 }
                 .foregroundColor(Color("Red"))
@@ -79,19 +77,21 @@ struct ControlPageView: View {
         isRunning = false
     }
     
-}
-
-#Preview {
-    struct PreviewWrapper: View {
-        @State private var timeElapsed: Double = 0.0
-        @State private var isRunning: Bool = false
-        @State private var timer: Timer? = nil
-        @State private var isRootSessionActive: Bool = false
-        @State private var appState: AppState = .planning
+    func endSessionAndSaveData() {
+        let summary = workoutManager.stopWorkoutAndReturnSummary()
         
-        var body: some View {
-            ControlPageView(timeElapsed: $timeElapsed, isRunning: $isRunning, timer: $timer, appState: $appState)
+        if let finalData = summary {
+            ConnectivityService.shared.sendWorkoutSummary(finalData)
+            
+            if finalData.totalTime < 10 {
+                appState = .planning
+            } else {
+                finalSummaryData = finalData
+                appState = .summary
+            }
+        } else {
+            appState = .planning
         }
     }
-    return PreviewWrapper()
+    
 }

@@ -1,6 +1,6 @@
 //
-//  MetricsNoteView.swift
-//  TestCoursa
+//  MetricLabelView.swift
+//  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 26/10/25.
 //
@@ -23,7 +23,6 @@ struct MetricLabelView: View {
         }
     }
 }
-
 
 #Preview {
     MetricLabelView(topText: "CUR", bottomText: "HR")
