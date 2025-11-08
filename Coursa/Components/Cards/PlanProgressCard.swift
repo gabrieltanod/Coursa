@@ -24,7 +24,7 @@ struct PlanProgressCard: View {
             // Title + percent pill
             HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.system(size: 28, weight: .semibold))
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(Color("white-500"))
                     .lineLimit(1)
 
@@ -49,11 +49,7 @@ struct PlanProgressCard: View {
                     GeometryReader { geo in
                         Capsule()
                             .fill(
-                                LinearGradient(
-                                    colors: [Color("green-500"), .white],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                                Color("green-500")
                             )
                             .frame(width: max(0, min(progress, 1)) * geo.size.width, height: 6)
                             .animation(.easeInOut(duration: 0.35), value: progress)
@@ -71,10 +67,10 @@ struct PlanProgressCard: View {
                 Spacer()
 
                 Text("Distance  ")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.system(size: 17, weight: .regular))
                     .foregroundStyle(Color("white-500")) +
                 Text("\(completedKm.clean) / \(targetKm.clean) KM")
-                    .font(.system(size: 18, weight: .heavy))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(Color("white-500"))
             }
         }
@@ -95,4 +91,8 @@ private extension Double {
     var clean: String {
         truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", self) : String(format: "%.1f", self)
     }
+}
+
+#Preview {
+    PlanProgressCard(title: "Endurance", progress: 0.25, weekNow: 1, weekTotal: 4, completedKm: 15, targetKm: 60)
 }

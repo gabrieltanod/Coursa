@@ -291,7 +291,6 @@ struct PlanView: View {
 }
 
 #Preview("PlanView – with OnboardingData") {
-    // Sample onboarding data for the preview
     var onboarding = OnboardingData()
     onboarding.goal = .improveEndurance
     onboarding.personalInfo = .init(age: 22, gender: "M", weightKg: 68, heightCm: 173)

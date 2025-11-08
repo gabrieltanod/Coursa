@@ -13,11 +13,11 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             // Background
-            Color("black-500") // #2D2A2B in your assets
+            Color("black-500")
                 .ignoresSafeArea()
 
             // Centered logo
-            Image("logo-black")   // PDF vector in Assets
+            Image("logo-black")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 160, height: 160)

@@ -1,155 +1,204 @@
-import SwiftUI
+//
+//  HomeView.swift
+//  Coursa
+//
 
-// Features/Home/HomeView.swift
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject private var router: AppRouter
-    @State private var selectedDayIndex: Int = 0
-
-    // Simple mocked week data to match the quick UI mock
-    private let week: [DayItem] = [
-        .init(label: "MON", date: "18", hasRun: true),
-        .init(label: "TUE", date: "19", hasRun: false),
-        .init(label: "WED", date: "20", hasRun: false),
-        .init(label: "THU", date: "21", hasRun: false),
-        .init(label: "FRI", date: "22", hasRun: true, isCircled: true),
-        .init(label: "SAT", date: "23", hasRun: false),
-        .init(label: "SUN", date: "24", hasRun: true)
-    ]
+    @StateObject private var vm = HomeViewModel()
+    @State private var selectedWeekIndex: Int = 0
+    private let calendar = Calendar.current
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Header with a calendar button
-            HStack {
-                Spacer()
-                Button(action: { /* open calendar */ }) {
-                    Image(systemName: "calendar")
-                        .font(.title2)
-                        .padding(12)
-                        .background(.ultraThinMaterial, in: Circle())
-                }
+        ZStack {
+            Color("black-500").ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 16) {
+                header
+
+                calendarStrip
+
+                sessionsSection
+
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal)
-            .padding(.top, 4)
-
-            // Week strip (non‑scrolling)
-            WeekStrip(week: week, selectedIndex: $selectedDayIndex)
-                .padding(.horizontal)
-
-            Spacer(minLength: 8)
-
-            // Center content – Rest Day card
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: [Color.white.opacity(0.12), Color.white.opacity(0.02)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 96, height: 96)
-                    Image(systemName: "clock")
-                        .font(.system(size: 44, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-
-                Text("Rest Day")
-                    .font(.title.bold())
-
-                Text("Rest days are where the real gains happen. Don't skip your day off!")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Button("Reset App") {
-                    router.reset()
-                }
-            }
-
-            Spacer()
+            .padding(.horizontal, 16)
+            .padding(.top, 20)
         }
-        .preferredColorScheme(.dark)
-        .navigationTitle("Dashboard")
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(greetingTitle)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundStyle(Color("white-500").opacity(0.8))
+
+            Text("Today’s Training")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(Color("white-500"))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var greetingTitle: String {
+        let hour = calendar.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good Morning"
+        case 12..<18: return "Good Afternoon"
+        default: return "Good Evening"
+        }
+    }
+
+    // MARK: - Calendar Strip (week-based)
+
+    private var calendarStrip: some View {
+        let weeks = calendarWeeks
+
+        return TabView(selection: $selectedWeekIndex) {
+            ForEach(Array(weeks.enumerated()), id: \.offset) { index, days in
+                HStack(spacing: 10) {
+                    ForEach(days, id: \.self) { date in
+                        let isSelected = calendar.isDate(date, inSameDayAs: vm.selectedDate)
+                        let hasRun = vm.hasRun(on: date)
+
+                        VStack(spacing: 6) {
+                            Text(weekdayString(for: date).uppercased())
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(
+                                    Color("white-500").opacity(isSelected ? 1.0 : 0.6)
+                                )
+
+                            Text(dayString(for: date))
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 32, height: 32)
+                                .foregroundStyle(isSelected ? .black : Color("white-500"))
+                                .background(
+                                    Circle()
+                                        .fill(isSelected ? Color("white-500") : .clear)
+                                )
+
+                            Circle()
+                                .fill(Color("purple-500"))
+                                .frame(width: 6, height: 6)
+                                .opacity(hasRun ? 1 : 0)
+                                .offset(y: -2)
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 4)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            vm.selectedDate = date
+                        }
+                    }
+                }
+                .tag(index)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(height: 80)
+    }
+
+    // Weeks from first plan week to last plan week, each exactly 7 days.
+    // No pre-plan weeks → no empty calendar before your plan.
+    private var calendarWeeks: [[Date]] {
+        guard let firstRunDate = vm.runs.first?.date,
+              let lastRunDate = vm.runs.last?.date else {
+            return []
+        }
+
+        let startComponents = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: firstRunDate)
+        let endComponents = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: lastRunDate)
+
+        guard let startOfFirstWeek = calendar.date(from: startComponents),
+              let startOfLastWeek = calendar.date(from: endComponents) else {
+            return []
+        }
+
+        var weeks: [[Date]] = []
+        var currentWeekStart = startOfFirstWeek
+
+        while currentWeekStart <= startOfLastWeek {
+            var days: [Date] = []
+            for offset in 0..<7 {
+                if let d = calendar.date(byAdding: .day, value: offset, to: currentWeekStart) {
+                    days.append(d)
+                }
+            }
+            weeks.append(days)
+
+            guard let next = calendar.date(byAdding: .day, value: 7, to: currentWeekStart) else {
+                break
+            }
+            currentWeekStart = next
+        }
+
+        return weeks
+    }
+
+    private func weekdayString(for date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale.current
+        f.dateFormat = "EEE"
+        return f.string(from: date)
+    }
+
+    private func dayString(for date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale.current
+        f.dateFormat = "d"
+        return f.string(from: date)
+    }
+
+    // MARK: - Sessions List
+
+    private var sessionsSection: some View {
+        let sessions = vm.sessions(on: vm.selectedDate)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            if sessions.isEmpty {
+                Text("No session scheduled")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color("white-500").opacity(0.6))
+                    .padding(.top, 8)
+            } else {
+                Text(selectedDateTitle(vm.selectedDate))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color("white-500"))
+                    .padding(.top, 4)
+
+                ForEach(sessions) { run in
+                    NavigationLink {
+                        PlanDetailView(run: run)
+                    } label: {
+                        RunningSessionCard(run: run)
+                    }
+                }
+            }
+        }
+    }
+
+    private func selectedDateTitle(_ date: Date) -> String {
+        if calendar.isDateInToday(date) {
+            return "Today’s Session"
+        } else if calendar.isDateInTomorrow(date) {
+            return "Tomorrow"
+        } else {
+            let f = DateFormatter()
+            f.locale = Locale.current
+            f.dateFormat = "EEEE, d MMM"
+            return f.string(from: date)
+        }
     }
 }
 
-// MARK: - Small helper views
-private struct WeekStrip: View {
-    let week: [DayItem]
-    @Binding var selectedIndex: Int
-
-    var body: some View {
-        HStack(spacing: 24) {
-            ForEach(week.indices, id: \.self) { i in
-                DayPill(day: week[i], isSelected: i == selectedIndex)
-                    .onTapGesture { selectedIndex = i }
-            }
-        }
+#Preview("HomeView") {
+    NavigationStack {
+        HomeView()
+            .background(Color("black-500"))
+            .preferredColorScheme(.dark)
     }
-}
-
-private struct DayPill: View {
-    let day: DayItem
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(day.label)
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
-
-            ZStack {
-                if isSelected {
-                    Circle()
-                        .strokeBorder(Color.primary, lineWidth: 2)
-                        .frame(width: 28, height: 28)
-                }
-                Text(day.date)
-                    .font(.subheadline.weight(.semibold))
-            }
-
-            Circle()
-                .fill(day.hasRun ? Color.green.opacity(0.9) : Color.secondary.opacity(0.4))
-                .frame(width: 6, height: 6)
-                .opacity(day.hasRun || isSelected ? 1 : 0.6)
-        }
-        .frame(minWidth: 30)
-    }
-}
-
-private struct QuickActionIcon: View {
-    let systemName: String
-    let title: String
-    var isActive: Bool = false
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: systemName)
-                .font(.title3)
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .shadow(radius: isActive ? 8 : 0, y: isActive ? 2 : 0)
-                )
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(isActive ? .primary : .secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-private struct DayItem: Identifiable, Hashable {
-    let id = UUID()
-    let label: String
-    let date: String
-    var hasRun: Bool = false
-    var isCircled: Bool = false
-}
-
-#Preview {
-    NavigationStack { HomeView() }
-        .environmentObject(AppRouter())
 }

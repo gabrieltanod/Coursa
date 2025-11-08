@@ -27,10 +27,4 @@ final class PlanViewModel: ObservableObject {
         guard let generated = PlanMapper.generatePlan(from: data) else { return }
         generatedPlan = generated
     }
-
-    func reset() {
-        recommendedPlan = nil
-        generatedPlan = nil
-        data = OnboardingData()
-    }
 }
