@@ -22,6 +22,7 @@ struct RunningSessionCard: View {
                         .frame(width: 120, height: 120)
                         .foregroundStyle(.white.opacity(0.15))
                         .padding(-10)
+//                        .allowsHitTesting(false)
                 }
                 .clipped()
 

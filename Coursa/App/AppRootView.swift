@@ -15,45 +15,45 @@ struct AppRootView: View {
 
     var body: some View {
         ZStack {
-            // --- Your existing routing below ---
-            if router.didOnboard {
-                if let existing = OnboardingStore.load() {
-                    CoreTabView(onboardingData: existing)
-                } else {
-                    CoreTabView(onboardingData: OnboardingData())
-                }
-            } else {
-                NavigationStack(path: $router.path) {
-                    if hasSeenWelcome {
-                        OnboardingFlowView { finishedData in
-                            OnboardingStore.save(finishedData)
-                            router.goToCoreApp() // swaps roots, no back button
-                        }
-                        .navigationDestination(for: Route.self) { route in
-                            switch route {
-                            case .plan(let data):
-                                PlanView(vm: PlanViewModel(data: data))
-                            case .home:
-                                HomeView()
-                            case .coreApp(let data):
-                                CoreTabView(onboardingData: data)
-                            }
+            NavigationStack(path: $router.path) {
+                ZStack {
+                    if router.didOnboard {
+                        if let existing = OnboardingStore.load() {
+                            CoreTabView(onboardingData: existing)
+                        } else {
+                            CoreTabView(onboardingData: OnboardingData())
                         }
                     } else {
-                        WelcomeView {
-                            hasSeenWelcome = true
+                        if hasSeenWelcome {
+                            OnboardingFlowView { finishedData in
+                                OnboardingStore.save(finishedData)
+                                router.goToCoreApp()
+                            }
+                        } else {
+                            WelcomeView {
+                                hasSeenWelcome = true
+                            }
                         }
                     }
                 }
-                .task {
-                    if OnboardingStore.load() != nil {
-                        router.didOnboard = true
+                .navigationDestination(for: Route.self) { route in
+                    switch route {
+                    case .plan(let data):
+                        PlanView(vm: PlanViewModel(data: data))
+                    case .home:
+                        HomeView()
+                    case .coreApp(let data):
+                        CoreTabView(onboardingData: data)
                     }
                 }
             }
-            // --- Your existing routing above ---
+            .onAppear {
+                // If we have onboarding data saved, skip onboarding on fresh launch
+                if !router.didOnboard, OnboardingStore.load() != nil {
+                    router.didOnboard = true
+                }
+            }
 
-            // Hard-coded splash overlay (blocks UI until dismissed)
             if showSplash {
                 SplashView()
                     .transition(.opacity)
@@ -87,7 +87,7 @@ private struct WelcomeView: View {
                         gradient: Gradient(colors: [
                             Color.black.opacity(0.2),
                             Color.black.opacity(0),
-                            Color.black.opacity(0.15)
+                            Color.black.opacity(0.15),
                         ]),
                         startPoint: .top,
                         endPoint: .bottom
@@ -119,18 +119,12 @@ private struct WelcomeView: View {
                 // Bottom CTA
                 Button(action: onNext) {
                     Text("Next")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(maxWidth: 350)
-                        .padding(.vertical, 16)
-                        .background(.white)
-                        .foregroundStyle(.black)
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
-                .accessibilityLabel("Next")
+                .buttonStyle(CustomButtonStyle(isDisabled: false))
 
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+//            .padding(.bottom, 24)
         }
         .preferredColorScheme(.dark)
         .navigationBarHidden(true)
@@ -138,5 +132,7 @@ private struct WelcomeView: View {
 }
 
 #Preview {
-    
+    AppRootView()
+        .environmentObject(AppRouter())
+        .preferredColorScheme(.dark)
 }

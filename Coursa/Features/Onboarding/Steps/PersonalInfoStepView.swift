@@ -149,10 +149,14 @@ struct PersonalInfoStepView: View {
                 Spacer()
                 
                 if !isValid {
-                    Text("Please fill out all the fields first")
-                        .font(.body)
-                        .font(.custom("Helvetica Neue", size: 22))
-                        .foregroundStyle(Color("alert"))
+                    HStack{
+                        Spacer()
+                        Text("Please fill out all the fields first")
+                            .font(.body)
+                            .font(.custom("Helvetica Neue", size: 22))
+                            .foregroundStyle(Color("alert"))
+                        Spacer()
+                    }
                 }
 
                 Button("Continue") {
@@ -166,6 +170,7 @@ struct PersonalInfoStepView: View {
                 }
                 .buttonStyle(CustomButtonStyle(isDisabled: !isValid))
                 .disabled(!isValid)
+                .padding(.top, 16)
                 
             }
             .padding(.top, 36)

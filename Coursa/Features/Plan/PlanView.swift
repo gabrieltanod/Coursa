@@ -125,9 +125,22 @@ struct PlanView: View {
                         }
                     } else {
                         Spacer()
-                        Text("No plan yet")
-                            .foregroundColor(.secondary)
-                            .foregroundStyle(Color("white-500"))
+                        VStack(spacing: 12) {
+                            Image(systemName: "figure.run")
+                                .font(.system(size: 56, weight: .regular))
+                                .foregroundStyle(Color.gray.opacity(0.8))
+                                .padding(.bottom, 6)
+
+                            Text("No Plan")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(Color("white-500"))
+
+                            Text("Pick your preferred plan to get started.")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color("white-500").opacity(0.7))
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color("black-500"))
                         Spacer()
                     }
                 } else {
