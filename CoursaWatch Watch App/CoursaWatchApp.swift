@@ -11,7 +11,7 @@ import SwiftUI
 struct CoursaWatch_Watch_AppApp: App {
     var body: some Scene {
         WindowGroup {
-            EmptyView()
+            HomePageView()
         }
     }
 }
