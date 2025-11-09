@@ -108,11 +108,30 @@ struct HomeView: View {
                                         )
                                 )
 
-                            Circle()
-                                .fill(Color("purple-500"))
-                                .frame(width: 6, height: 6)
-                                .opacity(hasRun ? 1 : 0)
-                                .offset(y: -2)
+                            if let run = vm.runs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+                                let kind = run.template.kind
+                                let colorName: String = {
+                                    switch kind {
+                                    case .long:
+                                        return "long"   // asset for Long Run
+                                    case .easy:
+                                        return "easy"   // asset for Easy Run
+                                    default:
+                                        return "maf"    // asset for MAF / other runs
+                                    }
+                                }()
+
+                                Circle()
+                                    .fill(Color(colorName))
+                                    .frame(width: 6, height: 6)
+                                    .offset(y: 2)
+                            } else {
+                                Circle()
+                                    .fill(Color.clear)
+                                    .frame(width: 6, height: 6)
+                                    .offset(y: 2)
+                            }
+
                         }
                         .padding(.vertical, 6)
                         .padding(.horizontal, 4)
