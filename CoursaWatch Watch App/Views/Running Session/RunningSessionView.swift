@@ -37,17 +37,9 @@ struct RunningSessionView: View {
                         OverviewPageView()
                             .tag(0)
                         
-                        // Halaman 2: Heart Rate
-                        HeartRateView()
-                            .tag(1)
-                        
-                        // Halaman 3: Pace
+                        // Halaman 2: Pace View
                         PaceView()
-                            .tag(2)
-                        
-                        // Halaman 4: Elevation
-                        ElevationView()
-                            .tag(3)
+                            .tag(1)
                     }
                     .tabViewStyle(.verticalPage)
                     .ignoresSafeArea()

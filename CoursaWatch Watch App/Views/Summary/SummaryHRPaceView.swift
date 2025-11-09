@@ -1,5 +1,5 @@
 //
-//  MetricsPreview.swift
+//  SummaryHRView.swift
 //  WatchTestCoursa Watch App
 //
 //  Created by Chairal Octavyanz on 25/10/25.
@@ -7,12 +7,11 @@
 
 import SwiftUI
 
-struct OverviewPageView: View {
-    private let headerHeight: CGFloat = 100
-    @EnvironmentObject var workoutManager: WorkoutManager
+struct SummaryHRPaceView: View {
+    @ObservedObject var viewModel: SummaryPageViewModel
     
     private var currentZone: Int {
-        let hr = workoutManager.heartRate
+        let hr = Double(viewModel.formattedAverageHR) ?? 0
         let maxHeartRate: Double = 195.0
         
         guard maxHeartRate.isFinite && maxHeartRate > 0,
@@ -55,19 +54,14 @@ struct OverviewPageView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
-            
-            Spacer(minLength: headerHeight)
-            
-            Text(String(format: "%.2f KM", workoutManager.distance))
-                .font(.helveticaNeue(size: 30))
+        VStack(alignment: .leading, spacing: 4){
+            Text("Average HR")
+                .font(.helveticaNeue(size: 16))
                 .foregroundColor(Color("primary"))
+                .padding(.top, 8)
             
-            HStack{
-                Text(String(format: "%.0f", workoutManager.heartRate))
-                    .font(.helveticaNeue(size: 30))
-                    .foregroundColor(Color("primary"))
-                
+            HStack {
+                MetricValueView(value: viewModel.formattedAverageHR, unit: "",color: "primary")
                 HRZoneBadgeView(
                     zoneNumber: currentZone,
                     bgColor: currentZoneColors.bg,
@@ -75,25 +69,14 @@ struct OverviewPageView: View {
                 )
             }
             
-            HStack(alignment: .lastTextBaseline) {
-                MetricValueView(value: (formatPace(paceMinutes: workoutManager.pace)), unit: "/KM", color: "primary")
-                MetricLabelView(topText: "CUR", bottomText: "PACE")
-            }
+            Text("Average Pace")
+                .font(.helveticaNeue(size: 16))
+                .foregroundColor(Color("primary"))
             
-            Spacer()
-            
+            MetricValueView(value: viewModel.formattedAveragePace, unit: "/KM", color: "primary")
         }
         .padding(.horizontal, 15)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .ignoresSafeArea()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(Color("app"))
     }
-    
-    func formatPace(paceMinutes: Double) -> String {
-        let minutes = Int(paceMinutes)
-        let secondsDecimal = paceMinutes.truncatingRemainder(dividingBy: 1)
-        let seconds = Int(secondsDecimal * 60)
-        return String(format: "%d:%02d", minutes, seconds)
-    }
 }
-

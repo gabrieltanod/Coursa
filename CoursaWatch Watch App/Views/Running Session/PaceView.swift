@@ -17,21 +17,29 @@ struct PaceView : View {
             Spacer(minLength: headerHeight)
             HStack(alignment: .lastTextBaseline) {
                 MetricValueView(value: "7:30", unit: "/KM", color: "primary")
-                MetricLabelView(topText: "REC", bottomText: "PACE")
+                MetricLabelView(topText: "REC", bottomText: "PACE", isPaceView: true)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(Color("secondary"))
+                    .cornerRadius(8)
             }
             HStack(alignment: .lastTextBaseline) {
                 MetricValueView(value: (formatPace(paceMinutes: workoutManager.pace)), unit: "/KM", color: "primary")
                 MetricLabelView(topText: "CUR", bottomText: "PACE")
             }
-            HStack(alignment: .lastTextBaseline) {
-                MetricValueView(value: (formatPace(paceMinutes: workoutManager.averagePace)), unit: "/KM", color: "primary")
-                MetricLabelView(topText: "AVG", bottomText: "PACE")
-            }
+            
+            Spacer()
+            
+            Text("KEEP STEADY")
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity)
+                .background(Color("accent"))
+                .cornerRadius(8)
             
             Spacer()
             
         }
-        .padding(.horizontal, 9)
+        .padding(.horizontal, 15)
         .frame(maxWidth: .infinity, alignment: .leading)
         .ignoresSafeArea()
         .background(Color("app"))

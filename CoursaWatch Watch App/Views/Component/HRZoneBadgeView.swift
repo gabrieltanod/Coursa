@@ -7,20 +7,23 @@
 
 import SwiftUI
 
+
 struct HRZoneBadgeView: View {
     let zoneNumber: Int
-
+    let bgColor: String
+    let textColor: String
+    
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: "heart.fill")
                 .foregroundColor(.red)
-            Text("\(zoneNumber)")
+            Text("Zone \(zoneNumber)")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(Color("app"))
+                .foregroundColor(Color(textColor))
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
-        .background(Color("secondary"))
+        .background(Color(bgColor))
         .cornerRadius(8)
     }
 }

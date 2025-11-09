@@ -15,31 +15,13 @@ struct HeaderTimerView: View {
     
     var body: some View {
         VStack {
-            HStack(alignment: .top) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.yellow, lineWidth: 2)
-                        .frame(width: 26, height: 26)
-                    Text("3")
-                        .foregroundColor(.white)
-                        .font(.caption)
-                        .fontWeight(.bold)
-                }
-                .padding(.leading, 10)
-                .offset(y: 2)
-                
-                Spacer()
-            }
-            .padding(.bottom, 18)
-            
-            
+            Spacer()
             Text(formattedTime(time: timeElapsed))
-                .font(.system(size: 32, weight: .semibold))
+                .font(.helveticaNeue(size: 38, weight: .bold))
                 .foregroundColor(Color("secondary"))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, 18)
-        .padding(.horizontal, 9)
+        .padding(.horizontal, 15)
         .frame(maxWidth: .infinity)
         .frame(height: headerHeight)
         .background(Color("app"))
@@ -47,10 +29,10 @@ struct HeaderTimerView: View {
     }
     
     func formattedTime(time: Double) -> String {
+        let hours = Int(time) / 3600
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
-        let milliseconds = Int((time.truncatingRemainder(dividingBy: 1)) * 100)
-        return String(format: "%02d:%02d,%02d", minutes, seconds, milliseconds)
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 }
 

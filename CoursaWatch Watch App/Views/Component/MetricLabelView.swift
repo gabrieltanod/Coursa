@@ -10,17 +10,15 @@ import SwiftUI
 struct MetricLabelView: View {
     var topText: String = "0"
     var bottomText: String = "0"
+    var isPaceView: Bool = false
     
     var body: some View {
         VStack (alignment: .leading) {
             Text(topText)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white)
-            
             Text(bottomText)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white)
         }
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(Color(isPaceView ? "app" : "primary"))
     }
 }
 

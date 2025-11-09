@@ -194,10 +194,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             self.currentZone = newZone
         }
         
-        // 3. LOGIKA PEMICU ALERT (Trigger Logic)
-        // Jika HR di atas Zona 2 (yaitu Zona 3, 4, atau 5)
         if newZone > 2 {
-            // Dan jika timer haptic belum berjalan...
             if hapticTimer == nil {
                 // ...Mainkan haptic pertama SEKARANG JUGA
                 playHighZoneHaptic()

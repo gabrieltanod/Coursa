@@ -30,16 +30,12 @@ struct SummaryPageView: View {
             
             TabView(selection: $selectedVerticalTab) {
                 // Halaman 1: Overview
-                SummaryDistanceView(viewModel: viewModel)
+                SummaryTimeDistanceView(viewModel: viewModel)
                     .tag(0)
                 
                 // Halaman 2: Heart Rate
-                SummaryHRView(viewModel: viewModel)
+                SummaryHRPaceView(viewModel: viewModel)
                     .tag(1)
-                
-                // Halaman 3: Pace
-                SummaryPaceElevationView(viewModel: viewModel)
-                    .tag(2)
             }
             .tabViewStyle(.verticalPage)
             

@@ -26,7 +26,7 @@ struct HomePageView: View {
     
     // Dummy Data
     let myPlan = Plan(
-        date: Date(), title: "Easy Run", targetDistance: "3km", intensity: "HR Zone 2", description: "Keep conversational pace for 3km. Your recommended pace is 7:30/km."
+        date: Date(), title: "Easy Run", targetDistance: "3km", intensity: "HR Zone 2", recPace: "7:30/KM"
     )
     
     var body: some View {
@@ -37,16 +37,20 @@ struct HomePageView: View {
                 NavigationStack(path: $navPath) {
                     ScrollView {
                         VStack(alignment: .leading){
-                            Text("TODAY'S PLAN")
-                                .font(.system(size: 12, weight: .semibold))
+                            Text("Coursa")
+                                .font(.system(size: 17, weight: .semibold))
+                                .padding(.bottom, 8)
+                            
+                            Text("TODAY PLAN")
+                                .font(.helveticaNeue(size: 13, weight: .regular))
                                 .padding(.bottom, 4)
                             
                             NavigationLink(value: NavigationRoute.workoutDetail(myPlan)) {
                                 PlanCardView(
                                     date: myPlan.date,
-                                    title: myPlan.title,
                                     targetDistance: myPlan.targetDistance,
-                                    intensity: myPlan.intensity
+                                    intensity: myPlan.intensity,
+                                    runningType: .easyRun
                                 )
                             }
                             .buttonStyle(.plain)
@@ -54,18 +58,30 @@ struct HomePageView: View {
                         .padding(.bottom, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         
-                        VStack(alignment: .leading, spacing: 8){
+                        VStack(alignment: .leading, spacing: 4){
                             Text("UPCOMING PLAN")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.helveticaNeue(size: 13, weight: .regular))
                                 .padding(.bottom, 4)
                             
-                            PlanCardView(date: Date(), title: "MAF Training", targetDistance: "3km", intensity: "HR Zone 2")
-                            PlanCardView(date: Date(), title: "Long Run", targetDistance: "3km", intensity: "HR Zone 2")
+                            PlanCardView(
+                                date: myPlan.date,
+                                targetDistance: myPlan.targetDistance,
+                                intensity: myPlan.intensity,
+                                runningType: .mafTraining
+                            )
+                            PlanCardView(
+                                date: myPlan.date,
+                                targetDistance: myPlan.targetDistance,
+                                intensity: myPlan.intensity,
+                                runningType: .longRun
+                            )
+                            
                         }
+                        .padding(.bottom, 40)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         
                     }
-                    .padding(.horizontal, 9)
+                    .padding(.horizontal, 15)
                     .ignoresSafeArea(edges: .bottom)
                     .navigationDestination(for: NavigationRoute.self) { route in
                         switch route {
@@ -74,7 +90,7 @@ struct HomePageView: View {
                                 title: plan.title,
                                 targetDistance: plan.targetDistance,
                                 intensity: plan.intensity,
-                                description: plan.description,
+                                recPace: plan.recPace,
                                 plan: plan,
                                 appState: $appState,
                             )
@@ -108,3 +124,4 @@ struct HomePageView: View {
         }
     }
 }
+

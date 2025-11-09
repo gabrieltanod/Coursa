@@ -15,10 +15,10 @@ struct MetricValueView: View {
     var body: some View {
         HStack (alignment: .lastTextBaseline) {
             Text(value)
-                .font(.system(size: 28, weight: .semibold))
+                .font(.helveticaNeue(size: 30))
                 .foregroundColor(Color(color))
             Text(unit)
-                .font(. system(size: 14, weight: .semibold))
+                .font(.helveticaNeue(size: 14))
                 .foregroundColor(Color(color))
         }
     }

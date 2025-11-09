@@ -11,7 +11,7 @@ struct PlanDetailsPageView: View {
     let title: String
     let targetDistance: String
     let intensity: String
-    let description: String
+    let recPace: String
     
     let plan: Plan
     @State private var navPath = NavigationPath()
@@ -41,27 +41,20 @@ struct PlanDetailsPageView: View {
     var body: some View {
         ZStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 30) {
                     // Header
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(plan.title)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.helveticaNeue(size: 20))
                         Text(plan.targetDistance)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.helveticaNeue(size: 16))
                         Text(plan.intensity)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.helveticaNeue(size: 16))
+                        Text("Rec Pace \(plan.recPace)")
+                            .font(.helveticaNeue(size: 16))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .foregroundColor(.white)
-                    
-                    // Deskripsi
-                    Text(plan.description)
-                        .font(.system(size: 12, weight: .regular))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.gray.opacity(0.8))
-                        .cornerRadius(8)
-                        .lineSpacing(6)
                     
                     // Start Button
                     Button(action: {
@@ -69,17 +62,17 @@ struct PlanDetailsPageView: View {
                         workoutManager.startWorkout()
                     }) {
                         Text("Start")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.helveticaNeue(size: 20))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(Color("secondary"))
                             .foregroundColor(.black)
-                            .cornerRadius(15)
+                            .cornerRadius(28)
                     }
                     .buttonStyle(.plain)
                     
                 }
-                .padding(.horizontal, 9)
+                .padding(.horizontal, 15)
                 .padding(.top, 10)
                 .padding(.bottom, 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -102,11 +95,11 @@ struct PlanDetailsPageView: View {
                         VStack {
                             VStack(spacing: 8) {
                                 Text("RECOMMENDED PACE")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.helveticaNeue(size: 16, weight: .bold))
                                     .foregroundColor(Color("secondary"))
                                 
                                 Text("7:30/KM")
-                                    .font(.system(size: 32, weight: .semibold))
+                                    .font(.helveticaNeue(size: 38, weight: .bold))
                                     .foregroundColor(Color("secondary"))
                             }
                             .frame(maxWidth: .infinity)
@@ -114,23 +107,22 @@ struct PlanDetailsPageView: View {
                         .transition(.opacity.combined(with: .scale))
                         
                     case .number(let num):
-                        VStack{
+                        VStack (spacing: 32){
                             Text("\(num)")
-                                .font(.system(size: 96, weight: .semibold))
-                                .foregroundColor(.orange)
-                                .padding(.bottom, 20)
+                                .font(.helveticaNeue(size: 96, weight: .bold))
+                                .foregroundColor(Color("accentSecondary"))
                                 .transition(.opacity.combined(with: .scale))
                                 .id(num)
                             
                             Text("Be Ready!")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.orange)
+                                .font(.helveticaNeue(size: 15, weight: .bold))
+                                .foregroundColor(Color("accentSecondary"))
                         }
                         
                     case .start:
                         Text("START!")
-                            .font(.system(size: 40, weight: .semibold))
-                            .foregroundColor(.yellow)
+                            .font(.helveticaNeue(size: 40, weight: .bold))
+                            .foregroundColor(Color("secondary"))
                             .transition(.opacity.combined(with: .scale))
                     }
                 }
