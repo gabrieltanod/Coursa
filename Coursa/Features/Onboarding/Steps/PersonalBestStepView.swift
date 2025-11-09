@@ -35,8 +35,6 @@ struct PersonalBestStepView: View {
                 .foregroundStyle(Color("white-800"))
             }
 
-            
-
             HStack(spacing: 8) {
                 Button(action: {
                     distanceKm = "3"
@@ -100,8 +98,7 @@ struct PersonalBestStepView: View {
 
             Button(action: { showDurationWheel = true }) {
                 HStack {
-                    if selectedHour > 0 && selectedMinute > 0
-                        && selectedSecond > 0
+                    if selectedHour > 0
                     {
                         Text(
                             "\(selectedHour)h : \(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
@@ -110,7 +107,7 @@ struct PersonalBestStepView: View {
                         .font(.custom("Helvetica Neue", size: 22))
                         .fontWeight(.regular)
                         .foregroundStyle(Color("white-500"))
-                    } else if selectedMinute > 0 && selectedSecond > 0 {
+                    } else if selectedMinute > 0 {
                         Text(
                             "\(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
                         )
@@ -118,13 +115,14 @@ struct PersonalBestStepView: View {
                         .font(.custom("Helvetica Neue", size: 22))
                         .fontWeight(.regular)
                         .foregroundStyle(Color("white-500"))
-                    } else if selectedSecond > 0{
+                    }
+                    else if selectedSecond > 0 {
                         Text("\(String(format: "%02d", selectedSecond))s")
                             .font(.body)
                             .font(.custom("Helvetica Neue", size: 22))
                             .fontWeight(.regular)
                             .foregroundStyle(Color("white-500"))
-                    } else {
+                    } else if selectedHour <= 0 && selectedMinute <= 0 && selectedSecond <= 0{
                         Text("Duration")
                             .font(.body)
                             .font(.custom("Helvetica Neue", size: 22))
@@ -145,7 +143,12 @@ struct PersonalBestStepView: View {
                 let duration = durationText.isEmpty ? nil : durationText
                 onContinue(distance, duration)
             }
-            .buttonStyle(CustomButtonStyle(isDisabled: !isValid && !distanceKm.isEmpty && !durationText.isEmpty))
+            .buttonStyle(
+                CustomButtonStyle(
+                    isDisabled: !isValid && !distanceKm.isEmpty
+                        && !durationText.isEmpty
+                )
+            )
         }
         .sheet(
             isPresented: $showDurationWheel,
