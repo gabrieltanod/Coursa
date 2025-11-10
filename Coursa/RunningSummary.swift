@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct WorkoutSummary: Codable, Hashable, Sendable{
+struct RunningSummary: Codable, Hashable, Sendable, Identifiable{
     var id = UUID()
     let totalTime: Double
     let totalDistance: Double

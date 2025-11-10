@@ -19,10 +19,10 @@ enum AppState {
 
 struct HomePageView: View {
     @State private var navPath = NavigationPath()
-    @State private var isSessionActive = false
     @State private var appState: AppState = .planning
     @StateObject private var workoutManager = WorkoutManager()
-    @State private var finalWorkoutSummary: WorkoutSummary?
+    @State private var finalRunningSummary: RunningSummary?
+    @EnvironmentObject var syncService: SyncService
     
     // Dummy Data
     let myPlan = Plan(
@@ -37,9 +37,19 @@ struct HomePageView: View {
                 NavigationStack(path: $navPath) {
                     ScrollView {
                         VStack(alignment: .leading){
-                            Text("Coursa")
-                                .font(.system(size: 17, weight: .semibold))
-                                .padding(.bottom, 8)
+                            
+                            // ini buat ngetest session di watch jalan apa engga, bisa diganti kalo udah gadibutuhin
+                            if syncService.isSessionActivated {
+                                Text("Coursa")
+                                    .foregroundColor(.green)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .padding(.bottom, 8)
+                            } else {
+                                Text("Coursa")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .padding(.bottom, 8)
+                            }
                             
                             Text("TODAY PLAN")
                                 .font(.helveticaNeue(size: 13, weight: .regular))
@@ -103,12 +113,12 @@ struct HomePageView: View {
             case .running:
                 RunningSessionView(
                     appState: $appState,
-                    finalSummaryData: $finalWorkoutSummary
+                    finalSummaryData: $finalRunningSummary
                 )
                 .transition(.opacity)
                 
             case .summary:
-                if let summaryData = finalWorkoutSummary {
+                if let summaryData = finalRunningSummary {
                     SummaryPageView(
                         appState: $appState, viewModel: SummaryPageViewModel(summary: summaryData)
                     )
@@ -121,6 +131,7 @@ struct HomePageView: View {
         .environmentObject(workoutManager)
         .onAppear {
             workoutManager.requestAuthorization()
+            workoutManager.syncService = syncService
         }
     }
 }

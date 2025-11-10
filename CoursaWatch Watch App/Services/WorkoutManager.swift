@@ -10,6 +10,7 @@ import HealthKit
 import CoreLocation
 import Combine
 import WatchKit
+import SwiftUI
 
 class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     // Healthkit Property
@@ -17,7 +18,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     var workoutSession: HKWorkoutSession?
     var workoutBuilder: HKLiveWorkoutBuilder?
     
-    // Core Location Property
+    // Core Location Property [Deprecated]
     let locationManager = CLLocationManager()
     
     // Real-time Data
@@ -32,13 +33,26 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var elevationGain: Double = 0
     private var lastAltitude: Double = 0
     
-    @Published var finalSummary: WorkoutSummary?
+    @Published var finalSummary: RunningSummary?
     @Published var zoneDurationTracker: [Int: TimeInterval] = [:]
     
     @Published var currentZone: Int = 1
     private let userMaxHeartRate: Double = 180.0 // still static data
     private var hapticTimer: Timer?
     
+    // SyncService - can be injected from environment or will use own instance
+    var syncService: SyncService?
+    
+    // Lazy initialization of syncService if not provided
+    private func getSyncService() -> SyncService {
+        if let service = syncService {
+            return service
+        }
+        // Create a new instance if not provided (fallback)
+        let service = SyncService()
+        syncService = service
+        return service
+    }
     
     // MARK: Authorization
     func requestAuthorization() {
@@ -61,7 +75,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
         
-        // Core Location Permission
+        // Core Location Permission [Deprecated]
         locationManager.requestWhenInUseAuthorization()
         locationManager.delegate = self
     }
@@ -92,6 +106,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
             
+            // [Deprecated]
             locationManager.startUpdatingLocation()
             
             DispatchQueue.main.async {
@@ -104,7 +119,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     // MARK: Stop Running Session
-    func stopWorkoutAndReturnSummary() -> WorkoutSummary? {
+    func stopWorkoutAndReturnSummary() -> RunningSummary? {
         
         workoutSession?.end()
         locationManager.stopUpdatingLocation()
@@ -125,7 +140,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             return nil
         }
         
-        let summary = WorkoutSummary(
+        let summary = RunningSummary(
             totalTime: totalTime,
             totalDistance: self.distance,
             averageHeartRate: self.averageHeartRate,
@@ -134,17 +149,28 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             zoneDuration: self.zoneDurationTracker
         )
         
+        sendSummaryToiOS(summary)
+        
         self.workoutIsActive = false
         self.heartRate = 0
         self.distance = 0
         self.pace = 0
+        
+        // [Deprecated]
         self.elevation = 0
         
         return summary
     }
     
+    func sendSummaryToiOS(_ summary: RunningSummary) {
+        let service = getSyncService()
+        DispatchQueue.main.async {
+            service.sendSummaryToiOS(summary: summary)
+        }
+    }
     
-    // MARK: Delegate Core Location
+    
+    // MARK: Delegate Core Location [DEPRECATED]
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let latestLocation = locations.last else { return }
         
@@ -157,14 +183,10 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     self.elevationGain += altitudeChange
                 }
             }
-            // Catatan: Anda dapat menambahkan threshold kecil (misalnya > 1 meter)
-            // untuk mengabaikan noise sensor, tetapi kita buat sederhana dulu.
         }
         
-        // Perbarui ketinggian terakhir untuk iterasi berikutnya
         self.lastAltitude = currentAltitude
         
-        // Update data elevasi
         DispatchQueue.main.async {
             self.elevation = latestLocation.altitude
         }
@@ -184,31 +206,21 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func checkZoneAlerts(newHR: Double) {
-        
-        // 1. Hitung zona baru
         let newZone = calculateZone(from: newHR)
         
-        // 2. Update zona saat ini untuk UI
-        // Kita gunakan DispatchQueue untuk memastikan update terjadi di main thread
         DispatchQueue.main.async {
             self.currentZone = newZone
         }
         
         if newZone > 2 {
             if hapticTimer == nil {
-                // ...Mainkan haptic pertama SEKARANG JUGA
                 playHighZoneHaptic()
-                
-                // ...Lalu mulai timer untuk mengulang haptic
-                // (misalnya, setiap 5 detik)
                 hapticTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
                     self?.playHighZoneHaptic()
                 }
             }
         }
-        // JIKA kembali ke Zona Aman (2 atau 1)
         else {
-            // Hentikan dan reset timer haptic
             hapticTimer?.invalidate()
             hapticTimer = nil
         }
@@ -216,7 +228,6 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     private func playHighZoneHaptic() {
         DispatchQueue.main.async {
-            // Gunakan haptic yang didukung watchOS; contoh: .notification, .failure, .directionUp
             let device = WKInterfaceDevice.current()
             device.play(.notification)
         }

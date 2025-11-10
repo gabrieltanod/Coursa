@@ -13,7 +13,7 @@ struct ControlPageView: View {
     @Binding var timer: Timer?
     @Binding var appState: AppState
     @State private var showingConfirmation = false
-    @Binding var finalSummaryData: WorkoutSummary?
+    @Binding var finalSummaryData: RunningSummary?
     @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
@@ -81,7 +81,8 @@ struct ControlPageView: View {
         let summary = workoutManager.stopWorkoutAndReturnSummary()
         
         if let finalData = summary {
-            ConnectivityService.shared.sendWorkoutSummary(finalData)
+            // Send summary to iOS
+            workoutManager.sendSummaryToiOS(finalData)
             
             if finalData.totalTime < 10 {
                 appState = .planning

@@ -11,9 +11,9 @@ import Combine
 
 class SummaryPageViewModel: ObservableObject {
     
-    private let summary: WorkoutSummary
+    private let summary: RunningSummary
     
-    init(summary: WorkoutSummary) {
+    init(summary: RunningSummary) {
         self.summary = summary
     }
     var formattedTotalTime: String {

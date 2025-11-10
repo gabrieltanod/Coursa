@@ -9,12 +9,18 @@ import SwiftUI
 
 @main
 struct CoursaApp: App {
-    @StateObject private var router = AppRouter()
+
+    // route main ios gua comment buat test watchconnectivity
+    
+    //    @StateObject private var router = AppRouter()
+    @StateObject private var syncService = SyncService()
     
     var body: some Scene {
-        WindowGroup { 
-            AppRootView()
-                .environmentObject(router)
+        WindowGroup {
+            //            AppRootView()
+            //                .environmentObject(router)
+            WatchConnectDisplay()
+                .environmentObject(syncService)
         }
     }
 }

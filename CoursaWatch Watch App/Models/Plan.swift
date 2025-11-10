@@ -16,6 +16,5 @@ struct Plan: Hashable {
     let targetDistance: String
     let intensity: String
     let recPace: String
-//    let description: String
 }
 

@@ -16,7 +16,7 @@ struct RunningSessionView: View {
     @State private var hasStarted: Bool = false
     
     @Binding var appState: AppState
-    @Binding var finalSummaryData: WorkoutSummary?
+    @Binding var finalSummaryData: RunningSummary?
     @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
