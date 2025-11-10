@@ -17,7 +17,7 @@ import Foundation
 // Replace DayWorkout + old GeneratedPlan with this:
 struct GeneratedPlan: Codable {
     let plan: Plan
-    let runs: [ScheduledRun]
+    var runs: [ScheduledRun]
 }
 
 enum PlanMapper {

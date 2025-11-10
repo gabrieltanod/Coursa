@@ -25,14 +25,18 @@ struct PlanView: View {
 
                 if selectedTab == .plan {
                     if let generated = vm.generatedPlan {
-                        // --- derive plan stats ---
-                        let runs = generated.runs.sorted { $0.date < $1.date }                      // your `generated.runs.sorted { $0.date < $1.date }`
-                        let totalSessions = generated.runs.count
-                        let completedSessions = generated.runs.filter { $0.status == .completed }.count
+                        // --- derive plan stats (all runs) ---
+                        let allRuns = generated.runs.sorted { $0.date < $1.date }
+                        let totalSessions = allRuns.count
+                        let completedSessions = allRuns.filter { $0.status == .completed }.count
+
+                        // Runs that are still part of the active plan view
+                        let planRuns = vm.plannedRuns.sorted { $0.date < $1.date }
+
                         let progress = totalSessions == 0 ? 0 : Double(completedSessions) / Double(totalSessions)
 
                         // distance completed (prefer actual.distanceKm, fallback to template targetDistanceKm)
-                        let completedKm = runs
+                        let completedKm = allRuns
                             .filter { $0.status == .completed }
                             .reduce(0.0) { sum, run in
                                 if let d = run.actual.distanceKm { return sum + d }
@@ -41,16 +45,16 @@ struct PlanView: View {
                             }
 
                         // target distance = sum of template targets (ignore nils)
-                        let targetKm = runs
+                        let targetKm = allRuns
                             .compactMap { $0.template.targetDistanceKm }
                             .reduce(0, +)
 
-                        // weeks
-                        let allGroups = groupByWeek(runs)
+                        // weeks (only planned/in-progress runs)
+                        let allGroups = groupByWeek(planRuns)
                         let weekTotal = max(allGroups.count, 1)
                         let weekNow = (selectedWeekIndex ?? 0) + 1
 
-                        let sorted = generated.runs.sorted { $0.date < $1.date }
+                        let sorted = planRuns
                         let now = Date()
                         
                         // Determine default (current) week index
@@ -72,7 +76,6 @@ struct PlanView: View {
                         let selectedGroup = allGroups.isEmpty ? nil : allGroups[selectedIndex]
                         let selectedRuns = selectedGroup?._value ?? []
                         let selectedRunsExcludingToday = selectedRuns.filter { !Calendar.current.isDate($0.date, inSameDayAs: now) }
-                        let upcomingGroups = Array(allGroups.dropFirst(min(selectedIndex + 1, allGroups.count)))
                         
                         ScrollView {
                             
@@ -144,22 +147,39 @@ struct PlanView: View {
                         Spacer()
                     }
                 } else {
-                    // Activity placeholder
-                    VStack(spacing: 16) {
-                        Image(systemName: "chart.bar.xaxis")
-                            .font(.system(size: 36, weight: .regular))
-                            .foregroundStyle(Color("white-500").opacity(0.8))
-                        Text("Activity will live here")
-                            .font(.headline)
-                            .foregroundStyle(Color("white-500"))
-                        Text("Your recent runs, stats, and trends will appear on this tab.")
-                            .font(.subheadline)
-                            .foregroundStyle(Color("white-500").opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
+                    // Activity tab: completed & skipped runs
+                    let activity = vm.activityRuns.sorted { $0.date > $1.date }
+
+                    if activity.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "chart.bar.xaxis")
+                                .font(.system(size: 36, weight: .regular))
+                                .foregroundStyle(Color("white-500").opacity(0.8))
+                            Text("No activity yet")
+                                .font(.headline)
+                                .foregroundStyle(Color("white-500"))
+                            Text("Completed and skipped runs will appear here.")
+                                .font(.subheadline)
+                                .foregroundStyle(Color("white-500").opacity(0.7))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 24)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, 32)
+                    } else {
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 16) {
+                                ForEach(activity) { run in
+                                    NavigationLink {
+                                        PlanDetailView(run: run)
+                                    } label: {
+                                        RunningSessionCard(run: run)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 8)
+                        }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .padding(.top, 32)
                 }
             }
             .padding(.horizontal, 16)
@@ -168,6 +188,7 @@ struct PlanView: View {
             .onAppear {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
                 if vm.generatedPlan == nil { vm.generatePlan() }
+                vm.applyAutoSkipIfNeeded()
             }
 
         }
