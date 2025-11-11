@@ -10,13 +10,13 @@ final class OnboardingViewModel: ObservableObject {
     private let steps: [OnboardingStep] = [
         .goals,
         .personalInfo,
-//        .daysPerWeek,
+        .daysPerWeek,
         .whichDays,
         .personalBest,
-//        .recommendedPlan,
-//        .choosePlan,
+        .recommendedPlan,
+        .choosePlan,
         .chooseStartDate,
-//        .home
+        .home
     ]
     var index: Int {
         steps.firstIndex(of: step) ?? 0
@@ -25,13 +25,10 @@ final class OnboardingViewModel: ObservableObject {
     // MARK: - Navigation Methods
     
     func next() {
-        guard let i = OnboardingStep.allCases.firstIndex(of: step) else { return }
-        let steps = OnboardingStep.allCases
-        let nextIdx = steps.index(after: i)
-        if nextIdx < steps.endIndex {
-            step = steps[nextIdx]
-        }
-        // else: do nothing; ChooseStartDateStepView will call onFinished(...)
+        guard let currentIndex = steps.firstIndex(of: step),
+              currentIndex < steps.count - 1 else { return }
+        
+        step = steps[currentIndex + 1]
     }
     
     func back() {
@@ -46,7 +43,7 @@ final class OnboardingViewModel: ObservableObject {
     }
     
     var isLastStep: Bool {
-        return step == steps.last
+        return step == .home
     }
     
     // MARK: - Data Update Methods
@@ -92,12 +89,12 @@ final class OnboardingViewModel: ObservableObject {
         switch goal {
         case .runConsistently:
             return .baseBuilder
-        case .improveEndurance:
-            return .endurance
-        case .improveSpeed:
-            return .speed
+        case .improve5K:
+            return .fiveKTimeTrial
+        case .improve10K:
+            return .tenKImprover
         case .halfMarathon:
-            return .halfMarathonPrep // Placeholder as requested
+            return .tenKImprover // Placeholder as requested
         }
     }
     

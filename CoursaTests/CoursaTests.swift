@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import Coursa
+@testable import Fico
 
 struct CoursaTests {
 

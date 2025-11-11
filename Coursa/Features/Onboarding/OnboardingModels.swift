@@ -1,13 +1,11 @@
-// ABSTRACT: Ini data models for personalization
-
 import Foundation
 
 // MARK: - Goal Enum
 enum Goal: String, CaseIterable, Identifiable, Codable {
-    case runConsistently = "🏃🏿‍♂️ General Training"
-    case improveEndurance = "🧡 Endurance"
-    case improveSpeed = "💨 Speed"
-    case halfMarathon = "🏁 Half Marathon"
+    case runConsistently = "Run Consistently"
+    case improve5K = "Improve 5K"
+    case improve10K = "Improve 10K"
+    case halfMarathon = "Half Marathon"
     
     var id: String { rawValue }
 }
@@ -67,22 +65,13 @@ struct OnboardingData: Codable, Hashable {
 enum OnboardingStep: String, CaseIterable {
     case goals = "Goals"
     case personalInfo = "Personal Info"
-//    case daysPerWeek = "Days Per Week"
+    case daysPerWeek = "Days Per Week"
     case whichDays = "Which Days"
     case personalBest = "Personal Best"
-//    case choosePlan = "Choose Plan"
+    case recommendedPlan = "Recommended Plan"
+    case choosePlan = "Choose Plan"
     case chooseStartDate = "Choose Start Date"
+    case home = "Home"
     
     var title: String { rawValue }
-}
-
-extension OnboardingStep {
-    var usesProgress: Bool {
-        switch self {
-        case .goals, .whichDays, .personalInfo, .personalBest, .chooseStartDate:
-            return true
-        default:
-            return false
-        }
-    }
 }

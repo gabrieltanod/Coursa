@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct CoursaWatch_Watch_AppApp: App {
+    
+    @StateObject private var syncService = SyncService()
+    
     var body: some Scene {
         WindowGroup {
-            EmptyView()
+            HomePageView()
+                .environmentObject(syncService)
         }
     }
 }

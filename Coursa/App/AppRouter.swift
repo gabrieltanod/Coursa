@@ -5,18 +5,13 @@
 //  Created by Gabriel Tanod on 24/10/25.
 //
 
-import Combine
 import SwiftUI
+import Combine
 
 @MainActor
 final class AppRouter: ObservableObject {
     @Published var path = NavigationPath()
     @Published var didOnboard = false
-
-    func goToCoreApp(with data: OnboardingData) {
-        path = NavigationPath()
-        didOnboard = true
-    }
 
     func goToPlan(with data: OnboardingData) {
         path.append(Route.plan(data))
