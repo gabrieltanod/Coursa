@@ -125,6 +125,12 @@ struct PlanView: View {
                                 .padding(.vertical, -5)
                             }
                             .padding(.vertical)
+                            NavigationLink {
+                                ManagePlanView()
+                            } label: {
+                                Text("Manage Plan")
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
                         }
                     } else {
                         Spacer()
