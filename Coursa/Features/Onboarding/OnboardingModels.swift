@@ -67,7 +67,7 @@ struct OnboardingData: Codable, Hashable {
 enum OnboardingStep: String, CaseIterable {
     case goals = "Goals"
     case personalInfo = "Personal Info"
-    case daysPerWeek = "Days Per Week"
+//    case daysPerWeek = "Days Per Week"
     case whichDays = "Which Days"
     case personalBest = "Personal Best"
 //    case choosePlan = "Choose Plan"
@@ -79,7 +79,7 @@ enum OnboardingStep: String, CaseIterable {
 extension OnboardingStep {
     var usesProgress: Bool {
         switch self {
-        case .goals, .whichDays, .personalInfo, .personalBest, .daysPerWeek:
+        case .goals, .whichDays, .personalInfo, .personalBest, .chooseStartDate:
             return true
         default:
             return false

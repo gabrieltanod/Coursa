@@ -41,6 +41,11 @@ Package.resolved
 
 # CocoaPods
 Pods/
+# Xcode user data
+*.xcuserdatad/
+*.xcuserstate
+*.xcscmblueprint
+.DS_Store
 Podfile.lock
 
 # Carthage

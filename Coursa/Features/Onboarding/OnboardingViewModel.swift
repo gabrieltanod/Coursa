@@ -10,7 +10,7 @@ final class OnboardingViewModel: ObservableObject {
     private let steps: [OnboardingStep] = [
         .goals,
         .personalInfo,
-        .daysPerWeek,
+//        .daysPerWeek,
         .whichDays,
         .personalBest,
 //        .recommendedPlan,

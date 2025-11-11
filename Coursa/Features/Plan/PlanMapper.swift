@@ -17,7 +17,7 @@ import Foundation
 // Replace DayWorkout + old GeneratedPlan with this:
 struct GeneratedPlan: Codable {
     let plan: Plan
-    let runs: [ScheduledRun]
+    var runs: [ScheduledRun]
 }
 
 enum PlanMapper {
@@ -45,36 +45,39 @@ enum PlanMapper {
     // Return real templates instead of strings
     private static func weekTemplate(for plan: Plan, frequency: Int) -> [RunTemplate] {
         func easy(_ min: Int, _ z: HRZone = .z2) -> RunTemplate {
-            .init(name: "Easy Run", kind: .easy, focus: .base, targetDurationSec: min*60, targetHRZone: z)
+            .init(name: "Easy Run", kind: .easy, focus: .base, targetDurationSec: min*60, targetDistanceKm: 5 ,targetHRZone: z, notes: "Low-intensity aerobic run (Zone 2). Builds base endurance and active recovery capacity.")
         }
         func long(_ min: Int) -> RunTemplate {
-            .init(name: "Long Run", kind: .long, focus: .endurance, targetDurationSec: min*60, targetHRZone: .z2)
+            .init(name: "Long Run", kind: .long, focus: .endurance, targetDurationSec: min*60, targetDistanceKm: 10, targetHRZone: .z2, notes: "Extended steady-pace session (Zone 2). Strengthens endurance, mental resilience, and fat adaptation.")
         }
         func tempo(_ min: Int, notes: String? = nil) -> RunTemplate {
-            .init(name: "Tempo Run", kind: .tempo, focus: .speed, targetDurationSec: min*60, targetHRZone: .z3, notes: notes)
+            .init(name: "Tempo Run", kind: .tempo, focus: .speed, targetDurationSec: min*60, targetHRZone: .z3, notes: "Sustained medium-hard effort (Zone 3). Improves lactate threshold and pace control.")
         }
         func intervals(_ min: Int, notes: String? = nil) -> RunTemplate {
-            .init(name: "Interval Run", kind: .intervals, focus: .speed, targetDurationSec: min*60, targetHRZone: .z4, notes: notes)
+            .init(name: "Interval Run", kind: .intervals, focus: .speed, targetDurationSec: min*60, targetHRZone: .z4, notes: "Alternating bursts of high-intensity (Zone 4) and recovery. Builds VO₂ max and speed.")
         }
         func recovery(_ min: Int) -> RunTemplate {
-            .init(name: "Recovery Jog", kind: .recovery, focus: .base, targetDurationSec: min*60, targetHRZone: .z1)
+            .init(name: "Recovery Jog", kind: .recovery, focus: .base, targetDurationSec: min*60, targetHRZone: .z1, notes: "Very light effort (Zone 1). Promotes circulation and muscle repair between hard days.")
+        }
+        func maf(_ min: Int) -> RunTemplate {
+            .init(name: "MAF Training", kind: .maf, focus: .endurance, targetDurationSec: min*45, targetHRZone: .z2, notes: "Steady Zone 2 run near aerobic threshold. Trains efficiency while minimizing fatigue.")
         }
 
         switch plan {
         case .baseBuilder:
-            var t = [easy(30), easy(30), long(60)]
+            var t = [easy(30), easy(30), long(60), maf(45)]
             if frequency > t.count { t += Array(repeating: easy(25, .z1), count: frequency - t.count) }
             return t
         case .endurance:
-            var t = [tempo(20, notes: "3×6' @ T"), intervals(25, notes: "6×400m fast"), easy(30), long(55)]
+            var t = [easy(30), easy(30), long(60), maf(45)]
             if frequency > t.count { t += Array(repeating: easy(25, .z1), count: frequency - t.count) }
             return t
         case .speed:
-            var t = [intervals(28, notes: "5×800m"), tempo(22), easy(30), long(65)]
+            var t = [easy(30), easy(30), long(60), tempo(60), maf(45)]
             if frequency > t.count { t += Array(repeating: easy(25, .z1), count: frequency - t.count) }
             return t
         case .halfMarathonPrep:
-            var t = [tempo(25), intervals(30, notes: "5×1k"), easy(35), long(75), recovery(20)]
+            var t = [tempo(25), intervals(30), easy(35), long(75), recovery(20)]
             if frequency > t.count { t += Array(repeating: easy(25, .z1), count: frequency - t.count) }
             return t
         }

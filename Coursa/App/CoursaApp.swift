@@ -15,6 +15,7 @@ struct CoursaApp: App {
         WindowGroup { 
             AppRootView()
                 .environmentObject(router)
+                .environment(\.colorScheme, .dark)
         }
     }
 }
