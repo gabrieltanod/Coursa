@@ -24,15 +24,21 @@ struct RunningSummaryCard: View {
             endPoint: endPoint
         )
     }
-
+    var workoutType: String = "Easy Run"
+    var date: String = "Wed, 25 Oct 2025 at 6.00 AM"
+    var duration: String = "35:46"
+    var avgHR: Int = 130
+    var avgPace: Int = 130
+    var distance: Float = 5.3
+    
     var body: some View {
         VStack(alignment:.leading) {
             VStack (alignment: .leading){
-                Text("hello, moto")
+                Text(workoutType)
                     .font(.custom("Helvetica Neue", size: 34))
                     .fontWeight(.medium)
                     .foregroundStyle(Color("white-500"))
-                Text("hello, moto")
+                Text(date)
                     .font(.custom("Helvetica Neue", size: 17))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("black-100"))
@@ -41,22 +47,22 @@ struct RunningSummaryCard: View {
 
             HStack {
                 VStack(alignment: .leading) {
-                    Text("hello, moto")
+                    Text("Duration")
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("hello, moto")
+                    Text(duration)
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }
                 Spacer()
                 VStack(alignment: .leading) {
-                    Text("hello, moto")
+                    Text("Distance")
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("hello, moto")
+                    Text(String(format: "%.2f KM", distance))
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
@@ -66,22 +72,22 @@ struct RunningSummaryCard: View {
 
             HStack {
                 VStack(alignment: .leading) {
-                    Text("hello, moto")
+                    Text("Average HR")
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("hello, moto")
+                    Text("\(avgHR) bpm")
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }
                 Spacer()
                 VStack(alignment: .leading) {
-                    Text("hello, moto")
+                    Text("Average Pace")
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("hello, moto")
+                    Text("\(avgPace) bpm")
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))

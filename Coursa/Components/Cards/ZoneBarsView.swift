@@ -78,13 +78,14 @@ struct ZoneBar: View {
 }
 
 struct ZoneBarsView: View {
-    let zones = [
-        ZoneData(label: "Zone 1", time: "4:32"),
-        ZoneData(label: "Zone 2", time: "15:32"),
-        ZoneData(label: "Zone 3", time: "2:32"),
-        ZoneData(label: "Zone 4", time: nil),
-        ZoneData(label: "Zone 5", time: nil),
-    ]
+    var times: [String?] = ["4:32", "15:32", "2:32", nil, nil]
+    
+    // Computed property to generate zones based on times
+    private var zones: [ZoneData] {
+        times.enumerated().map { index, time in
+            ZoneData(label: "Zone \(index + 1)", time: time)
+        }
+    }
 
     // Convert time string to seconds
     private func timeToSeconds(_ timeStr: String?) -> Int {
@@ -133,7 +134,7 @@ struct ZoneBarsView: View {
                 }
             }
         }
-        .frame(height: 347)
+        .frame(height: CGFloat(zones.count) * 52 + CGFloat(zones.count - 1) * 12)
     }
 }
 
