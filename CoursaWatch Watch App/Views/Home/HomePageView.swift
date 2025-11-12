@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum NavigationRoute: Hashable {
-    case workoutDetail(Plan)
+    case workoutDetail(RunningPlan)
 }
 
 enum AppState {
@@ -25,7 +25,7 @@ struct HomePageView: View {
     @EnvironmentObject var syncService: SyncService
     
     // Dummy Data
-    let myPlan = Plan(
+    let myPlan = RunningPlan(
         date: Date(), title: "Easy Run", targetDistance: "3km", intensity: "HR Zone 2", recPace: "7:30/KM"
     )
     

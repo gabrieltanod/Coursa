@@ -20,6 +20,7 @@ struct CoursaApp: App {
             //            AppRootView()
             //                .environmentObject(router)
             WatchConnectDisplay()
+//            PlanConnectDisplay()
                 .environmentObject(syncService)
         }
     }

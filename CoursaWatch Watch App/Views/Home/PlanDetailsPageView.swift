@@ -13,7 +13,7 @@ struct PlanDetailsPageView: View {
     let intensity: String
     let recPace: String
     
-    let plan: Plan
+    let plan: RunningPlan
     @State private var navPath = NavigationPath()
     @Binding var appState: AppState
     

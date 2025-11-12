@@ -12,10 +12,22 @@ import Combine
 class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
     @Published var summary: RunningSummary?
+    @Published var plan: RunningPlan?
     @Published var isSessionActivated: Bool = false
     
     private var session: WCSession = .default
-    #if os(watchOS)
+    
+#if os(iOS)
+    // Queue for messages pending activation
+    private var pendingRunningPlan: RunningPlan?
+//    private var isActivationInProgress: Bool = false
+//    private var activationRetryTimer: Timer?
+//    private var activationRetryCount: Int = 0
+//    private let maxActivationRetries: Int = 5
+//    private let activationRetryDelay: TimeInterval = 3.0
+#endif
+    
+#if os(watchOS)
     // Queue for messages pending activation
     private var pendingSummary: RunningSummary?
     private var isActivationInProgress: Bool = false
@@ -23,18 +35,18 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     private var activationRetryCount: Int = 0
     private let maxActivationRetries: Int = 5
     private let activationRetryDelay: TimeInterval = 3.0
-    #endif
-
+#endif
+    
     init(session: WCSession = .default) {
         super.init()
         self.session = session
         self.session.delegate = self
-        #if os(iOS)
+#if os(iOS)
         print("iOS: SyncService initialized")
-        #endif
-        #if os(watchOS)
+#endif
+#if os(watchOS)
         print("watchOS: SyncService initialized")
-        #endif
+#endif
         
         self.connect()
     }
@@ -45,7 +57,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
-        #if os(watchOS)
+#if os(watchOS)
         // Check if iOS companion app is installed (warning only in simulators)
         // NOTE: In simulators, isCompanionAppInstalled may return false even when iOS app is running
         // We'll still attempt activation regardless, as simulators have limitations
@@ -61,26 +73,26 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             print("watchOS: ✅ iOS companion app is installed: \(session.isCompanionAppInstalled)")
         }
         print("watchOS: Activation state before activate(): \(session.activationState.rawValue)")
-        #endif
+#endif
         
-        #if os(iOS)
+#if os(iOS)
         // Check if watch app is installed (warning only, still try to activate)
         if !session.isWatchAppInstalled {
             print("iOS: WARNING - Watch app is not installed on paired watch")
         }
         
         print("iOS: Watch app installed: \(session.isWatchAppInstalled), Paired: \(session.isPaired)")
-        #endif
+#endif
         
         if session.activationState == .activated {
             print("WCSession already activated")
             DispatchQueue.main.async {
                 self.isSessionActivated = true
             }
-            #if os(watchOS)
+#if os(watchOS)
             // Send any pending summary
             sendPendingSummaryIfNeeded()
-            #endif
+#endif
         } else {
             let stateDescription: String
             switch session.activationState {
@@ -95,20 +107,20 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             }
             
             print("Activating WCSession... (Current state: \(stateDescription))")
-            #if os(watchOS)
+#if os(watchOS)
             isActivationInProgress = true
             activationRetryCount = 0
-            #endif
+#endif
             session.activate()
             
-            #if os(watchOS)
+#if os(watchOS)
             // Set up a timer to check activation status and retry if needed (for simulator scenarios)
             scheduleActivationCheck()
-            #endif
+#endif
         }
     }
     
-    #if os(watchOS)
+#if os(watchOS)
     /// Schedule a check to see if activation completed, and retry if needed
     private func scheduleActivationCheck() {
         // Cancel any existing timer
@@ -182,22 +194,22 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         session.activate()
         scheduleActivationCheck()
     }
-    #endif
+#endif
     
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Note: This delegate may not be called reliably in simulators
-        #if os(watchOS)
+#if os(watchOS)
         print("watchOS: activationDidCompleteWith delegate called - State: \(activationState.rawValue), Error: \(error?.localizedDescription ?? "none")")
-        #endif
+#endif
         
         DispatchQueue.main.async {
-            #if os(watchOS)
+#if os(watchOS)
             // Don't set isActivationInProgress = false here if not activated
             // Let the retry mechanism handle it
             if activationState == .activated {
                 self.isActivationInProgress = false
             }
-            #endif
+#endif
             
             let stateDescription: String
             switch activationState {
@@ -213,13 +225,13 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             
             if activationState == .activated {
                 self.isSessionActivated = true
-                #if os(iOS)
+#if os(iOS)
                 print("iOS: ✅ WCSession activated successfully")
                 print("iOS: Session reachable: \(session.isReachable)")
                 print("iOS: Watch app installed: \(session.isWatchAppInstalled)")
                 print("iOS: Activation state: \(session.activationState.rawValue)")
-                #endif
-                #if os(watchOS)
+#endif
+#if os(watchOS)
                 print("watchOS: ✅ WCSession activated successfully")
                 print("watchOS: Session reachable: \(session.isReachable)")
                 print("watchOS: Companion app installed: \(session.isCompanionAppInstalled)")
@@ -230,14 +242,14 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 self.activationRetryCount = 0
                 // Send any pending summary now that session is activated
                 self.sendPendingSummaryIfNeeded()
-                #endif
+#endif
             } else {
                 self.isSessionActivated = false
                 if let error = error {
-                    #if os(iOS)
+#if os(iOS)
                     print("iOS: ❌ WCSession activation failed with error: \(error.localizedDescription)")
-                    #endif
-                    #if os(watchOS)
+#endif
+#if os(watchOS)
                     print("watchOS: ❌ WCSession activation failed with error: \(error.localizedDescription)")
                     print("watchOS: Full error: \(error)")
                     print("watchOS: Activation state: \(session.activationState.rawValue)")
@@ -247,12 +259,12 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                     print("  - SIMULATOR LIMITATION: WatchConnectivity has known issues in simulators")
                     print("  - Try: Restart both simulators, launch iOS app first, then Watch app")
                     print("  - Best: Test on physical devices for reliable behavior")
-                    #endif
+#endif
                 } else {
-                    #if os(iOS)
+#if os(iOS)
                     print("iOS: ❌ WCSession activation failed. State: \(stateDescription)")
-                    #endif
-                    #if os(watchOS)
+#endif
+#if os(watchOS)
                     print("watchOS: ❌ WCSession activation failed. State: \(stateDescription)")
                     print("watchOS: Activation state: \(session.activationState.rawValue)")
                     print("watchOS: Troubleshooting:")
@@ -261,13 +273,13 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                     print("  - SIMULATOR LIMITATION: WatchConnectivity has known issues in simulators")
                     print("  - Try: Restart both simulators, launch iOS app first, then Watch app")
                     print("  - Best: Test on physical devices for reliable behavior")
-                    #endif
+#endif
                 }
             }
         }
     }
-
-    #if os(iOS)
+    
+#if os(iOS)
     func sessionDidBecomeInactive(_ session: WCSession) {
         print("iOS: WCSession became inactive")
         DispatchQueue.main.async {
@@ -283,10 +295,12 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         // Reactivate session
         session.activate()
     }
-    #endif
+#endif
     
-    // MARK: - Receive Summary (iOS from watchOS)
-    #if os(iOS)
+    
+// ========================================== MARK: - Receive Summary (iOS from watchOS) ==========================================
+    
+#if os(iOS)
     // Receive message from watchOS
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         print("iOS: Received message from watchOS")
@@ -305,7 +319,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         print("iOS: Received application context from watchOS")
         decodeAndStoreSummary(from: applicationContext)
     }
-    #endif
+#endif
     
     private func decodeAndStoreSummary(from dictionary: [String: Any]) {
         // Handle UUID as String (since Dictionary can't store UUID directly)
@@ -323,12 +337,12 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
               let averageHeartRate = dictionary["averageHeartRate"] as? Double,
               let averagePace = dictionary["averagePace"] as? Double,
               let elevationGain = dictionary["elevationGain"] as? Double else {
-            #if os(iOS)
+#if os(iOS)
             print("iOS: Failed to decode RunningSummary from dictionary. Keys: \(dictionary.keys)")
-            #endif
-            #if os(watchOS)
+#endif
+#if os(watchOS)
             print("watchOS: Failed to decode RunningSummary from dictionary. Keys: \(dictionary.keys)")
-            #endif
+#endif
             return
         }
         
@@ -357,14 +371,82 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         
         DispatchQueue.main.async {
             self.summary = decodedSummary
-            #if os(iOS)
+#if os(iOS)
             print("iOS: Successfully decoded and stored RunningSummary. Total Time: \(decodedSummary.totalTime)s, Distance: \(decodedSummary.totalDistance)km")
-            #endif
+#endif
         }
     }
     
-    // MARK: - Send Summary (watchOS to iOS)
+    
+// ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
+        
     #if os(watchOS)
+        // Receive message from watchOS
+        func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+            print("watchOS: Received message from iOS")
+            decodeAndStorePlan(from: message)
+        }
+        
+        // Receive message with reply handler
+        func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+            print("watchOS: Received message from watchOS (with reply handler)")
+            decodeAndStorePlan(from: message)
+            replyHandler(["status": "received"])
+        }
+        
+        // Receive application context
+        func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+            print("watchOS: Received application context from iOS")
+            decodeAndStorePlan(from: applicationContext)
+        }
+    #endif
+        
+        private func decodeAndStorePlan(from dictionary: [String: Any]) {
+            // Handle UUID as String (since Dictionary can't store UUID directly)
+            var id: UUID
+            if let idString = dictionary["id"] as? String {
+                id = UUID(uuidString: idString) ?? UUID()
+            } else if let idUUID = dictionary["id"] as? UUID {
+                id = idUUID
+            } else {
+                id = UUID()
+            }
+            
+            guard let date = dictionary["date"] as? Date,
+                  let title = dictionary["title"] as? String,
+                  let targetDistance = dictionary["targetDistance"] as? String,
+                  let intensity = dictionary["intensity"] as? String,
+                  let recPace = dictionary["recPace"] as? String else {
+    #if os(wacthOS)
+                print("watchOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
+    #endif
+    #if os(iOS)
+                print("iOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
+    #endif
+                return
+            }
+            
+            let decodedPlan = RunningPlan(
+                id: id,
+                date: date,
+                title: title,
+                targetDistance: targetDistance,
+                intensity: intensity,
+                recPace: recPace
+            )
+            
+            DispatchQueue.main.async {
+                self.plan = decodedPlan
+    #if os(watchOS)
+                print("watchOS: Successfully decoded and stored PlanTest. Title: \(decodedPlan.title), Target Distance: \(decodedPlan.targetDistance)km")
+    #endif
+            }
+        }
+    
+    
+// ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
+    
+#if os(watchOS)
     func sendSummaryToiOS(summary: RunningSummary) {
         // Check activation state first
         if session.activationState == .activated {
@@ -447,5 +529,93 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         // Send it
         sendSummaryData(summary: pending)
     }
-    #endif
+#endif
+    
+    
+// ========================================== MARK: - Send Plan (iOS to watchOS) ==========================================
+    
+   
+#if os(iOS)
+    func sendPlanToWatchOS(plan: RunningPlan) {
+        // Check activation state first
+        if session.activationState == .activated {
+            // Session is activated - send immediately
+            sendRunningPlanData(plan: plan)
+        } else {
+            // Session not activated yet - queue it
+            print("iOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary...")
+            pendingRunningPlan = plan
+            // Don't call activate() here - it's already being called in connect()
+            // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
+        }
+    }
+    
+    private func sendRunningPlanData(plan: RunningPlan) {
+        // Double-check activation state before attempting to send
+        guard session.activationState == .activated else {
+            let stateDescription: String
+            switch session.activationState {
+            case .notActivated:
+                stateDescription = "notActivated"
+            case .inactive:
+                stateDescription = "inactive"
+            case .activated:
+                stateDescription = "activated"
+            @unknown default:
+                stateDescription = "unknown(\(session.activationState.rawValue))"
+            }
+            print("iOS: ❌ Cannot send plan - Session is not activated. Current state: \(stateDescription)")
+            print("iOS: Queueing plan for later...")
+            pendingRunningPlan = plan
+            return
+        }
+        
+        let data: [String: Any] = [
+            "id": plan.id.uuidString,
+            "date": plan.date,
+            "title": plan.title,
+            "targetDistance": plan.targetDistance,
+            "intensity": plan.intensity,
+            "recPace": plan.recPace
+        ]
+        
+        print("iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))")
+        
+        // Use updateApplicationContext (works even when not reachable)
+        do {
+            try session.updateApplicationContext(data)
+            print("iOS: ✅ Successfully sent plan via updateApplicationContext")
+        } catch {
+            print("iOS: ❌ Error updating application context: \(error.localizedDescription)")
+            print("iOS: Error details: \(error)")
+            
+            // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
+            if session.isReachable {
+                print("iOS: Trying sendMessage as fallback...")
+                session.sendMessage(data, replyHandler: { reply in
+                    print("iOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)")
+                }, errorHandler: { error in
+                    print("iOS: ❌ Error sending message: \(error.localizedDescription)")
+                    print("iOS: Queueing send for retry...")
+                    self.pendingRunningPlan = plan
+                })
+            } else {
+                print("iOS: Session is not reachable. Queueing summary for later...")
+                pendingRunningPlan = plan
+            }
+        }
+    }
+    
+    private func sendPendingRunningPlanIfNeeded() {
+        guard let plan = pendingRunningPlan, session.activationState == .activated else {
+            return
+        }
+        
+        print("iOS: Sending pending summary now that session is activated...")
+        // Clear pending first
+        pendingRunningPlan = nil
+        // Send it
+        sendRunningPlanData(plan: plan)
+    }
+#endif
 }
