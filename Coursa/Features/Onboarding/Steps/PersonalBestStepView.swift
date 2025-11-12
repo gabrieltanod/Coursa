@@ -12,37 +12,122 @@ struct PersonalBestStepView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("What's your personal best?")
-                .font(.title2)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .padding(.top)
-            
-            Form {
-                Section {
-                    HStack {
-                        Text("Distance (km)")
-                        Spacer()
-                        TextField("5.0", text: $distanceKm)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 80)
-                    }
-                    
-                    HStack {
-                        Text("Duration (hh:mm:ss)")
-                        Spacer()
-                        TextField("00:25:30", text: $durationText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 120)
-                    }
-                } header: {
-                    Text("Leave blank if you don't have a personal best")
-                        .font(.caption)
+        VStack(alignment: .leading, spacing: 27) {
+            VStack(alignment: .leading) {
+                OnboardingHeaderQuestion(
+                    question: "Your personal best",
+                    caption: ""
+                )
+                Group {
+                    Text("Fill in your ")
+                        + Text("current PB")
+                        .foregroundStyle(Color("green-500"))
+                        + Text(" to determine your current performance.")
                 }
+                .foregroundStyle(Color("white-800"))
             }
-            
+
+            HStack(spacing: 8) {
+                Button(action: {
+                    distanceKm = "3"
+                }) {
+                    Text("🏃🏿‍♂️ 3K")
+                        .foregroundStyle(Color("white-500"))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .cornerRadius(20)
+                        .background(
+                            distanceKm == "3"
+                                ? Color("black-200") : Color("black-400")
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                        )
+                        .cornerRadius(20)
+                }
+
+                Button(action: {
+                    distanceKm = "5"
+                }) {
+                    Text("👏 5K")
+                        .foregroundStyle(Color("white-500"))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .cornerRadius(20)
+                        .background(
+                            distanceKm == "5"
+                                ? Color("black-200") : Color("black-400")
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                        )
+                        .cornerRadius(20)
+                }
+
+                Button(action: {
+                    distanceKm = "10"
+                }) {
+                    Text("🔥 10K")
+                        .foregroundStyle(Color("white-500"))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .cornerRadius(20)
+                        .background(
+                            distanceKm == "10"
+                                ? Color("black-200") : Color("black-400")
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                        )
+                        .cornerRadius(20)
+
+                }
+                Spacer()
+            }
+
+            Button(action: { showDurationWheel = true }) {
+                HStack {
+                    if selectedHour > 0
+                    {
+                        Text(
+                            "\(selectedHour)h : \(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
+                        )
+                        .font(.body)
+                        .font(.custom("Helvetica Neue", size: 22))
+                        .fontWeight(.regular)
+                        .foregroundStyle(Color("white-500"))
+                    } else if selectedMinute > 0 {
+                        Text(
+                            "\(String(format: "%02d", selectedMinute))m : \(String(format: "%02d", selectedSecond))s"
+                        )
+                        .font(.body)
+                        .font(.custom("Helvetica Neue", size: 22))
+                        .fontWeight(.regular)
+                        .foregroundStyle(Color("white-500"))
+                    }
+                    else if selectedSecond > 0 {
+                        Text("\(String(format: "%02d", selectedSecond))s")
+                            .font(.body)
+                            .font(.custom("Helvetica Neue", size: 22))
+                            .fontWeight(.regular)
+                            .foregroundStyle(Color("white-500"))
+                    } else if selectedHour <= 0 && selectedMinute <= 0 && selectedSecond <= 0{
+                        Text("Duration")
+                            .font(.body)
+                            .font(.custom("Helvetica Neue", size: 22))
+                            .fontWeight(.regular)
+                            .foregroundStyle(Color("white-500"))
+                    }
+                    Spacer()
+                }
+                .customFrameModifier(isActivePage: false, isSelected: false)
+                .contentShape(Rectangle())  // This makes the whole area of HStack tappable
+            }
+            .buttonStyle(.plain)
+
             Spacer()
             
             Button("Continue") {
@@ -50,10 +135,80 @@ struct PersonalBestStepView: View {
                 let duration = durationText.isEmpty ? nil : durationText
                 onContinue(distance, duration)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!isValid && !distanceKm.isEmpty && !durationText.isEmpty)
-            .padding(.horizontal)
+            .buttonStyle(
+                CustomButtonStyle(
+                    isDisabled: !isValid && !distanceKm.isEmpty
+                        && !durationText.isEmpty
+                )
+            )
         }
+        .sheet(
+            isPresented: $showDurationWheel,
+            content: {
+                VStack {
+                    HStack(spacing: 4) {
+                        Picker("Hour", selection: $selectedHour) {
+                            ForEach(hours, id: \.self) { hour in
+                                Text("\(hour)h")
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 60)
+                        .onChange(of: selectedHour) { _ in
+                            durationText =
+                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedHour < 0 {
+                                selectedHour = 1
+                            }
+                        }
+
+                        Text(":")
+
+                        Picker("Minute", selection: $selectedMinute) {
+                            ForEach(minutes, id: \.self) { min in
+                                Text(String(format: "%02dm", min))
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 100)
+                        .onChange(of: selectedMinute) { _ in
+                            durationText =
+                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedMinute < 0 {
+                                selectedMinute = 1
+                            }
+                        }
+
+                        Text(":")
+
+                        Picker("Second", selection: $selectedSecond) {
+                            ForEach(seconds, id: \.self) { sec in
+                                Text(String(format: "%02ds", sec))
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 60)
+                        .onChange(of: selectedSecond) { _ in
+                            durationText =
+                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedSecond < 0 {
+                                selectedSecond = 1
+                            }
+                        }
+                    }
+                    .labelsHidden()
+
+                }
+                .presentationDetents([.medium])
+                .padding(24)
+            }
+        )
     }
     
     private func isValidTimeFormat(_ time: String) -> Bool {

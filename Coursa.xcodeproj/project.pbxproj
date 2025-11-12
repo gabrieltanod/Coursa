@@ -822,6 +822,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to track distance and pace during runs.";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion data refines cadence and pace suggestions.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "Six-Men.Coursa";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -861,6 +862,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to track distance and pace during runs.";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion data refines cadence and pace suggestions.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "Six-Men.Coursa";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
