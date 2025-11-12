@@ -36,10 +36,9 @@ final class PlanViewModel: ObservableObject {
     }
 
     func generatePlan() {
-        guard let generated = PlanMapper.generatePlan(from: data) else {
-            return
-        }
+        guard let generated = PlanMapper.generatePlan(from: data) else { return }
         generatedPlan = generated
+        UserDefaultsPlanStore.shared.save(generated)
     }
 
     func markRun(_ run: ScheduledRun, as newStatus: RunStatus) {
@@ -63,7 +62,7 @@ final class PlanViewModel: ObservableObject {
     func markRunSkipped(_ run: ScheduledRun) {
         markRun(run, as: .skipped)
     }
-    
+
     func applyAutoSkipIfNeeded(now: Date = Date()) {
         guard var plan = generatedPlan else { return }
         let cal = Calendar.current

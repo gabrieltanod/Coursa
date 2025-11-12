@@ -104,3 +104,52 @@ enum PlanMapper {
         return result
     }
 }
+
+extension PlanMapper {
+    /// Regenerate future runs when schedule (or plan) changes,
+    /// while preserving all past runs and their statuses.
+    static func regeneratePlan(
+        existing: GeneratedPlan,
+        newPlan: Plan? = nil,
+        newSelectedDays: Set<Int>,
+        today: Date = Date()
+    ) -> GeneratedPlan {
+        let cal = Calendar.current
+        let todayStart = cal.startOfDay(for: today)
+
+        // 1. Lock all runs before today (keep completed/skipped/etc.)
+        let lockedRuns = existing.runs.filter { $0.date < todayStart }
+
+        // Use updated plan if given, otherwise keep existing
+        let plan = newPlan ?? existing.plan
+
+        // 2. Work out frequency + duration based on new schedule
+        let frequency = max(newSelectedDays.count, 1)
+        let durationWeeks = plan == .halfMarathonPrep ? 10 : 8
+        let totalSessions = frequency * durationWeeks
+
+        // If user already has more past runs than new plan length, just keep them.
+        guard lockedRuns.count < totalSessions else {
+            return GeneratedPlan(plan: plan, runs: lockedRuns.sorted { $0.date < $1.date })
+        }
+
+        // 3. Templates for this plan/frequency
+        let weekTemplate = weekTemplate(for: plan, frequency: frequency)
+
+        // 4. How many future sessions we still need
+        let remainingSessions = totalSessions - lockedRuns.count
+
+        // 5. Start generating from today with new selectedDays
+        let futureRuns = makeSchedule(
+            template: weekTemplate,
+            startDate: todayStart,
+            selectedDays: newSelectedDays,
+            totalSessions: remainingSessions
+        )
+
+        // 6. Stitch back together
+        let allRuns = (lockedRuns + futureRuns).sorted { $0.date < $1.date }
+
+        return GeneratedPlan(plan: plan, runs: allRuns)
+    }
+}
