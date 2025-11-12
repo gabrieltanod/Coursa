@@ -4,8 +4,18 @@
 //
 //  Created by Gabriel Tanod on 11/11/25.
 //
-
-// ManagePlanViewModel.swift
+//  Summary
+//  -------
+//  Glue between persistence, PlanMapper, and the Manage Plan UI.
+//  Handles "schedule day" changes while preserving history.
+//
+//  Responsibilities
+//  ----------------
+//  - Load/save plan via PlanStore (UserDefaults for v1).
+//  - Track user edits (goal, days).
+//  - On save: regenerate future sessions only (preserve past).
+//  - Never mutates completed/skipped sessions.
+//
 
 import Foundation
 import Combine

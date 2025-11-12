@@ -4,21 +4,21 @@
 //
 //  Created by Gabriel Tanod on 24/10/25.
 //
+//  Summary
+//  -------
+//  PlanMapper converts plan intent (selected goal, start date, chosen days)
+//  into concrete, chronological runs. It also supports safe, partial
+//  regeneration of only-future sessions.
+//
+//  Responsibilities
+//  ----------------
+//  - Initial plan generation (onboarding) producing [ScheduledRun].
+//  - "Preserve the past" rule: keep completed/skipped/old sessions intact.
+//  - Regenerate future sessions after weekly adaptation triggers.
+//  - Enforce plan horizon (up to 16 weeks), Zone-2-only for v1.
+//
 
 import Foundation
-
-//struct DayWorkout: Identifiable, Codable {
-//    let id = UUID()
-//    let date: Date
-//    let title: String
-//    let description: String
-//}
-
-// Replace DayWorkout + old GeneratedPlan with this:
-struct GeneratedPlan: Codable {
-    let plan: Plan
-    var runs: [ScheduledRun]
-}
 
 enum PlanMapper {
     static func generatePlan(from data: OnboardingData) -> GeneratedPlan? {

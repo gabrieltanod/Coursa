@@ -4,6 +4,17 @@
 //
 //  Created by Gabriel Tanod on 11/11/25.
 //
+//  Summary
+//  -------
+//  A focused surface to tweak plan configuration (goal, schedule)
+//  without touching historical sessions.
+//
+//  Responsibilities
+//  ----------------
+//  - Display current settings with clean, tappable rows.
+//  - Let users change selected days (schedule).
+//  - Route saves to ViewModel; button reflects "has changes" state.
+//
 
 import SwiftUI
 

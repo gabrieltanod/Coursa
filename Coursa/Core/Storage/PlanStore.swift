@@ -6,8 +6,14 @@
 //
 //  Summary
 //  -------
-//  A simple adapter that lets `ManagePlanViewModel` read/write the
-//  user's `GeneratedPlan` through the existing `OnboardingStore`.
+//  Minimal persistence for GeneratedPlan using UserDefaults.
+//  Keeps v1 lightweight and easy to migrate later.
+//
+//  Responsibilities
+//  ----------------
+//  - load()/save() of GeneratedPlan as JSON.
+//  - No migration logic yet (v1 lightweight).
+//  - Isolated behind PlanStore protocol for future SwiftData.
 //
 
 import Foundation

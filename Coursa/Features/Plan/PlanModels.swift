@@ -19,6 +19,13 @@ enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
     var id: String { rawValue }
 }
 
+// Replace DayWorkout + old GeneratedPlan with this:
+struct GeneratedPlan: Codable {
+    let plan: Plan
+    var runs: [ScheduledRun]
+}
+
+
 // MARK: - Core Run Types
 
 enum RunKind: String, Codable, CaseIterable, Identifiable {
