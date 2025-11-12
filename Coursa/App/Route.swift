@@ -11,5 +11,4 @@ import Combine
 enum Route: Hashable {
     case plan(OnboardingData)
     case home
-    case coreApp(OnboardingData)
 }
