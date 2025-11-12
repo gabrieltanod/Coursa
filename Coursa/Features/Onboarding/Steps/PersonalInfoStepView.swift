@@ -1,44 +1,18 @@
 import SwiftUI
 
-enum WhatToShow: Identifiable {
-    case showDatePicker
-    case showGenderPicker
-    case showWeightPicker
-    case showHeightPicker
-
-    var id: String {
-        switch self {
-        case .showDatePicker: return "dob"
-        case .showGenderPicker: return "gender"
-        case .showWeightPicker: return "weight"
-        case .showHeightPicker: return "height"
-        }
-    }
-}
-
 struct PersonalInfoStepView: View {
     let onContinue: (PersonalInfo) -> Void
     
-    private var selectedDateBinding: Binding<Date> {
-        Binding<Date>(
-            get: { date ?? Date() },
-            set: { date = $0 }
-        )
-    }
-    @State private var date: Date?
+    @State private var age = ""
     @State private var gender = ""
     @State private var weightKg = ""
     @State private var heightCm = ""
-    @State private var activeSheet: WhatToShow?
-
+    
     private var isValid: Bool {
-        !gender.isEmpty && !weightKg.isEmpty && !heightCm.isEmpty
+        !age.isEmpty && !gender.isEmpty && !weightKg.isEmpty && !heightCm.isEmpty &&
+        Int(age) != nil && Double(weightKg) != nil && Double(heightCm) != nil
     }
-
-    private let genderOptions = ["Male", "Female", "Other"]
-    private let weightOptions = Array(30...200).map { "\($0) kg" }
-    private let heightOptions = Array(100...250).map { "\($0) cm" }
-
+    
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
