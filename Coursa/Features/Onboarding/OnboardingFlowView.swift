@@ -3,84 +3,137 @@ import SwiftUI
 struct OnboardingFlowView: View {
     @StateObject private var vm = OnboardingViewModel()
     let onFinished: (OnboardingData) -> Void
+    @State private var showPlanReady = false
+    @State private var showGenerating = false
+    @State private var generatingProgress: Double = 0
+
+    @ViewBuilder
+    private var stepContent: some View {
+        switch vm.step {
+        case .goals:
+            GoalsStepView(onGoalSelected: { goal in
+                vm.setGoal(goal)
+                vm.next()
+            })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
+        case .personalInfo:
+            PersonalInfoStepView(onContinue: { personalInfo in
+                vm.setPersonalInfo(personalInfo)
+                vm.next()
+            })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
+        case .whichDays:
+            WhichDaysStepView(onContinue: { days in
+                vm.setSelectedDays(days)
+                vm.setDaysPerWeek(days.count)
+                vm.next()
+            })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
+        case .personalBest:
+            PersonalBestStepView(onContinue: { distanceKm, durationText in
+                vm.setPersonalBest(
+                    distanceKm: distanceKm,
+                    durationText: durationText
+                )
+                vm.updateRecommendedPlan()
+                vm.next()
+            })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
+        case .chooseStartDate:
+            ChooseStartDateStepView(onFinish: { date in
+                vm.setStartDate(date)
+                OnboardingStore.save(vm.data)
+                // Gimmick: show a generating overlay for ~2 seconds
+                generatingProgress = 0
+                showGenerating = true
+                
+                // Start progress animation on next runloop so the overlay is already visible
+                DispatchQueue.main.async {
+                    withAnimation(.linear(duration: 2.0)) {
+                        generatingProgress = 1
+                    }
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    showGenerating = false
+                    onFinished(vm.data)
+                }
+            })
+            .padding(.horizontal, 24)
+            .background(Color("black-500"))
+        }
+    }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Main content based on current step
-                Group {
-                    switch vm.step {
-                    case .goals:
-                        GoalsStepView(onGoalSelected: { goal in
-                            vm.setGoal(goal)
-                            vm.next()
-                        })
-                    case .personalInfo:
-
-                        PersonalInfoStepView(onContinue: { personalInfo in
-                            vm.setPersonalInfo(personalInfo)
-                            vm.next()
-                        })
-                    case .daysPerWeek:
-                        DaysPerWeekStepView(onContinue: { days in
-                            vm.setDaysPerWeek(days)
-                            vm.next()
-                        })
-                    case .whichDays:
-                        WhichDaysStepView(onContinue: { days in
-                            vm.setSelectedDays(days)
-                            vm.next()
-                        })
-                    case .personalBest:
-                        PersonalBestStepView(onContinue: {
-                            distanceKm,
-                            durationText in
-                            vm.setPersonalBest(
-                                distanceKm: distanceKm,
-                                durationText: durationText
-                            )
-                            vm.updateRecommendedPlan()
-                            vm.next()
-                        })
-                    case .recommendedPlan:
-                        //                        RecommendedPlanStepView(
-                        //                            recommendedPlan: vm.data.recommendedPlan ?? .baseBuilder,
-                        //                            onContinue: { vm.next() },
-                        //                            onChooseDifferent: { vm.next() }
-                        //                        )
-                        PlanView(vm: PlanViewModel(data: vm.data))
-                    case .choosePlan:
-                        ChoosePlanStepView(onContinue: { plan in
-                            vm.setSelectedPlan(plan)
-                            vm.next()
-                        })
-                    case .chooseStartDate:
-                        ChooseStartDateStepView(onFinish: { date in
-                            vm.setStartDate(date)
-                            OnboardingStore.save(vm.data)
-                            onFinished(vm.data)
-                        })
-                    case .home:
-                        HomeView()
-                    }
-                }
+        ZStack {
+            // Main content based on current step
+            stepContent
                 .navigationBarTitleDisplayMode(.large)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if vm.canGoBack && !vm.isLastStep {
-                        Button("Back") {
-                            vm.back()
-                        }
-                    }
-                }
-                ToolbarItem(
-                    placement: .principal,
-                    content: {
-                        CarouselIndicator(currentIndex: vm.index)
-                    }
-                )
+            
+            if showGenerating {
+                GeneratingOverlay(progress: generatingProgress)
+                    .transition(.opacity)
+                    .ignoresSafeArea()
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if vm.canGoBack {
+                    Button(action: vm.back) {
+                        Image(systemName: "chevron.backward")
+                    }
+                    .buttonStyle(.plain)  // keeps native look in nav bars
+                } else {
+                    EmptyView()
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                if vm.step.usesProgress {
+                    CarouselIndicator(currentIndex: vm.index)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+}
+
+private struct GeneratingOverlay: View {
+    var progress: Double
+    
+    var body: some View {
+        ZStack {
+            // Frosted backdrop
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .background(Color.black.opacity(0.35))
+                .ignoresSafeArea()
+            
+            VStack(spacing: 12) {
+                Text("Generating Your Running Plan")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
+                Text("Greatness is just a moment away…")
+                    .font(.system(size: 17, weight: .light))
+                    .foregroundStyle(.white)
+                    .padding(.bottom, 6)
+                
+                // Progress bar
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.25)) // softer, cleaner background
+                        .frame(width: 220, height: 2)    // <- thinner height
+                    Capsule()
+                        .fill(
+                            Color("green-500")
+                        )
+                        .frame(width: 220 * max(0, min(progress, 1)), height: 2) // match thin height
+                }
+            }
+            .padding(20)
+          }
     }
 }

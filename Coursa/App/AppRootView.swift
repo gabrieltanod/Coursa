@@ -4,10 +4,14 @@
 //
 //  Created by Gabriel Tanod on 24/10/25.
 //
+
 import SwiftUI
 
 struct AppRootView: View {
     @EnvironmentObject private var router: AppRouter
+    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+
+    @State private var showSplash = true
 
     var body: some View {
         ZStack {
