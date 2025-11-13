@@ -45,21 +45,11 @@ struct PlanConnectDisplay: View {
             }
             
             
-            // Call without arguments because buttonSendPlanTapped takes no parameters.
-            Button(action: { sendFinalPlanData() }) {
+            Button(action: { planManager.sendPlanToWatchOS(myPlan) }) {
                 Text("Send Plan to Watch")
             }
         }
         .padding()
-    }
-    
-    func sendFinalPlanData() {
-        let plan = planManager.buttonSendPlanTapped()
-        
-        if let finalData = plan {
-            // Send summary to iOS
-            planManager.sendPlanToWatchOS(finalData)
-        }
     }
 }
 

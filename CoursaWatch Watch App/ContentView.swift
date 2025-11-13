@@ -24,9 +24,9 @@ struct ContentView: View {
             if let plan = syncService.plan {
                 // Display Total Time from Summary
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Total Time: \(plan.title)")
+                    Text("Name: \(plan.title)")
                     
-                    Text("Distance: \(plan.targetDistance)")
+                    Text("Target Distance: \(plan.targetDistance)")
                     
                     Text("intensity: \(plan.intensity)")
                     
@@ -47,6 +47,3 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    ContentView()
-}

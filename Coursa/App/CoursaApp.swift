@@ -9,17 +9,25 @@ import SwiftUI
 
 @main
 struct CoursaApp: App {
-    @StateObject private var router = AppRouter()
-//    @StateObject private var syncService = SyncService()
+//    @StateObject private var router = AppRouter()
+    
+    
+    // Watch Connectivity
+    @StateObject private var syncService = SyncService()
+    @StateObject private var planManager = PlanManager()
     
     var body: some Scene {
         WindowGroup {
-            AppRootView()
-                .environmentObject(router)
-                .environment(\.colorScheme, .dark)
+//            AppRootView()
+//                .environmentObject(router)
+//                .environment(\.colorScheme, .dark)
             
+            
+            // Watch Connectivity
 //            WatchConnectDisplay()
-//                .environmentObject(syncService)
+            PlanConnectDisplay()
+                .environmentObject(syncService)
+                .environmentObject(planManager)
         }
     }
 }
