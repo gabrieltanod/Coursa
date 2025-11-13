@@ -71,9 +71,31 @@
 		406EDCDB2EAA260F0049DEA9 /* CoursaWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "CoursaWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4013E1752EC5BE04005A8A41 /* Exceptions for "Coursa" folder in "CoursaWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WatchConnectivity/Model.swift,
+				WatchConnectivity/SyncService.swift,
+			);
+			target = 406EDCC42EAA260E0049DEA9 /* CoursaWatch Watch App */;
+		};
+		4013E1772EC5BE30005A8A41 /* Exceptions for "Coursa" folder in "Coursa" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 404BE8CB2E9CECD00065C49A /* Coursa */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		404BE8CE2E9CECD00065C49A /* Coursa */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4013E1772EC5BE30005A8A41 /* Exceptions for "Coursa" folder in "Coursa" target */,
+				4013E1752EC5BE04005A8A41 /* Exceptions for "Coursa" folder in "CoursaWatch Watch App" target */,
+			);
 			path = Coursa;
 			sourceTree = "<group>";
 		};

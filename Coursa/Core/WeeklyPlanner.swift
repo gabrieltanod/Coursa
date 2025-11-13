@@ -28,6 +28,7 @@ enum WeeklyPlanner {
         return Int((Double(sumSec) / 60.0).rounded())
     }
 
+    /// Build a week with a mix of Easy / Long / MAF sessions.
     static func zone2Week(
         weekStart: Date,
         selectedDays: Set<Int>,     // Calendar weekday ints, Mon=2 ... Sun=1
@@ -37,33 +38,122 @@ enum WeeklyPlanner {
         let days = selectedDays.sorted()
         guard !days.isEmpty else { return [] }
 
-        let per = totalZ2Minutes / days.count
-        let extra = totalZ2Minutes % days.count
+        // 1. Base pattern of session types + nominal minutes
+        let pattern = basePattern(for: days.count)
+        let totalBase = pattern.reduce(0) { $0 + $1.baseMinutes }
 
+        // 2. Scale pattern so total minutes ~= totalZ2Minutes
+        let scale = totalBase > 0 ? Double(totalZ2Minutes) / Double(totalBase) : 1.0
+        var scaledMinutes = pattern.map { Int((Double($0.baseMinutes) * scale).rounded()) }
+
+        // 3. Fix rounding mismatch on the last entry
+        let diff = totalZ2Minutes - scaledMinutes.reduce(0, +)
+        if let lastIndex = scaledMinutes.indices.last, diff != 0 {
+            scaledMinutes[lastIndex] = max(10, scaledMinutes[lastIndex] + diff) // keep at least 10 min
+        }
+
+        // 4. Build runs for each selected day
         var result: [ScheduledRun] = []
         for (idx, weekday) in days.enumerated() {
-            let minutes = per + (idx == days.count - 1 ? extra : 0) // remainder to last day
+            let minutes = max(10, scaledMinutes[idx]) // clip to min duration
             let date = weekStart.dateForWeekday(weekday)
-            let tmpl = zone2Template(minutes: minutes)
+            let tmpl = template(for: pattern[idx].kind, minutes: minutes)
             result.append(ScheduledRun(date: date, template: tmpl))
         }
+
         return result.sorted { $0.date < $1.date }
     }
 
-    private static func zone2Template(minutes: Int) -> RunTemplate {
-        RunTemplate(
-            name: "Easy Run",
-            kind: .easy,
-            focus: .base,
-            targetDurationSec: minutes * 60,
-            targetDistanceKm: nil,
-            targetHRZone: .z2,
-            notes: "Steady Zone 2 run."
-        )
+    // MARK: - Base pattern and templates
+
+    /// Types of sessions within a week.
+    private enum WeekSessionKind {
+        case easy
+        case long
+        case maf
+    }
+
+    /// Base mix before scaling to the week's target minutes.
+    /// All are Zone-2 from an HR perspective; difference is intent & nominal length.
+    private static func basePattern(for slots: Int) -> [(kind: WeekSessionKind, baseMinutes: Int)] {
+        switch slots {
+        case 1:
+            // Only one day: make it a long steady session
+            return [(.long, 60)]
+
+        case 2:
+            // One shorter easy run + one long
+            return [(.easy, 30),
+                    (.long, 60)]
+
+        case 3:
+            // Classic: Easy, Long, MAF
+            return [(.easy, 30),
+                    (.long, 60),
+                    (.maf, 45)]
+
+        case 4:
+            // Easy, Long, MAF, Easy
+            return [(.easy, 30),
+                    (.long, 60),
+                    (.maf, 45),
+                    (.easy, 30)]
+
+        default:
+            // 5+ days: Easy, Long, MAF, then fill with Easy
+            var base: [(WeekSessionKind, Int)] = [
+                (.easy, 30),
+                (.long, 60),
+                (.maf, 45),
+                (.easy, 30)
+            ]
+            while base.count < slots {
+                base.append((.easy, 30))
+            }
+            return Array(base.prefix(slots))
+        }
+    }
+
+    private static func template(for kind: WeekSessionKind, minutes: Int) -> RunTemplate {
+        let sec = minutes * 60
+
+        switch kind {
+        case .easy:
+            return RunTemplate(
+                name: "Easy Run",
+                kind: .easy,
+                focus: .base,
+                targetDurationSec: sec,
+                targetDistanceKm: nil,
+                targetHRZone: .z2,
+                notes: "Relaxed Zone 2 effort. Focus on smooth form and controlled breathing."
+            )
+
+        case .long:
+            return RunTemplate(
+                name: "Long Run",
+                kind: .long,
+                focus: .endurance,
+                targetDurationSec: sec,
+                targetDistanceKm: nil,
+                targetHRZone: .z2,
+                notes: "Extended Zone 2 session to build aerobic endurance and mental stamina."
+            )
+
+        case .maf:
+            return RunTemplate(
+                name: "MAF Training",
+                kind: .maf,
+                focus: .endurance,
+                targetDurationSec: sec,
+                targetDistanceKm: nil,
+                targetHRZone: .z2,
+                notes: "Steady Zone 2 run near aerobic threshold. Stay controlled and efficient."
+            )
+        }
     }
 
     private static func runDurationSec(_ run: ScheduledRun) -> Int? {
-        // prefer actual if present, else target
         if let s = run.actual.elapsedSec { return s }
         return run.template.targetDurationSec
     }

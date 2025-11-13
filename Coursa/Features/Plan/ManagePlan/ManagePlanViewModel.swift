@@ -17,8 +17,8 @@
 //  - Never mutates completed/skipped sessions.
 //
 
-import Foundation
 import Combine
+import Foundation
 
 final class ManagePlanViewModel: ObservableObject {
     @Published private(set) var original: GeneratedPlan
@@ -38,24 +38,35 @@ final class ManagePlanViewModel: ObservableObject {
     }
 
     var hasChanges: Bool {
-        plan != original.plan ||
-        selectedDays != Self.inferSelectedDays(from: original)
+        plan != original.plan
+            || selectedDays != Self.inferSelectedDays(from: original)
     }
 
     func saveChanges() {
-        guard hasChanges else { return }
+        guard hasChanges, let original = store.load() else { return }
+
+        #if DEBUG
+            print("===== ENGINE DEBUG: Before schedule change =====")
+            original.debugPrint(label: "Original (before Manage Plan)")
+        #endif
 
         let updated = PlanMapper.regeneratePlan(
             existing: original,
-            newPlan: plan,
+            newPlan: original.plan,
             newSelectedDays: selectedDays
         )
 
         store.save(updated)
-        original = updated
+
+        #if DEBUG
+            print("===== ENGINE DEBUG: After schedule change =====")
+            updated.debugPrint(label: "Updated (after Manage Plan)")
+        #endif
     }
 
-    private static func inferSelectedDays(from generated: GeneratedPlan) -> Set<Int> {
+    private static func inferSelectedDays(from generated: GeneratedPlan) -> Set<
+        Int
+    > {
         let cal = Calendar.current
         let sample = generated.runs.prefix(14)
         return Set(sample.map { cal.component(.weekday, from: $0.date) })
