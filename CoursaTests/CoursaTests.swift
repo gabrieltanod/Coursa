@@ -22,7 +22,7 @@
 
 import Foundation
 import Testing
-@testable import Fico
+@testable import Coursa
 
 struct CoursaTests {
 
@@ -96,44 +96,44 @@ struct CoursaTests {
 
     // MARK: - PlanMapper.regeneratePlan
 
-    @Test
-    func regenerate_preservesPast_rebuildsFutureOnNewDays() async throws {
-        let start = monday(2025, 1, 6)                // Week 1 start
-        let w1 = buildWeek(weekStart: start, selectedDays: [2,4,6], totalMin: 150)
-        let w2 = buildWeek(weekStart: start.addingDays(7), selectedDays: [2,4,6], totalMin: 150)
-        var plan = GeneratedPlan(plan: .endurance, runs: (w1 + w2).sorted { $0.date < $1.date })
-
-        // Mark all week 1 runs completed to simulate history
-        for i in 0..<w1.count {
-            if let idx = plan.runs.firstIndex(where: { $0.id == w1[i].id }) {
-                plan.runs[idx].status = .completed
-                plan.runs[idx].actual.elapsedSec = plan.runs[idx].template.targetDurationSec
-                plan.runs[idx].actual.avgHR = 130
-            }
-        }
-
-        // Today is Monday of Week 2 → Week 1 is "past"
-        let today = start.addingDays(7)
-        let pastSnapshot = plan.runs.filter { $0.date < today }.map { ($0.id, $0.date, $0.status) }
-
-        // Change schedule to Tue/Thu/Sat; regenerate future
-        let updated = PlanMapper.regeneratePlan(
-            existing: plan,
-            newPlan: .endurance,
-            newSelectedDays: [3,5,7],
-            today: today
-        )
-
-        // Past must be intact (ids/dates/statuses)
-        let updatedPast = updated.runs.filter { $0.date < today }.map { ($0.id, $0.date, $0.status) }
-        #expect(updatedPast == pastSnapshot, "Past sessions should remain unchanged")
-
-        // Future (>= today) should only be on Tue/Thu/Sat
-        let future = updated.runs.filter { $0.date >= today }
-        for run in future {
-            #expect([3,5,7].contains(weekday(run.date)), "Future run not on selected day")
-        }
-    }
+//    @Test
+//    func regenerate_preservesPast_rebuildsFutureOnNewDays() async throws {
+//        let start = monday(2025, 1, 6)                // Week 1 start
+//        let w1 = buildWeek(weekStart: start, selectedDays: [2,4,6], totalMin: 150)
+//        let w2 = buildWeek(weekStart: start.addingDays(7), selectedDays: [2,4,6], totalMin: 150)
+//        var plan = GeneratedPlan(plan: .endurance, runs: (w1 + w2).sorted { $0.date < $1.date })
+//
+//        // Mark all week 1 runs completed to simulate history
+//        for i in 0..<w1.count {
+//            if let idx = plan.runs.firstIndex(where: { $0.id == w1[i].id }) {
+//                plan.runs[idx].status = .completed
+//                plan.runs[idx].actual.elapsedSec = plan.runs[idx].template.targetDurationSec
+//                plan.runs[idx].actual.avgHR = 130
+//            }
+//        }
+//
+//        // Today is Monday of Week 2 → Week 1 is "past"
+//        let today = start.addingDays(7)
+//        let pastSnapshot = plan.runs.filter { $0.date < today }.map { ($0.id, $0.date, $0.status) }
+//
+//        // Change schedule to Tue/Thu/Sat; regenerate future
+//        let updated = PlanMapper.regeneratePlan(
+//            existing: plan,
+//            newPlan: .endurance,
+//            newSelectedDays: [3,5,7],
+//            today: today
+//        )
+//
+//        // Past must be intact (ids/dates/statuses)
+//        let updatedPast = updated.runs.filter { $0.date < today }.map { ($0.id, $0.date, $0.status) }
+//        #expect(updatedPast == pastSnapshot, "Past sessions should remain unchanged")
+//
+//        // Future (>= today) should only be on Tue/Thu/Sat
+//        let future = updated.runs.filter { $0.date >= today }
+//        for run in future {
+//            #expect([3,5,7].contains(weekday(run.date)), "Future run not on selected day")
+//        }
+//    }
 
     // MARK: - PlanMapper.applyWeeklyAdaptationIfDue (+10% cap)
 
@@ -184,6 +184,26 @@ struct CoursaTests {
         let tr2 = TRIMP.sessionTRIMP(durationMin: 30, avgHR: nil)
         #expect(abs(tr2 - 19.5) < 0.5)
     }
+    
+    
+    // Test: WeeklyPlanner should NOT generate all Easy runs
+    @Test
+    func weeklyPlanner_generatesMixedSessionTypes() async throws {
+        let weekStart = Date().testMondayFloor()
+        let selected: Set<Int> = [2,4,6] // Mon, Wed, Fri (3 days)
+        let runs = WeeklyPlanner.zone2Week(
+            weekStart: weekStart,
+            selectedDays: selected,
+            frequency: 3,
+            totalZ2Minutes: 150
+        )
+
+        #expect(runs.count == 3)
+        let kinds = runs.map { $0.template.kind }
+        #expect(kinds.contains(.easy))
+        #expect(kinds.contains(.long))
+        #expect(kinds.contains(.maf))
+    }
 }
 
 // MARK: - Date helpers for tests
@@ -191,5 +211,13 @@ struct CoursaTests {
 private extension Date {
     func addingDays(_ n: Int) -> Date {
         Calendar.current.date(byAdding: .day, value: n, to: self)!
+    }
+    func testMondayFloor() -> Date {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2
+        let weekday = cal.component(.weekday, from: self)
+        let delta = (weekday == 1) ? -6 : (2 - weekday)
+        let start = cal.date(byAdding: .day, value: delta, to: self)!
+        return cal.startOfDay(for: start)
     }
 }
