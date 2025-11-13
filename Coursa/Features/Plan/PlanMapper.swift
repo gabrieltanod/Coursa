@@ -8,24 +8,6 @@
 //  -------
 //  PlanMapper converts plan intent (selected goal, start date, chosen days)
 //  into concrete, chronological runs. It also supports safe, partial
-//  regeneration of only-future sessions.
-//
-//  Responsibilities
-//  ----------------
-//  - Initial plan generation (onboarding) producing [ScheduledRun].
-//  - "Preserve the past" rule: keep completed/skipped/old sessions intact.
-//  - Regenerate future sessions after weekly adaptation triggers.
-//  - Enforce plan horizon (up to 16 weeks), Zone-2-only for v1.
-//
-
-//
-//  PlanMapper.swift
-//  Coursa
-//
-//  Summary
-//  -------
-//  PlanMapper converts plan intent (selected goal, start date, chosen days)
-//  into concrete, chronological runs. It also supports safe, partial
 //  regeneration of only-future sessions and a weekly adaptation flow.
 //  Weeks are Monday-based; regeneration is capped to 16 weeks and Zone-2-only.
 //
@@ -135,13 +117,15 @@ enum PlanMapper {
 
         // Sum TRIMP (or fallback) for the closing week
         let weekRuns = runs(in: existing, weekStart: closingWeekStart)
-        let weekTRIMP = TRIMP.totalTRIMP(for: weekRuns)
+        let weekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: weekRuns)
 
         // Decide next week target with +10% cap
         let prevTarget = WeeklyPlanner.estimatedWeeklyMinutes(from: weekRuns)
         let nextTarget = AdaptationEngine.nextWeekMinutes(
             lastWeekTRIMP: weekTRIMP,
-            lastWeekMinutes: prevTarget
+            thisWeekTRIMP: weekTRIMP, // same week (we sum TRIMP weekly)
+            lastWeekMinutes: prevTarget,
+            runningFrequency: selectedDays.count
         )
 
         // Write the NEXT week (the current Monday window)
