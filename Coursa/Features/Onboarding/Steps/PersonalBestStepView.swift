@@ -2,15 +2,23 @@ import SwiftUI
 
 struct PersonalBestStepView: View {
     let onContinue: (Double?, String?) -> Void
-    
+
+    @State private var selectedHour = -1
+    @State private var selectedMinute = -1
+    @State private var selectedSecond = -1
     @State private var distanceKm = ""
     @State private var durationText = ""
-    
+    @State private var showDurationWheel: Bool = false
+
+    let hours = Array(0...23)
+    let minutes = Array(0...59)
+    let seconds = Array(0...59)
+
     private var isValid: Bool {
-        !distanceKm.isEmpty && !durationText.isEmpty &&
-        Double(distanceKm) != nil && isValidTimeFormat(durationText)
+        !distanceKm.isEmpty && !durationText.isEmpty
+            && Double(distanceKm) != nil && isValidTimeFormat(durationText)
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 27) {
             VStack(alignment: .leading) {
@@ -129,7 +137,7 @@ struct PersonalBestStepView: View {
             .buttonStyle(.plain)
 
             Spacer()
-            
+
             Button("Continue") {
                 let distance = distanceKm.isEmpty ? nil : Double(distanceKm)
                 let duration = durationText.isEmpty ? nil : durationText
@@ -210,7 +218,7 @@ struct PersonalBestStepView: View {
             }
         )
     }
-    
+
     private func isValidTimeFormat(_ time: String) -> Bool {
         let components = time.split(separator: ":")
         return components.count >= 2 && components.allSatisfy { Int($0) != nil }

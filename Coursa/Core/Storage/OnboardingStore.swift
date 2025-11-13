@@ -20,7 +20,13 @@ enum OnboardingStore {
     }
 
     static func load() -> OnboardingData? {
-        guard let d = UserDefaults.standard.data(forKey: key) else { return nil }
+        guard let d = UserDefaults.standard.data(forKey: key) else {
+            return nil
+        }
         return try? JSONDecoder().decode(OnboardingData.self, from: d)
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
     }
 }

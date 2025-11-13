@@ -21,4 +21,3 @@ struct CustomButtonStyle: ButtonStyle {
             .disabled(isDisabled)
     }
 }
-
