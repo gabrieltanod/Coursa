@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct PlanDetailsPageView: View {
-    let title: String
-    let targetDistance: String
-    let intensity: String
-    let recPace: String
+//    let name: String
+//    let targetDistance: Double
+//    let targetHRZone: HRZone
+//    let recPace: String
     
     let plan: RunningPlan
     @State private var navPath = NavigationPath()
@@ -44,13 +44,13 @@ struct PlanDetailsPageView: View {
                 VStack(spacing: 30) {
                     // Header
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.title)
+                        Text(plan.name)
                             .font(.helveticaNeue(size: 20))
-                        Text(plan.targetDistance)
+                        Text("Distance: \(plan.targetDistance)")
                             .font(.helveticaNeue(size: 16))
-                        Text(plan.intensity)
+                        Text("HR Zone: \(plan.targetHRZone)")
                             .font(.helveticaNeue(size: 16))
-                        Text("Rec Pace \(plan.recPace)")
+                        Text("Rec Pace: \(plan.recPace)")
                             .font(.helveticaNeue(size: 16))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -165,5 +165,4 @@ struct PlanDetailsPageView: View {
         }
     }
 }
-
 

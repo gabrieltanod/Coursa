@@ -20,11 +20,11 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #if os(iOS)
     // Queue for messages pending activation
     private var pendingRunningPlan: RunningPlan?
-//    private var isActivationInProgress: Bool = false
-//    private var activationRetryTimer: Timer?
-//    private var activationRetryCount: Int = 0
-//    private let maxActivationRetries: Int = 5
-//    private let activationRetryDelay: TimeInterval = 3.0
+    //    private var isActivationInProgress: Bool = false
+    //    private var activationRetryTimer: Timer?
+    //    private var activationRetryCount: Int = 0
+    //    private let maxActivationRetries: Int = 5
+    //    private let activationRetryDelay: TimeInterval = 3.0
 #endif
     
 #if os(watchOS)
@@ -298,7 +298,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     
-// ========================================== MARK: - Receive Summary (iOS from watchOS) ==========================================
+    // ========================================== MARK: - Receive Summary (iOS from watchOS) ==========================================
     
 #if os(iOS)
     // Receive message from watchOS
@@ -378,73 +378,78 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     }
     
     
-// ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
-        
-    #if os(watchOS)
-        // Receive message from watchOS
-        func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-            print("watchOS: Received message from iOS")
-            decodeAndStorePlan(from: message)
+    // ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
+    
+#if os(watchOS)
+    // Receive message from watchOS
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        print("watchOS: Received message from iOS")
+        decodeAndStorePlan(from: message)
+    }
+    
+    // Receive message with reply handler
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+        print("watchOS: Received message from watchOS (with reply handler)")
+        decodeAndStorePlan(from: message)
+        replyHandler(["status": "received"])
+    }
+    
+    // Receive application context
+    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        print("watchOS: Received application context from iOS")
+        decodeAndStorePlan(from: applicationContext)
+    }
+#endif
+    
+    private func decodeAndStorePlan(from dictionary: [String: Any]) {
+        // Handle UUID as String (since Dictionary can't store UUID directly)
+        var id: UUID
+        if let idString = dictionary["id"] as? String {
+            id = UUID(uuidString: idString) ?? UUID()
+        } else if let idUUID = dictionary["id"] as? UUID {
+            id = idUUID
+        } else {
+            id = UUID()
         }
         
-        // Receive message with reply handler
-        func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
-            print("watchOS: Received message from watchOS (with reply handler)")
-            decodeAndStorePlan(from: message)
-            replyHandler(["status": "received"])
+        // Decode values safely
+        guard let date = dictionary["date"] as? Date,
+              let name = dictionary["name"] as? String,
+              let kindRaw = dictionary["kind"] as? String,
+              let kind = RunKind(rawValue: kindRaw),
+              let targetDistance = dictionary["targetDistance"] as? Double,
+              let hrZoneRaw = dictionary["targetHRZone"] as? Int,
+              let targetHRZone = HRZone(rawValue: hrZoneRaw),
+              let recPace = dictionary["recPace"] as? String else {
+#if os(watchOS)
+            print("watchOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
+#endif
+#if os(iOS)
+            print("iOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
+#endif
+            return
         }
         
-        // Receive application context
-        func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
-            print("watchOS: Received application context from iOS")
-            decodeAndStorePlan(from: applicationContext)
-        }
-    #endif
+        let decodedPlan = RunningPlan(
+            id: id.uuidString,
+            date: date,
+            name: name,
+            kind: kind,
+            targetDistance: targetDistance,
+            targetHRZone: targetHRZone,
+            recPace: recPace
+        )
         
-        private func decodeAndStorePlan(from dictionary: [String: Any]) {
-            // Handle UUID as String (since Dictionary can't store UUID directly)
-            var id: UUID
-            if let idString = dictionary["id"] as? String {
-                id = UUID(uuidString: idString) ?? UUID()
-            } else if let idUUID = dictionary["id"] as? UUID {
-                id = idUUID
-            } else {
-                id = UUID()
-            }
-            
-            guard let date = dictionary["date"] as? Date,
-                  let title = dictionary["title"] as? String,
-                  let targetDistance = dictionary["targetDistance"] as? String,
-                  let intensity = dictionary["intensity"] as? String,
-                  let recPace = dictionary["recPace"] as? String else {
-    #if os(wacthOS)
-                print("watchOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
-    #endif
-    #if os(iOS)
-                print("iOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
-    #endif
-                return
-            }
-            
-            let decodedPlan = RunningPlan(
-                id: id,
-                date: date,
-                title: title,
-                targetDistance: targetDistance,
-                intensity: intensity,
-                recPace: recPace
-            )
-            
-            DispatchQueue.main.async {
-                self.plan = decodedPlan
-    #if os(watchOS)
-                print("watchOS: Successfully decoded and stored PlanTest. Title: \(decodedPlan.title), Target Distance: \(decodedPlan.targetDistance)km")
-    #endif
-            }
+        DispatchQueue.main.async {
+            self.plan = decodedPlan
+#if os(watchOS)
+            print("watchOS: Successfully decoded and stored PlanTest. Name: \(decodedPlan.name), Target Distance: \(decodedPlan.targetDistance)km")
+#endif
         }
+    }
     
     
-// ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
+    // ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
     
 #if os(watchOS)
     func sendSummaryToiOS(summary: RunningSummary) {
@@ -532,9 +537,9 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     
-// ========================================== MARK: - Send Plan (iOS to watchOS) ==========================================
+    // ========================================== MARK: - Send Plan (iOS to watchOS) ==========================================
     
-   
+    
 #if os(iOS)
     func sendPlanToWatchOS(plan: RunningPlan) {
         // Check activation state first
@@ -570,13 +575,15 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
+        // ✅ Convert everything to property-list–safe types
         let data: [String: Any] = [
-            "id": plan.id.uuidString,
-            "date": plan.date,
-            "title": plan.title,
-            "targetDistance": plan.targetDistance,
-            "intensity": plan.intensity,
-            "recPace": plan.recPace
+            "id": plan.id,                          // UUID → String
+            "date": plan.date,                                 // Date is allowed
+            "name": plan.name,                                 // String
+            "kind": plan.kind?.rawValue ?? 0,                  // RunKind → Int
+            "targetDistance": plan.targetDistance ?? 0.0,       // Double
+            "targetHRZone": plan.targetHRZone?.rawValue ?? 0,   // HRZone → Int
+            "recPace": plan.recPace ?? ""                      // String
         ]
         
         print("iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))")
@@ -619,3 +626,4 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     }
 #endif
 }
+

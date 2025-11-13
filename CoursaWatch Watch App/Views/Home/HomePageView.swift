@@ -22,74 +22,49 @@ struct HomePageView: View {
     @State private var appState: AppState = .planning
     @StateObject private var workoutManager = WorkoutManager()
     @State private var finalRunningSummary: RunningSummary?
+    
     @EnvironmentObject var syncService: SyncService
-    
-    // Dummy Data
-    let myPlan = RunningPlan(
-        date: Date(), title: "Easy Run", targetDistance: "3km", intensity: "HR Zone 2", recPace: "7:30/KM"
-    )
-    
+
     var body: some View {
-        Group{
+        Group {
             switch appState {
                 
             case .planning:
                 NavigationStack(path: $navPath) {
                     ScrollView {
-                        VStack(alignment: .leading){
+                        VStack(alignment: .leading) {
                             
-                            // ini buat ngetest session di watch jalan apa engga, bisa diganti kalo udah gadibutuhin
-                            if syncService.isSessionActivated {
-                                Text("Coursa")
-                                    .foregroundColor(.green)
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .padding(.bottom, 8)
-                            } else {
-                                Text("Coursa")
-                                    .foregroundColor(.orange)
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .padding(.bottom, 8)
-                            }
+                            // Debug indicator for session state
+                            Text("Coursa")
+                                .foregroundColor(syncService.isSessionActivated ? .green : .orange)
+                                .font(.system(size: 17, weight: .semibold))
+                                .padding(.bottom, 8)
                             
                             Text("TODAY PLAN")
                                 .font(.helveticaNeue(size: 13, weight: .regular))
                                 .padding(.bottom, 4)
                             
-                            NavigationLink(value: NavigationRoute.workoutDetail(myPlan)) {
-                                PlanCardView(
-                                    date: myPlan.date,
-                                    targetDistance: myPlan.targetDistance,
-                                    intensity: myPlan.intensity,
-                                    runningType: .easyRun
-                                )
+                            if let plan = syncService.plan {
+                                NavigationLink(value: NavigationRoute.workoutDetail(plan)) {
+                                    PlanCardView(plan: plan)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("No running plan available")
+                                    .font(.footnote)
+                                    .foregroundColor(.gray)
                             }
-                            .buttonStyle(.plain)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("UPCOMING PLAN")
+                                    .font(.helveticaNeue(size: 13, weight: .regular))
+                                    .padding(.bottom, 4)
+                            }
+                            .padding(.bottom, 40)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(.bottom, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        VStack(alignment: .leading, spacing: 4){
-                            Text("UPCOMING PLAN")
-                                .font(.helveticaNeue(size: 13, weight: .regular))
-                                .padding(.bottom, 4)
-                            
-                            PlanCardView(
-                                date: myPlan.date,
-                                targetDistance: myPlan.targetDistance,
-                                intensity: myPlan.intensity,
-                                runningType: .mafTraining
-                            )
-                            PlanCardView(
-                                date: myPlan.date,
-                                targetDistance: myPlan.targetDistance,
-                                intensity: myPlan.intensity,
-                                runningType: .longRun
-                            )
-                            
-                        }
-                        .padding(.bottom, 40)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
                     }
                     .padding(.horizontal, 15)
                     .ignoresSafeArea(edges: .bottom)
@@ -97,12 +72,8 @@ struct HomePageView: View {
                         switch route {
                         case .workoutDetail(let plan):
                             PlanDetailsPageView(
-                                title: plan.title,
-                                targetDistance: plan.targetDistance,
-                                intensity: plan.intensity,
-                                recPace: plan.recPace,
                                 plan: plan,
-                                appState: $appState,
+                                appState: $appState
                             )
                         }
                     }
@@ -120,12 +91,13 @@ struct HomePageView: View {
             case .summary:
                 if let summaryData = finalRunningSummary {
                     SummaryPageView(
-                        appState: $appState, viewModel: SummaryPageViewModel(summary: summaryData)
+                        appState: $appState,
+                        viewModel: SummaryPageViewModel(summary: summaryData)
                     )
                 } else {
                     Text("Error: No Summary Data")
+                        .foregroundColor(.red)
                 }
-                
             }
         }
         .environmentObject(workoutManager)
@@ -135,4 +107,3 @@ struct HomePageView: View {
         }
     }
 }
-

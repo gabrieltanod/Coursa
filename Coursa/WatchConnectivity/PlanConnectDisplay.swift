@@ -20,7 +20,7 @@ struct PlanConnectDisplay: View {
     
     // Dummy Data
     let myPlan = RunningPlan(
-        date: Date(), title: "Easy Run", targetDistance: "3km", intensity: "HR Zone 2", recPace: "7:30/KM"
+        date: Date(), name: "Easy Run", kind: .maf, targetDistance: 3.0 , targetHRZone: .z2, recPace: "7:30/KM"
     )
     
     var body: some View {
@@ -38,28 +38,18 @@ struct PlanConnectDisplay: View {
             
             VStack {
                 Text("\(myPlan.date)")
-                Text("\(myPlan.title)")
+                Text("\(myPlan.name)")
                 Text("\(myPlan.targetDistance)")
-                Text("\(myPlan.intensity)")
+                Text("\(myPlan.targetHRZone)")
                 Text("\(myPlan.recPace)")
             }
             
             
-            // Call without arguments because buttonSendPlanTapped takes no parameters.
-            Button(action: { sendFinalPlanData() }) {
+            Button(action: { planManager.sendPlanToWatchOS(myPlan) }) {
                 Text("Send Plan to Watch")
             }
         }
         .padding()
-    }
-    
-    func sendFinalPlanData() {
-        let plan = planManager.buttonSendPlanTapped()
-        
-        if let finalData = plan {
-            // Send summary to iOS
-            planManager.sendPlanToWatchOS(finalData)
-        }
     }
 }
 

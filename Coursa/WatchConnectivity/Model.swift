@@ -7,17 +7,6 @@
 
 import Foundation
 
-
-struct RunningPlan: Codable, Hashable, Sendable, Identifiable{
-    var id = UUID()
-    let date: Date
-    let title: String
-    let targetDistance: String
-    let intensity: String
-    let recPace: String
-}
-
-
 struct RunningSummary: Codable, Hashable, Sendable, Identifiable{
     var id = UUID()
     let totalTime: Double

@@ -13,21 +13,20 @@ import SwiftUI
 class PlanManager: NSObject, ObservableObject {
     
     
-    @Published var title: String = ""
-    @Published var distance: String = ""
-    @Published var intensity: String = ""
+    @Published var name: String = ""
+    @Published var kind: RunKind?
+    @Published var targetDistance: Double = 0.0
+    @Published var targetHRZone: HRZone?
     @Published var recPace: String = ""
     
     @Published var finalPlan: RunningPlan?
-    // SyncService - can be injected from environment or will use own instance
+    
     var syncService: SyncService?
     
-    // Lazy initialization of syncService if not provided
     private func getSyncService() -> SyncService {
         if let service = syncService {
             return service
         }
-        // Create a new instance if not provided (fallback)
         let service = SyncService()
         syncService = service
         return service
@@ -37,9 +36,10 @@ class PlanManager: NSObject, ObservableObject {
         
         let plan = RunningPlan(
             date: Date(),
-            title: self.title,
-            targetDistance: self.distance,
-            intensity: self.intensity,
+            name: self.name,
+            kind: self.kind,
+            targetDistance: self.targetDistance,
+            targetHRZone: self.targetHRZone,
             recPace: self.recPace
         )
         
