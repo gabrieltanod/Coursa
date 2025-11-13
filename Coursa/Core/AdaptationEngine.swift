@@ -26,11 +26,49 @@ enum AdaptationEngine {
     /// if TRIMP is zero/missing we fall back to lastWeekMinutes.
     static func nextWeekMinutes(
         lastWeekTRIMP: Double,
-        lastWeekMinutes: Int
+        thisWeekTRIMP: Double,
+        lastWeekMinutes: Int,
+        runningFrequency: Int
     ) -> Int {
-        // Baseline: if nothing last week, seed default
-        let baseline = (lastWeekMinutes > 0) ? lastWeekMinutes : WeeklyPlanner.defaultZ2MinutesSeed
-        let proposed = Int((Double(baseline) * cap).rounded())
-        return max(proposed, WeeklyPlanner.defaultZ2MinutesSeed)
+
+        guard lastWeekMinutes > 0 else {
+            return WeeklyPlanner.defaultZ2MinutesSeed
+        }
+
+        // 1. Determine overloadFactor based on TRIMP comparisons
+        let lowerBound = lastWeekTRIMP * 0.9
+        let upperBound = lastWeekTRIMP * 1.2
+        let progressLow = lastWeekTRIMP * 1.0
+        let progressHigh = lastWeekTRIMP * 1.1
+
+        let overloadFactor: Double
+
+        if thisWeekTRIMP < lowerBound {
+            // Under-trained → repeat
+            overloadFactor = 1.0
+        } else if thisWeekTRIMP > upperBound {
+            // Over-reached → repeat
+            overloadFactor = 1.0
+        } else if thisWeekTRIMP >= progressLow && thisWeekTRIMP <= progressHigh
+        {
+            // Good progress → +5%
+            overloadFactor = 1.05
+        } else {
+            // Ambiguous → repeat
+            overloadFactor = 1.0
+        }
+
+        // 2. Compute next week total minutes
+        let nextWeekTotal = Double(lastWeekMinutes) * overloadFactor
+
+        // 3. Hard clamps
+        let minMinutes = WeeklyPlanner.defaultZ2MinutesSeed
+        let maxMinutes = Int(Double(lastWeekMinutes) * 1.10)  // absolute ceiling
+
+        let constrained = max(
+            minMinutes,
+            min(Int(nextWeekTotal.rounded()), maxMinutes)
+        )
+        return constrained
     }
 }

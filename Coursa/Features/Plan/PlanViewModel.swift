@@ -36,9 +36,15 @@ final class PlanViewModel: ObservableObject {
     }
 
     func generatePlan() {
-        guard let generated = PlanMapper.generatePlan(from: data) else { return }
+        guard let generated = PlanMapper.generatePlan(from: data) else {
+            return
+        }
         generatedPlan = generated
         UserDefaultsPlanStore.shared.save(generated)
+
+        #if DEBUG
+            PlanEngineDebug.printInitialPlan(from: data)
+        #endif
     }
 
     func markRun(_ run: ScheduledRun, as newStatus: RunStatus) {
