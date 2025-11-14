@@ -144,9 +144,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             totalTime: totalTime,
             totalDistance: self.distance,
             averageHeartRate: self.averageHeartRate,
-            averagePace: self.averagePace,
-            elevationGain: self.elevationGain,
-            zoneDuration: self.zoneDurationTracker
+            averagePace: self.averagePace
         )
         
         sendSummaryToiOS(summary)
