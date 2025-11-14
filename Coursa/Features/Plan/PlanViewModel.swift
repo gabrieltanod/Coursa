@@ -30,6 +30,90 @@ final class PlanViewModel: ObservableObject {
         self.data = data
     }
 
+    var debugThisWeekMinutes: Int {
+        guard let plan = generatedPlan else { return 0 }
+        let start = Date().mondayFloor()
+        return sumMinutes(runs: runs(in: plan, weekStart: start))
+    }
+
+    var debugNextWeekMinutes: Int {
+        guard let plan = generatedPlan else { return 0 }
+        let start = Date().mondayFloor().addingWeeks(1)
+        return sumMinutes(runs: runs(in: plan, weekStart: start))
+    }
+
+    // Helpers (same logic as your tests)
+    private func runs(in plan: GeneratedPlan, weekStart: Date) -> [ScheduledRun]
+    {
+        let weekEnd = weekStart.addingTimeInterval(7 * 24 * 60 * 60)
+        return plan.runs.filter { $0.date >= weekStart && $0.date < weekEnd }
+    }
+
+    private func sumMinutes(runs: [ScheduledRun]) -> Int {
+        runs.reduce(0) { acc, run in
+            let sec =
+                run.actual.elapsedSec ?? run.template.targetDurationSec ?? 0
+            return acc + Int((Double(sec) / 60.0).rounded())
+        }
+    }
+
+    #if DEBUG
+        func debugCompleteThisWeekAndAdapt() {
+            guard var plan = generatedPlan else { return }
+            
+            let cal = Calendar.current
+            
+            // 1. Find the earliest week in the plan that still has active runs
+            //    (planned or in-progress). This lets us reuse the debug button
+            //    for later weeks, not just the first calendar week.
+            let allWeekStarts = Set(plan.runs.map { $0.date.mondayFloor() })
+            let sortedWeekStarts = allWeekStarts.sorted()
+            
+            guard let thisWeekStart = sortedWeekStarts.first(where: { weekStart in
+                let weekRuns = runs(in: plan, weekStart: weekStart)
+                return weekRuns.contains { run in
+                    run.status == .planned || run.status == .inProgress
+                }
+            }) else {
+                // No active weeks left to simulate.
+                return
+            }
+            
+            let thisWeekEnd = thisWeekStart.addingTimeInterval(7 * 24 * 60 * 60)
+            
+            // 2. Mark all runs in this week as completed with mid-Z2 HR
+            for idx in plan.runs.indices {
+                let d = plan.runs[idx].date
+                if d >= thisWeekStart && d < thisWeekEnd {
+                    plan.runs[idx].status = .completed
+                    let targetSec = plan.runs[idx].template.targetDurationSec ?? 30 * 60
+                    plan.runs[idx].actual.elapsedSec = targetSec
+                    plan.runs[idx].actual.avgHR = 130
+                }
+            }
+            
+            let store = UserDefaultsPlanStore.shared
+            store.save(plan)
+            generatedPlan = plan
+            
+            // 3. Now simulate "now" at the start of the *next* week and run adaptation.
+            let nextWeekStart = thisWeekStart.addingWeeks(1)
+            
+            let explicitDays = data.trainingPrefs.selectedDays
+            let inferredDays = inferSelectedDays(from: plan)
+            let selectedDays = explicitDays.isEmpty ? inferredDays : explicitDays
+            
+            let adapted = PlanMapper.applyWeeklyAdaptationIfDue(
+                existing: plan,
+                selectedDays: selectedDays,
+                now: nextWeekStart
+            )
+            
+            store.save(adapted)
+            generatedPlan = adapted
+        }
+    #endif
+
     func computeRecommendation() {
         recommendedPlan = PlanLibrary.recommend(for: data)
         data.recommendedPlan = recommendedPlan
@@ -45,6 +129,39 @@ final class PlanViewModel: ObservableObject {
         #if DEBUG
             PlanEngineDebug.printInitialPlan(from: data)
         #endif
+    }
+
+    func ensurePlanUpToDate(now: Date = Date()) {
+        let store = UserDefaultsPlanStore.shared
+
+        // If there is no stored plan yet, fall back to initial generation.
+        if store.load() == nil {
+            generatePlan()
+            return
+        }
+
+        // Load the latest stored plan and run it through the adaptation pipeline.
+        guard let existing = store.load() else { return }
+
+        // Prefer onboarding training prefs if available, otherwise infer from the plan.
+        let explicitDays = data.trainingPrefs.selectedDays
+        let inferredDays = inferSelectedDays(from: existing)
+        let selectedDays = explicitDays.isEmpty ? inferredDays : explicitDays
+
+        let adapted = PlanMapper.applyWeeklyAdaptationIfDue(
+            existing: existing,
+            selectedDays: selectedDays,
+            now: now
+        )
+
+        store.save(adapted)
+        generatedPlan = adapted
+    }
+
+    private func inferSelectedDays(from plan: GeneratedPlan) -> Set<Int> {
+        let cal = Calendar.current
+        let sample = plan.runs.prefix(14)
+        return Set(sample.map { cal.component(.weekday, from: $0.date) })
     }
 
     func markRun(_ run: ScheduledRun, as newStatus: RunStatus) {
@@ -86,5 +203,22 @@ final class PlanViewModel: ObservableObject {
         if changed {
             generatedPlan = plan
         }
+    }
+}
+
+extension Date {
+    fileprivate func mondayFloor() -> Date {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2  // Monday
+        let weekday = cal.component(.weekday, from: self)
+        let delta = (weekday == 1) ? -6 : (2 - weekday)  // shift Sunday back 6, otherwise to Monday
+        let start = cal.date(byAdding: .day, value: delta, to: self)!
+        return cal.startOfDay(for: start)
+    }
+    fileprivate func addingDays(_ n: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: n, to: self)!
+    }
+    fileprivate func addingWeeks(_ n: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: 7 * n, to: self)!
     }
 }

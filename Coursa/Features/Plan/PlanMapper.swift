@@ -115,16 +115,37 @@ enum PlanMapper {
             return existing
         }
 
-        // Sum TRIMP (or fallback) for the closing week
-        let weekRuns = runs(in: existing, weekStart: closingWeekStart)
-        let weekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: weekRuns)
+        // Sum TRIMP for the closing week (this week)
+        let thisWeekRuns = runs(in: existing, weekStart: closingWeekStart)
+        guard !thisWeekRuns.isEmpty else { return existing }
 
-        // Decide next week target with +10% cap
-        let prevTarget = WeeklyPlanner.estimatedWeeklyMinutes(from: weekRuns)
+        let thisWeekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: thisWeekRuns)
+
+        // Look one week back to get last week's TRIMP and minutes, if available.
+        let lastWeekStart = closingWeekStart.addingWeeks(-1)
+        let lastWeekRuns = runs(in: existing, weekStart: lastWeekStart)
+
+        let lastWeekTRIMP: Double
+        let lastWeekMinutes: Int
+
+        if !lastWeekRuns.isEmpty {
+            // Normal case: we have a previous training week.
+            lastWeekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: lastWeekRuns)
+            lastWeekMinutes = WeeklyPlanner.estimatedWeeklyMinutes(from: lastWeekRuns)
+        } else {
+            // First adaptive week: treat the closing week as baseline.
+            lastWeekTRIMP = thisWeekTRIMP
+            lastWeekMinutes = WeeklyPlanner.estimatedWeeklyMinutes(from: thisWeekRuns)
+        }
+
+        // Decide next week target using PRD adaptation rules:
+        // - Undertrained or overreached -> overloadFactor = 1.0 (repeat week)
+        // - Good progression (TRIMP within [1.0, 1.1] * lastWeekTRIMP) -> overloadFactor = 1.05
+        // - Always respect +10% cap.
         let nextTarget = AdaptationEngine.nextWeekMinutes(
-            lastWeekTRIMP: weekTRIMP,
-            thisWeekTRIMP: weekTRIMP, // same week (we sum TRIMP weekly)
-            lastWeekMinutes: prevTarget,
+            lastWeekTRIMP: lastWeekTRIMP,
+            thisWeekTRIMP: thisWeekTRIMP,
+            lastWeekMinutes: lastWeekMinutes,
             runningFrequency: selectedDays.count
         )
 

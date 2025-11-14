@@ -12,20 +12,26 @@ struct CoreTabView: View {
 
     var body: some View {
         TabView {
-            HomeView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
-                }
+            NavigationStack {
+                HomeView()
+            }
+            .tabItem {
+                Label("Dashboard", systemImage: "house.fill")
+            }
 
-            PlanView(vm: PlanViewModel(data: onboardingData))
-                .tabItem {
-                    Label("Plan", systemImage: "figure.run")
-                }
+            NavigationStack {
+                PlanView(vm: PlanViewModel(data: onboardingData))
+            }
+            .tabItem {
+                Label("Plan", systemImage: "figure.run")
+            }
 
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gearshape.fill")
+            }
         }
         .tint(Color("green-500"))
     }

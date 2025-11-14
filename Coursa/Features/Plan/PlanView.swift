@@ -12,11 +12,24 @@ struct PlanView: View {
     @StateObject var vm: PlanViewModel
 
     // MARK: - Tab state and enum
-    private enum PlanInnerTab: String, CaseIterable { case plan = "Plan"; case activity = "Activity" }
+    private enum PlanInnerTab: String, CaseIterable {
+        case plan = "Plan"
+        case activity = "Activity"
+    }
     @State private var selectedTab: PlanInnerTab = .plan
     @State private var selectedWeekIndex: Int? = nil
 
     var body: some View {
+        #if DEBUG
+            VStack(alignment: .leading, spacing: 4) {
+                Text("DEBUG – This week: \(vm.debugThisWeekMinutes) min")
+                Text("DEBUG – Next week: \(vm.debugNextWeekMinutes) min")
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .padding(.horizontal)
+            .padding(.top, 4)
+        #endif
         ZStack {
             VStack(spacing: 16) {
                 header()
@@ -26,26 +39,41 @@ struct PlanView: View {
                 if selectedTab == .plan {
                     if let generated = vm.generatedPlan {
                         // --- derive plan stats (all runs) ---
-                        let allRuns = generated.runs.sorted { $0.date < $1.date }
+                        let allRuns = generated.runs.sorted {
+                            $0.date < $1.date
+                        }
                         let totalSessions = allRuns.count
-                        let completedSessions = allRuns.filter { $0.status == .completed }.count
+                        let completedSessions = allRuns.filter {
+                            $0.status == .completed
+                        }.count
 
                         // Runs that are still part of the active plan view
-                        let planRuns = vm.plannedRuns.sorted { $0.date < $1.date }
+                        let planRuns = vm.plannedRuns.sorted {
+                            $0.date < $1.date
+                        }
 
-                        let progress = totalSessions == 0 ? 0 : Double(completedSessions) / Double(totalSessions)
+                        let progress =
+                            totalSessions == 0
+                            ? 0
+                            : Double(completedSessions) / Double(totalSessions)
 
                         // distance completed (prefer actual.distanceKm, fallback to template targetDistanceKm)
-                        let completedKm = allRuns
+                        let completedKm =
+                            allRuns
                             .filter { $0.status == .completed }
                             .reduce(0.0) { sum, run in
-                                if let d = run.actual.distanceKm { return sum + d }
-                                if let t = run.template.targetDistanceKm { return sum + t }
+                                if let d = run.actual.distanceKm {
+                                    return sum + d
+                                }
+                                if let t = run.template.targetDistanceKm {
+                                    return sum + t
+                                }
                                 return sum
                             }
 
                         // target distance = sum of template targets (ignore nils)
-                        let targetKm = allRuns
+                        let targetKm =
+                            allRuns
                             .compactMap { $0.template.targetDistanceKm }
                             .reduce(0, +)
 
@@ -56,49 +84,72 @@ struct PlanView: View {
 
                         let sorted = planRuns
                         let now = Date()
-                        
+
                         // Determine default (current) week index
                         let defaultIndex =
                             allGroups.firstIndex { group in
-                                guard let first = group._value.first?.date else { return false }
-                                return first >= Calendar.current.startOfDay(for: now)
+                                guard let first = group._value.first?.date
+                                else { return false }
+                                return first
+                                    >= Calendar.current.startOfDay(for: now)
                             } ?? 0
-                        
+
                         // Bind selected index, defaulting to current week
                         let bindingIndex = Binding<Int>(
                             get: { selectedWeekIndex ?? defaultIndex },
-                            set: { selectedWeekIndex = max(0, min($0, max(allGroups.count - 1, 0))) }
+                            set: {
+                                selectedWeekIndex = max(
+                                    0,
+                                    min($0, max(allGroups.count - 1, 0))
+                                )
+                            }
                         )
                         let selectedIndex = bindingIndex.wrappedValue
-                        
+
                         // Today runs (only if viewing current week)
-                        let todayRuns = sorted.filter { Calendar.current.isDate($0.date, inSameDayAs: now) }
-                        let selectedGroup = allGroups.isEmpty ? nil : allGroups[selectedIndex]
+                        let todayRuns = sorted.filter {
+                            Calendar.current.isDate($0.date, inSameDayAs: now)
+                        }
+                        let selectedGroup =
+                            allGroups.isEmpty ? nil : allGroups[selectedIndex]
                         let selectedRuns = selectedGroup?._value ?? []
-                        let selectedRunsExcludingToday = selectedRuns.filter { !Calendar.current.isDate($0.date, inSameDayAs: now) }
-                        
+                        let selectedRunsExcludingToday = selectedRuns.filter {
+                            !Calendar.current.isDate($0.date, inSameDayAs: now)
+                        }
+
                         ScrollView {
-                            
+
                             LazyVStack(alignment: .leading, spacing: 20) {
                                 PlanProgressCard(
-                                    title: vm.recommendedPlan?.rawValue ?? "Base Endurance Plan",
+                                    title: vm.recommendedPlan?.rawValue
+                                        ?? "Base Endurance Plan",
                                     progress: progress,
                                     weekNow: weekNow,
                                     weekTotal: weekTotal,
                                     completedKm: completedKm,
                                     targetKm: targetKm
                                 )
-                                
-                                weekSelector(totalWeeks: allGroups.count, currentIndex: bindingIndex)
-                                    .padding(.bottom, 8)
+
+                                weekSelector(
+                                    totalWeeks: allGroups.count,
+                                    currentIndex: bindingIndex
+                                )
+                                .padding(.bottom, 8)
                                 // Show Today only when looking at the current week
-                                if selectedIndex == defaultIndex, !todayRuns.isEmpty {
+                                if selectedIndex == defaultIndex,
+                                    !todayRuns.isEmpty
+                                {
                                     Text("Today")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .font(
+                                            .system(size: 15, weight: .semibold)
+                                        )
+                                        .frame(
+                                            maxWidth: .infinity,
+                                            alignment: .leading
+                                        )
                                         .padding(.top, 4)
                                         .foregroundStyle(Color("white-500"))
-                                    
+
                                     ForEach(todayRuns) { run in
                                         NavigationLink {
                                             PlanDetailView(run: run)
@@ -108,13 +159,16 @@ struct PlanView: View {
                                     }
                                     .padding(.vertical, 4)
                                 }
-                                
+
                                 Text("Week \(selectedIndex + 1) Sessions")
                                     .font(.system(size: 15, weight: .semibold))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        alignment: .leading
+                                    )
                                     .padding(.top, 4)
                                     .foregroundStyle(Color("white-500"))
-                                
+
                                 ForEach(selectedRunsExcludingToday) { run in
                                     NavigationLink {
                                         PlanDetailView(run: run)
@@ -131,6 +185,11 @@ struct PlanView: View {
                                 Text("Manage Plan")
                             }
                             .buttonStyle(SecondaryButtonStyle())
+                            #if DEBUG
+                            Button("Debug Adapt") {
+                                vm.debugCompleteThisWeekAndAdapt()
+                            }
+                            #endif
                         }
                     } else {
                         Spacer()
@@ -146,7 +205,9 @@ struct PlanView: View {
 
                             Text("Pick your preferred plan to get started.")
                                 .font(.system(size: 14))
-                                .foregroundStyle(Color("white-500").opacity(0.7))
+                                .foregroundStyle(
+                                    Color("white-500").opacity(0.7)
+                                )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color("black-500"))
@@ -160,17 +221,25 @@ struct PlanView: View {
                         VStack(spacing: 12) {
                             Image(systemName: "chart.bar.xaxis")
                                 .font(.system(size: 36, weight: .regular))
-                                .foregroundStyle(Color("white-500").opacity(0.8))
+                                .foregroundStyle(
+                                    Color("white-500").opacity(0.8)
+                                )
                             Text("No activity yet")
                                 .font(.headline)
                                 .foregroundStyle(Color("white-500"))
                             Text("Completed and skipped runs will appear here.")
                                 .font(.subheadline)
-                                .foregroundStyle(Color("white-500").opacity(0.7))
+                                .foregroundStyle(
+                                    Color("white-500").opacity(0.7)
+                                )
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 24)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity,
+                            alignment: .top
+                        )
                         .padding(.top, 32)
                     } else {
                         ScrollView {
@@ -190,13 +259,22 @@ struct PlanView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 20)
-//            .navigationTitle("Your Plan").foregroundStyle(Color("white-500"))
+            //            .navigationTitle("Your Plan").foregroundStyle(Color("white-500"))
             .onAppear {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
-                if vm.generatedPlan == nil { vm.generatePlan() }
+                vm.ensurePlanUpToDate()
                 vm.applyAutoSkipIfNeeded()
             }
-
+//            #if DEBUG
+//                .toolbar {
+//                    ToolbarItem(placement: .topBarTrailing) {
+//                        Button("Debug Adapt") {
+//                            vm.debugCompleteThisWeekAndAdapt()
+//                        }
+//                    }
+//                }
+//                .navigationBarTitleDisplayMode(.inline)
+//            #endif
         }
         .background(Color("black-500"))
     }
@@ -210,8 +288,18 @@ struct PlanView: View {
                         selectedTab = tab
                     } label: {
                         Text(tab.rawValue)
-                            .font(.system(size: 17, weight: selectedTab == tab ? .semibold : .regular))
-                            .foregroundStyle(Color("white-500").opacity(selectedTab == tab ? 1.0 : 0.65))
+                            .font(
+                                .system(
+                                    size: 17,
+                                    weight: selectedTab == tab
+                                        ? .semibold : .regular
+                                )
+                            )
+                            .foregroundStyle(
+                                Color("white-500").opacity(
+                                    selectedTab == tab ? 1.0 : 0.65
+                                )
+                            )
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 1)
                     }
@@ -228,11 +316,16 @@ struct PlanView: View {
 
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(selectedTab == .plan ? Color("white-500") : .clear)
+                        .fill(
+                            selectedTab == .plan ? Color("white-500") : .clear
+                        )
                         .frame(height: 2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Rectangle()
-                        .fill(selectedTab == .activity ? Color("white-500") : .clear)
+                        .fill(
+                            selectedTab == .activity
+                                ? Color("white-500") : .clear
+                        )
                         .frame(height: 2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -241,7 +334,9 @@ struct PlanView: View {
     }
 
     @ViewBuilder
-    private func weekSelector(totalWeeks: Int, currentIndex: Binding<Int>) -> some View {
+    private func weekSelector(totalWeeks: Int, currentIndex: Binding<Int>)
+        -> some View
+    {
         VStack(spacing: 10) {
             HStack {
                 Button {
@@ -253,15 +348,15 @@ struct PlanView: View {
                         .font(.system(size: 17, weight: .medium))
                         .foregroundStyle(Color.white)
                         .frame(width: 32, height: 32)
-                        
+
                 }
                 .buttonStyle(.plain)
-                
+
                 Text("Week \(currentIndex.wrappedValue + 1)")
                     .font(.system(size: 17, weight: .medium))
                     .frame(maxWidth: .infinity)
                     .foregroundStyle(Color.white)
-                
+
                 Button {
                     if currentIndex.wrappedValue < totalWeeks - 1 {
                         currentIndex.wrappedValue += 1
@@ -291,13 +386,13 @@ struct PlanView: View {
 
     @ViewBuilder
     private func header() -> some View {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Your Plan")
-                    .font(.system(size: 35))
-                    .foregroundStyle(Color("white-500"))
-                    .fontWeight(.medium)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Your Plan")
+                .font(.system(size: 35))
+                .foregroundStyle(Color("white-500"))
+                .fontWeight(.medium)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // group runs by [year, weekOfYear] so weeks don’t mix across years
@@ -333,18 +428,27 @@ struct PlanView: View {
 #Preview("PlanView – with OnboardingData") {
     var onboarding = OnboardingData()
     onboarding.goal = .improveEndurance
-    onboarding.personalInfo = .init(age: 22, gender: "M", weightKg: 68, heightCm: 173)
-    onboarding.trainingPrefs = .init(daysPerWeek: 4, selectedDays: [2, 4, 6, 7]) // Mon, Wed, Fri, Sat
-    onboarding.personalBest = .init(distanceKm: 5.0, durationSeconds: 25 * 60)   // 25:00 for 5K
-    onboarding.startDate = Calendar.current.nextDate(
-        after: Date(),
-        matching: DateComponents(weekday: 2), // next Monday
-        matchingPolicy: .nextTime
-    ) ?? Date()
+    onboarding.personalInfo = .init(
+        age: 22,
+        gender: "M",
+        weightKg: 68,
+        heightCm: 173
+    )
+    onboarding.trainingPrefs = .init(
+        daysPerWeek: 4,
+        selectedDays: [2, 4, 6, 7]
+    )  // Mon, Wed, Fri, Sat
+    onboarding.personalBest = .init(distanceKm: 5.0, durationSeconds: 25 * 60)  // 25:00 for 5K
+    onboarding.startDate =
+        Calendar.current.nextDate(
+            after: Date(),
+            matching: DateComponents(weekday: 2),  // next Monday
+            matchingPolicy: .nextTime
+        ) ?? Date()
 
     return NavigationStack {
         PlanView(vm: PlanViewModel(data: onboarding))
-//            .preferredColorScheme(.dark)
+            //            .preferredColorScheme(.dark)
             .background(Color("black-500"))
     }
 }

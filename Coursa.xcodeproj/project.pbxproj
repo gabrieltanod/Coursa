@@ -75,7 +75,7 @@
 		4013E1752EC5BE04005A8A41 /* Exceptions for "Coursa" folder in "CoursaWatch Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				WatchConnectivity/Model.swift,
+				Features/Plan/PlanModels.swift,
 				WatchConnectivity/SyncService.swift,
 			);
 			target = 406EDCC42EAA260E0049DEA9 /* CoursaWatch Watch App */;
