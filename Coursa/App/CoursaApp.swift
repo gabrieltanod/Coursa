@@ -14,15 +14,23 @@ struct CoursaApp: App {
     
     
     // Watch Connectivity
-//    @StateObject private var syncService = SyncService()
-//    @StateObject private var planManager = PlanManager()
+    @StateObject private var syncService = SyncService()
+    @StateObject private var planManager = PlanManager()
 
     
     var body: some Scene {
         WindowGroup {
             AppRootView()
                 .environmentObject(router)
+                .environmentObject(syncService)
+                .environmentObject(planManager)
                 .environment(\.colorScheme, .dark)
+                .onAppear {
+                    // Ensure a single SyncService instance is used app-wide
+                    if planManager.syncService == nil {
+                        planManager.syncService = syncService
+                    }
+                }
             
             
             // Watch Connectivity

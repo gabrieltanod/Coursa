@@ -23,15 +23,6 @@ class PlanManager: NSObject, ObservableObject {
     
     var syncService: SyncService?
     
-    private func getSyncService() -> SyncService {
-        if let service = syncService {
-            return service
-        }
-        let service = SyncService()
-        syncService = service
-        return service
-    }
-    
     func buttonSendPlanTapped() -> RunningPlan? {
         
         let plan = RunningPlan(
@@ -50,7 +41,10 @@ class PlanManager: NSObject, ObservableObject {
 
     
     func sendPlanToWatchOS(_ plan: RunningPlan) {
-        let service = getSyncService()
+        guard let service = syncService else {
+            print("PlanManager: SyncService not configured; cannot send plan.")
+            return
+        }
         DispatchQueue.main.async {
             service.sendPlanToWatchOS(plan: plan)
         }
