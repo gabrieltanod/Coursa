@@ -322,60 +322,34 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     private func decodeAndStoreSummary(from dictionary: [String: Any]) {
-        // Handle UUID as String (since Dictionary can't store UUID directly)
-        var id: UUID
-        if let idString = dictionary["id"] as? String {
-            id = UUID(uuidString: idString) ?? UUID()
-        } else if let idUUID = dictionary["id"] as? UUID {
-            id = idUUID
-        } else {
-            id = UUID()
-        }
+        print("📱 iOS: decodeAndStoreSummary received keys:", dictionary.keys)
         
-        guard let totalTime = dictionary["totalTime"] as? Double,
-              let totalDistance = dictionary["totalDistance"] as? Double,
-              let averageHeartRate = dictionary["averageHeartRate"] as? Double,
-              let averagePace = dictionary["averagePace"] as? Double,
-              let elevationGain = dictionary["elevationGain"] as? Double else {
-#if os(iOS)
-            print("iOS: Failed to decode RunningSummary from dictionary. Keys: \(dictionary.keys)")
-#endif
-#if os(watchOS)
-            print("watchOS: Failed to decode RunningSummary from dictionary. Keys: \(dictionary.keys)")
-#endif
+        guard
+            let totalTime = (dictionary["totalTime"] as? Double) ?? (dictionary["totalTime"] as? NSNumber)?.doubleValue,
+            let totalDistance = (dictionary["totalDistance"] as? Double) ?? (dictionary["totalDistance"] as? NSNumber)?.doubleValue,
+            let averageHeartRate = (dictionary["averageHeartRate"] as? Double) ?? (dictionary["averageHeartRate"] as? NSNumber)?.doubleValue,
+            let averagePace = (dictionary["averagePace"] as? Double) ?? (dictionary["averagePace"] as? NSNumber)?.doubleValue
+        else {
+            print("📱 iOS: ❌ Failed to decode RunningSummary from dictionary. Values:", dictionary)
             return
         }
-        
-        // Handle zoneDuration - keys might be Int or String after serialization
-        var zoneDuration: [Int: Double] = [:]
-        if let zoneDict = dictionary["zoneDuration"] as? [Int: Double] {
-            zoneDuration = zoneDict
-        } else if let zoneDictStringKeys = dictionary["zoneDuration"] as? [String: Double] {
-            // Convert String keys to Int keys
-            for (key, value) in zoneDictStringKeys {
-                if let intKey = Int(key) {
-                    zoneDuration[intKey] = value
-                }
-            }
-        }
+
+        let idString = dictionary["id"] as? String ?? UUID().uuidString
         
         let decodedSummary = RunningSummary(
-            id: id,
+            id: idString,
             totalTime: totalTime,
             totalDistance: totalDistance,
             averageHeartRate: averageHeartRate,
-            averagePace: averagePace,
-            elevationGain: elevationGain,
-            zoneDuration: zoneDuration
+            averagePace: averagePace
         )
-        
+
         DispatchQueue.main.async {
             self.summary = decodedSummary
-#if os(iOS)
-            print("iOS: Successfully decoded and stored RunningSummary. Total Time: \(decodedSummary.totalTime)s, Distance: \(decodedSummary.totalDistance)km")
-#endif
+            print("📱 iOS: ✅ Summary stored: \(decodedSummary)")
         }
     }
+
     
     
     // ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
@@ -487,13 +461,13 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         }
         
         let data: [String: Any] = [
-            "id": summary.id.uuidString,
+            "id": summary.id,
             "totalTime": summary.totalTime,
             "totalDistance": summary.totalDistance,
             "averageHeartRate": summary.averageHeartRate,
-            "averagePace": summary.averagePace,
-            "elevationGain": summary.elevationGain,
-            "zoneDuration": summary.zoneDuration
+            "averagePace": summary.averagePace
+//            "elevationGain": summary.elevationGain,
+//            "zoneDuration": summary.zoneDuration
         ]
         
         print("watchOS: Attempting to send summary (activationState: activated, isReachable: \(session.isReachable))")
