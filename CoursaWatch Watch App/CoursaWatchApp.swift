@@ -14,10 +14,10 @@ struct CoursaWatch_Watch_AppApp: App {
     
     var body: some Scene {
         WindowGroup {
-//            HomePageView()
-            
+            HomePageView()
+           
             // Test WatchConnectivity
-            ContentView()
+//            ContentView()
                 .environmentObject(syncService)
         }
     }

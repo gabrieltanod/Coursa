@@ -89,6 +89,31 @@ struct ScheduledRun: Identifiable, Codable {
     }
 }
 
+
+// MARK: - Running Plan Data Model for Send Data to WatchOS
+
+struct RunningPlan: Identifiable, Codable, Hashable{
+    var id: String = UUID().uuidString
+    var date: Date
+    var name: String
+    var kind: RunKind?
+    var targetDistance: Double?
+    var targetHRZone: HRZone?
+    var recPace: String?
+}
+
+extension RunningPlan {
+    init(from scheduledRun: ScheduledRun, recPace: String) {
+        self.id = scheduledRun.id
+        self.date = scheduledRun.date
+        self.name = scheduledRun.template.name
+        self.kind = scheduledRun.template.kind
+        self.targetDistance = scheduledRun.template.targetDistanceKm
+        self.targetHRZone = scheduledRun.template.targetHRZone
+        self.recPace = recPace
+    }
+}
+
 private extension Double {
     var clean: String {
         truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", self) : String(self)

@@ -13,9 +13,10 @@ import SwiftUI
 class PlanManager: NSObject, ObservableObject {
     
     
-    @Published var title: String = ""
-    @Published var distance: String = ""
-    @Published var intensity: String = ""
+    @Published var name: String = ""
+    @Published var kind: RunKind?
+    @Published var targetDistance: Double = 0.0
+    @Published var targetHRZone: HRZone?
     @Published var recPace: String = ""
     
     @Published var finalPlan: RunningPlan?
@@ -35,9 +36,10 @@ class PlanManager: NSObject, ObservableObject {
         
         let plan = RunningPlan(
             date: Date(),
-            title: self.title,
-            targetDistance: self.distance,
-            intensity: self.intensity,
+            name: self.name,
+            kind: self.kind,
+            targetDistance: self.targetDistance,
+            targetHRZone: self.targetHRZone,
             recPace: self.recPace
         )
         

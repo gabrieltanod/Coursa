@@ -14,69 +14,55 @@ enum RunningType: String, CaseIterable, Codable {
     
     var displayName: String {
         switch self {
-        case .easyRun:
-            return "Easy Run"
-        case .mafTraining:
-            return "MAF Training"
-        case .longRun:
-            return "Long Run"
+        case .easyRun: return "Easy Run"
+        case .mafTraining: return "MAF Training"
+        case .longRun: return "Long Run"
         }
     }
     
     var displayGradient: LinearGradient {
         let colors: [Color]
-        let stops: [Gradient.Stop]
-        let startPoint: UnitPoint
-        let endPoint: UnitPoint
-        
         switch self {
-            
         case .easyRun:
             colors = [Color("er1"), Color("er2")]
-            stops = [
-                .init(color: colors[0], location: 0.1556),
-                .init(color: colors[1], location: 1.114)
-            ]
-            startPoint = .topLeading
-            endPoint = .bottomTrailing
-            
         case .mafTraining:
             colors = [Color("maf1"), Color("maf2")]
-            stops = [
-                .init(color: colors[0], location: 0.1556),
-                .init(color: colors[1], location: 1.114)
-            ]
-            startPoint = .topLeading
-            endPoint = .bottomTrailing
-            
         case .longRun:
             colors = [Color("lr1"), Color("lr2")]
-            stops = [
-                .init(color: colors[0], location: 0.1556),
-                .init(color: colors[1], location: 1.114)
-            ]
-            startPoint = .topLeading
-            endPoint = .bottomTrailing
         }
         
         return LinearGradient(
-            stops: stops,
-            startPoint: startPoint,
-            endPoint: endPoint
+            gradient: Gradient(stops: [
+                .init(color: colors[0], location: 0.1556),
+                .init(color: colors[1], location: 1.114)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
         )
     }
     
+    init(from runKind: RunKind?) {
+        switch runKind {
+        case .easy: self = .easyRun
+        case .maf: self = .mafTraining
+        case .long: self = .longRun
+        default: self = .easyRun  // fallback
+        }
+    }
 }
 
 struct PlanCardView: View {
-    let date : Date
-    let targetDistance: String
-    let intensity: String
-    let runningType: RunningType
+    
+    let plan: RunningPlan
+    
+    var runningType: RunningType {
+            RunningType(from: plan.kind)
+        }
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(formatDate(date))
+            Text(formatDate(plan.date))
                 .font(.helveticaNeue(size: 13, weight: .regular))
                 .foregroundColor(Color("primary"))
             
@@ -84,7 +70,7 @@ struct PlanCardView: View {
                 .font(.helveticaNeue(size: 20, weight: .bold))
                 .foregroundColor(Color("primary"))
             
-            Text("\(targetDistance) - \(intensity)")
+            Text("\(plan.targetDistance) - \(plan.targetHRZone)")
                 .font(.helveticaNeue(size: 14, weight: .regular))
                 .foregroundColor(Color("primary"))
         }
@@ -101,8 +87,3 @@ struct PlanCardView: View {
         return formatter.string(from: date)
     }
 }
-
-#Preview {
-    PlanCardView(date: Date(), targetDistance: "3km", intensity: "HR Zone 2", runningType: .longRun)
-}
-

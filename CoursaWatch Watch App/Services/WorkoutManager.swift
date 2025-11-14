@@ -41,7 +41,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private var hapticTimer: Timer?
     
     // SyncService - can be injected from environment or will use own instance
-    var syncService: SyncService?
+    @Published var syncService: SyncService?
     
     // Lazy initialization of syncService if not provided
     private func getSyncService() -> SyncService {

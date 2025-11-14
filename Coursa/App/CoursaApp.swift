@@ -9,11 +9,12 @@ import SwiftUI
 
 @main
 struct CoursaApp: App {
-   @StateObject private var router = AppRouter()
+    @StateObject private var router = AppRouter()
     
-    // //  Test Watch Connectivity [jangan diapus]
-    // @StateObject private var syncService = SyncService()
-    // @StateObject private var planManager = PlanManager()
+    // Watch Connectivity
+//    @StateObject private var syncService = SyncService()
+//    @StateObject private var planManager = PlanManager()
+
     
     var body: some Scene {
          WindowGroup {
@@ -21,12 +22,12 @@ struct CoursaApp: App {
                .environmentObject(router)
                .environment(\.colorScheme, .dark)
             
-            
-            // Test Watch Connectivity [jangan diapus]
-            // WatchConnectDisplay()
-            // PlanConnectDisplay()
-            //     .environmentObject(syncService)
-            //     .environmentObject(planManager)
+            // Watch Connectivity
+//            WatchConnectDisplay()
+//            PlanConnectDisplay()
+//                .environmentObject(syncService)
+//                .environmentObject(planManager)
+
         }
     }
 }
