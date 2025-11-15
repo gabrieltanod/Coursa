@@ -31,13 +31,19 @@ final class PlanViewModel: ObservableObject {
     }
 
     var debugThisWeekMinutes: Int {
-        guard let plan = generatedPlan else { return 0 }
+        let store = UserDefaultsPlanStore.shared
+        let plan = store.load() ?? generatedPlan
+        guard let plan else { return 0 }
+
         let start = Date().mondayFloor()
         return sumMinutes(runs: runs(in: plan, weekStart: start))
     }
 
     var debugNextWeekMinutes: Int {
-        guard let plan = generatedPlan else { return 0 }
+        let store = UserDefaultsPlanStore.shared
+        let plan = store.load() ?? generatedPlan
+        guard let plan else { return 0 }
+
         let start = Date().mondayFloor().addingWeeks(1)
         return sumMinutes(runs: runs(in: plan, weekStart: start))
     }
@@ -59,56 +65,68 @@ final class PlanViewModel: ObservableObject {
 
     #if DEBUG
         func debugCompleteThisWeekAndAdapt() {
-            guard var plan = generatedPlan else { return }
-            
+            let store = UserDefaultsPlanStore.shared
+            guard var plan = store.load() ?? generatedPlan else { return }
+
             let cal = Calendar.current
-            
+
             // 1. Find the earliest week in the plan that still has active runs
             //    (planned or in-progress). This lets us reuse the debug button
             //    for later weeks, not just the first calendar week.
             let allWeekStarts = Set(plan.runs.map { $0.date.mondayFloor() })
             let sortedWeekStarts = allWeekStarts.sorted()
-            
-            guard let thisWeekStart = sortedWeekStarts.first(where: { weekStart in
-                let weekRuns = runs(in: plan, weekStart: weekStart)
-                return weekRuns.contains { run in
-                    run.status == .planned || run.status == .inProgress
-                }
-            }) else {
+
+            guard
+                let thisWeekStart = sortedWeekStarts.first(where: { weekStart in
+                    let weekRuns = runs(in: plan, weekStart: weekStart)
+                    return weekRuns.contains { run in
+                        run.status == .planned || run.status == .inProgress
+                    }
+                })
+            else {
                 // No active weeks left to simulate.
                 return
             }
-            
+
             let thisWeekEnd = thisWeekStart.addingTimeInterval(7 * 24 * 60 * 60)
-            
+            #if DEBUG
+                print(
+                    "[DEBUG] before – completed: \(plan.runs.filter { $0.status == .completed }.count)"
+                )
+            #endif
             // 2. Mark all runs in this week as completed with mid-Z2 HR
             for idx in plan.runs.indices {
                 let d = plan.runs[idx].date
                 if d >= thisWeekStart && d < thisWeekEnd {
                     plan.runs[idx].status = .completed
-                    let targetSec = plan.runs[idx].template.targetDurationSec ?? 30 * 60
+                    let targetSec =
+                        plan.runs[idx].template.targetDurationSec ?? 30 * 60
                     plan.runs[idx].actual.elapsedSec = targetSec
                     plan.runs[idx].actual.avgHR = 130
                 }
             }
-            
-            let store = UserDefaultsPlanStore.shared
+            #if DEBUG
+                print(
+                    "[DEBUG] after – completed: \(plan.runs.filter { $0.status == .completed }.count)"
+                )
+            #endif
             store.save(plan)
             generatedPlan = plan
-            
+
             // 3. Now simulate "now" at the start of the *next* week and run adaptation.
             let nextWeekStart = thisWeekStart.addingWeeks(1)
-            
+
             let explicitDays = data.trainingPrefs.selectedDays
             let inferredDays = inferSelectedDays(from: plan)
-            let selectedDays = explicitDays.isEmpty ? inferredDays : explicitDays
-            
+            let selectedDays =
+                explicitDays.isEmpty ? inferredDays : explicitDays
+
             let adapted = PlanMapper.applyWeeklyAdaptationIfDue(
                 existing: plan,
                 selectedDays: selectedDays,
                 now: nextWeekStart
             )
-            
+
             store.save(adapted)
             generatedPlan = adapted
         }

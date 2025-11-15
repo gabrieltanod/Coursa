@@ -11,6 +11,7 @@ import SwiftUI
 struct CoursaApp: App {
     
     @StateObject private var router = AppRouter()
+    @StateObject private var planSession = PlanSessionStore()
     
     
     // Watch Connectivity
@@ -24,6 +25,7 @@ struct CoursaApp: App {
                 .environmentObject(router)
                 .environmentObject(syncService)
                 .environmentObject(planManager)
+                .environmentObject(planSession)
                 .environment(\.colorScheme, .dark)
                 .onAppear {
                     // Ensure a single SyncService instance is used app-wide

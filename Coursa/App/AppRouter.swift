@@ -27,14 +27,26 @@ final class AppRouter: ObservableObject {
         path.append(Route.home)
     }
 
-    func reset(hard: Bool = true) {
+    func reset(hard: Bool = true, planSession: PlanSessionStore? = nil) {
+        // Reset navigation + onboarding flag
         path = NavigationPath()
         didOnboard = false
 
         guard hard else { return }
 
-        // Clear anything that re-triggers onboarding skip
-        OnboardingStore.clear()  // implement this to remove stored data
+        // --- CLEAR ONBOARDING DATA ---
+        OnboardingStore.clear()
         UserDefaults.standard.removeObject(forKey: "hasSeenWelcome")
+
+        // --- CLEAR GENERATED PLAN (persisted) ---
+        UserDefaults.standard.removeObject(forKey: "coursa.generatedPlan")
+
+        // --- CLEAR IN-MEMORY PLAN STATE (PlanSessionStore) ---
+        if let session = planSession {
+            session.generatedPlan = nil
+        }
+
+        // --- CLEAR ANY OTHER FLAGS YOU MAY ADD LATER ---
+        UserDefaults.standard.removeObject(forKey: "coursa.autoSkipApplied")
     }
 }
