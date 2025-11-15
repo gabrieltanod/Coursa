@@ -31,12 +31,26 @@ struct PlanView: View {
             .padding(.horizontal)
             .padding(.top, 4)
         #endif
+        #if DEBUG
+            Button("Fake Complete First Run") {
+                if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
+                    let fake = RunningSummary(
+                        id: run.id,
+                        totalTime: 1800,
+                        totalDistance: 5.0,
+                        averageHeartRate: 140,
+                        averagePace: 360
+                    )
+                    planSession.applyWatchSummary(fake)
+                }
+            }
+        #endif
         ZStack {
             VStack(spacing: 16) {
                 PlanHeader()
 
                 PlanTabs(selectedTab: $selectedTab)
-                
+
                 if selectedTab == .plan {
                     if let generated = planSession.generatedPlan
                         ?? UserDefaultsPlanStore.shared.load()
@@ -121,7 +135,7 @@ struct PlanView: View {
                         }
 
                         ScrollView {
-                            
+
                             DynamicPlanCard()
 
                             LazyVStack(alignment: .leading, spacing: 20) {
@@ -170,11 +184,12 @@ struct PlanView: View {
                             }
                             .buttonStyle(SecondaryButtonStyle())
                             #if DEBUG
-                            Button("Debug Adapt") {
-                                vm.debugCompleteThisWeekAndAdapt()
-                                // Reload shared plan from persistence so both tabs see the update
-                                planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
-                            }
+                                Button("Debug Adapt") {
+                                    vm.debugCompleteThisWeekAndAdapt()
+                                    // Reload shared plan from persistence so both tabs see the update
+                                    planSession.generatedPlan =
+                                        UserDefaultsPlanStore.shared.load()
+                                }
                             #endif
                         }
                     } else {
@@ -201,11 +216,14 @@ struct PlanView: View {
                     }
                 } else {
                     // Activity tab: completed & skipped runs
-                    let activitySource = planSession.generatedPlan
+                    let activitySource =
+                        planSession.generatedPlan
                         ?? UserDefaultsPlanStore.shared.load()
 
                     let activity = (activitySource?.runs ?? [])
-                        .filter { $0.status == .completed || $0.status == .skipped }
+                        .filter {
+                            $0.status == .completed || $0.status == .skipped
+                        }
                         .sorted { $0.date > $1.date }
 
                     if activity.isEmpty {
@@ -240,17 +258,26 @@ struct PlanView: View {
                                 ForEach(monthGroups) { group in
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text(monthYearTitle(for: group._key))
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .font(
+                                                .system(
+                                                    size: 15,
+                                                    weight: .semibold
+                                                )
+                                            )
                                             .foregroundStyle(Color("white-500"))
 
-                                        LazyVStack(alignment: .leading, spacing: 12) {
+                                        LazyVStack(
+                                            alignment: .leading,
+                                            spacing: 12
+                                        ) {
                                             ForEach(group._value) { run in
                                                 NavigationLink {
                                                     PlanDetailView(run: run)
                                                 } label: {
                                                     RunningHistoryCard(
                                                         run: run,
-                                                        isSkipped: run.status == .skipped
+                                                        isSkipped: run.status
+                                                            == .skipped
                                                     )
                                                 }
                                             }
@@ -273,20 +300,19 @@ struct PlanView: View {
                 // After any adjustments, reload the shared plan from persistence
                 planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
             }
-//            #if DEBUG
-//                .toolbar {
-//                    ToolbarItem(placement: .topBarTrailing) {
-//                        Button("Debug Adapt") {
-//                            vm.debugCompleteThisWeekAndAdapt()
-//                        }
-//                    }
-//                }
-//                .navigationBarTitleDisplayMode(.inline)
-//            #endif
+            //            #if DEBUG
+            //                .toolbar {
+            //                    ToolbarItem(placement: .topBarTrailing) {
+            //                        Button("Debug Adapt") {
+            //                            vm.debugCompleteThisWeekAndAdapt()
+            //                        }
+            //                    }
+            //                }
+            //                .navigationBarTitleDisplayMode(.inline)
+            //            #endif
         }
         .background(Color("black-500"))
     }
-
 
     // group runs by [year, weekOfYear] so weeks don’t mix across years
     private struct WeekKey: Hashable, Comparable {
@@ -492,10 +518,12 @@ private struct DynamicPlanCard: View {
             Text("Dynamic Plan")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(Color("green-500"))
-            Text("Your training plan is totally flexible and adapts to you! We check in on your progress every week to make sure next week's intensity is perfectly tailored.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundColor(Color("white-500").opacity(0.8))
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                "Your training plan is totally flexible and adapts to you! We check in on your progress every week to make sure next week's intensity is perfectly tailored."
+            )
+            .font(.system(size: 17, weight: .regular))
+            .foregroundColor(Color("white-500").opacity(0.8))
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .frame(maxWidth: 395, alignment: .topLeading)

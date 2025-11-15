@@ -117,9 +117,12 @@ struct RunningHistoryCard: View {
         return "\(minutes) min"
     }
 
-    /// TODO: wire to real HR once you have it.
     private var averageHRText: String {
-        "Avg HR 130 bpm"
+        if let hr = run.actual.avgHR {
+            return "Avg HR \(hr) bpm"
+        } else {
+            return "Avg HR —"
+        }
     }
 }
 

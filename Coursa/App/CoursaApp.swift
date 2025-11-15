@@ -16,15 +16,14 @@ struct CoursaApp: App {
     
     // Watch Connectivity
     @StateObject private var syncService = SyncService()
-    @StateObject private var planManager = PlanManager()
+    @StateObject private var planManager = PlanManager.shared
 
-    
     var body: some Scene {
         WindowGroup {
             AppRootView()
                 .environmentObject(router)
-                .environmentObject(syncService)
                 .environmentObject(planManager)
+                .environmentObject(syncService)
                 .environmentObject(planSession)
                 .environment(\.colorScheme, .dark)
                 .onAppear {
@@ -32,7 +31,9 @@ struct CoursaApp: App {
                     if planManager.syncService == nil {
                         planManager.syncService = syncService
                     }
+                    planManager.planSession = planSession
                 }
+            
             
             
             // Watch Connectivity

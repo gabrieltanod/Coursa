@@ -199,7 +199,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Note: This delegate may not be called reliably in simulators
 #if os(watchOS)
-        print("watchOS: activationDidCompleteWith delegate called - State: \(activationState.rawValue), Error: \(error?.localizedDescription ?? "none")")
+        print("watchOS: activationDidCompleteWith delegate called - State: \(activationState.rawValue), Error: \(String(describing: error))")
 #endif
         
         DispatchQueue.main.async {
@@ -427,17 +427,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
 #if os(watchOS)
     func sendSummaryToiOS(summary: RunningSummary) {
-        // Check activation state first
-        if session.activationState == .activated {
-            // Session is activated - send immediately
-            sendSummaryData(summary: summary)
-        } else {
-            // Session not activated yet - queue it
-            print("watchOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary...")
-            pendingSummary = summary
-            // Don't call activate() here - it's already being called in connect()
-            // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
-        }
+        sendSummaryData(summary: summary)
     }
     
     private func sendSummaryData(summary: RunningSummary) {

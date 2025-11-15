@@ -11,14 +11,15 @@ import SwiftUI
 struct CoursaWatch_Watch_AppApp: App {
     
     @StateObject private var syncService = SyncService()
+    @StateObject private var workoutManager = WorkoutManager()
     
     var body: some Scene {
         WindowGroup {
-            HomePageView()
+            DebugWatchView()
             
             // Test WatchConnectivity
 //            ContentView()
-                .environmentObject(syncService)
+                .environmentObject(workoutManager)
         }
     }
 }
