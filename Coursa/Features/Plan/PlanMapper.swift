@@ -176,10 +176,18 @@ private extension PlanMapper {
     // Your original weekly template logic (still used for onboarding only)
     static func weekTemplate(for plan: Plan, frequency: Int) -> [RunTemplate] {
         func easy(_ min: Int, _ z: HRZone = .z2) -> RunTemplate {
-            .init(name: "Easy Run", kind: .easy, focus: .base, targetDurationSec: min*60, targetDistanceKm: 5, targetHRZone: z, notes: "Low-intensity aerobic run (Zone 2). Builds base endurance and active recovery capacity.")
+            .init(name: "Easy Run", kind: .easy, focus: .base, targetDurationSec: min*60, targetDistanceKm: 5, targetHRZone: z, notes: "The main purpose of the easy run is not speed, but volume and consistency. By running slowly, you stimulate key physiological adaptations: capillarization (you grow more capillaries around your muscle fibers, improving oxygen and nutrient delivery and waste removal) and connective tissue strength (you safely strengthen your muscles, tendons, and ligaments to handle higher training loads later).")
         }
         func long(_ min: Int) -> RunTemplate {
-            .init(name: "Long Run", kind: .long, focus: .endurance, targetDurationSec: min*60, targetDistanceKm: 10, targetHRZone: .z2, notes: "Extended steady-pace session (Zone 2). Strengthens endurance, mental resilience, and fat adaptation.")
+            .init(
+                name: "Long Run",
+                kind: .long,
+                focus: .endurance,
+                targetDurationSec: min*60,
+                targetDistanceKm: 10,
+                targetHRZone: .z2,
+                notes: "The purpose of the long run is multi-faceted, extending beyond basic aerobic fitness. It maximizes fat oxidation—improving your ability to use fat as fuel and avoid 'hitting the wall'—and builds musculoskeletal toughness by strengthening connective tissues, muscles, and bones to resist fatigue over longer distances."
+            )
         }
         func tempo(_ min: Int) -> RunTemplate {
             .init(name: "Tempo Run", kind: .tempo, focus: .speed, targetDurationSec: min*60, targetHRZone: .z3, notes: "Sustained medium-hard effort (Zone 3). Improves lactate threshold and pace control.")
@@ -191,7 +199,7 @@ private extension PlanMapper {
             .init(name: "Recovery Jog", kind: .recovery, focus: .base, targetDurationSec: min*60, targetHRZone: .z1, notes: "Very light effort (Zone 1). Promotes circulation and muscle repair between hard days.")
         }
         func maf(_ min: Int) -> RunTemplate {
-            .init(name: "MAF Training", kind: .maf, focus: .endurance, targetDurationSec: min*45, targetHRZone: .z2, notes: "Steady Zone 2 run near aerobic threshold. Trains efficiency while minimizing fatigue.")
+            .init(name: "MAF Training", kind: .maf, focus: .endurance, targetDurationSec: min*45, targetHRZone: .z2, notes: "In the initial stages of MAF training, a runner must often significantly slow down their pace to stay within the target heart rate. The training is successful when, over time, the runner can maintain the same low heart rate while running at a faster pace. This indicates a more efficient aerobic system.")
         }
 
         switch plan {
