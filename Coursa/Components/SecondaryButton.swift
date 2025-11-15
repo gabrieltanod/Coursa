@@ -10,15 +10,17 @@ import SwiftUI
 struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundColor(.white)
+            .font(.system(size: 17, weight: .medium))
+            .foregroundColor(Color.white)
+            .padding(.horizontal, 0)
             .padding(.vertical, 16)
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .cornerRadius(20)
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20)
+            .inset(by: 0.5)
+            .stroke(.white, lineWidth: 1)
+
             )
-            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }

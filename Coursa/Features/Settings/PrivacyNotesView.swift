@@ -2,6 +2,7 @@
 //  PrivacyNotesView.swift
 //  Coursa
 //
+
 //  Created by Zikar Nurizky on 15/11/25.
 //
 
@@ -67,3 +68,4 @@ struct PrivacyNotesView: View {
 #Preview {
     PrivacyNotesView()
 }
+
