@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AppRootView: View {
     @EnvironmentObject private var router: AppRouter
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @Environment(\.modelContext) private var modelContext
 
     @State private var showSplash = true
 
@@ -48,6 +50,11 @@ struct AppRootView: View {
                 }
             }
             .onAppear {
+                // Configure StoreManager with SwiftData context
+                Task { @MainActor in
+                    StoreManager.shared.configure(modelContext: modelContext)
+                }
+                
                 // If we have onboarding data saved, skip onboarding on fresh launch
                 if !router.didOnboard, OnboardingStore.load() != nil {
                     router.didOnboard = true

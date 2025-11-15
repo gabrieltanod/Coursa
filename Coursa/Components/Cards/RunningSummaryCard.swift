@@ -24,21 +24,18 @@ struct RunningSummaryCard: View {
             endPoint: endPoint
         )
     }
-    var workoutType: String = "Easy Run"
-    var date: String = "Wed, 25 Oct 2025 at 6.00 AM"
-    var duration: String = "35:46"
-    var avgHR: Int = 130
-    var avgPace: Int = 130
-    var distance: Float = 5.3
+    
+    let run: ScheduledRun
+    let summary: RunningSummary
     
     var body: some View {
         VStack(alignment:.leading) {
             VStack (alignment: .leading){
-                Text(workoutType)
+                Text(run.template.name)
                     .font(.custom("Helvetica Neue", size: 34))
                     .fontWeight(.medium)
                     .foregroundStyle(Color("white-500"))
-                Text(date)
+                Text(formatDate(run.date))
                     .font(.custom("Helvetica Neue", size: 17))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("black-100"))
@@ -51,7 +48,7 @@ struct RunningSummaryCard: View {
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text(duration)
+                    Text(formattedTotalTime)
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
@@ -62,7 +59,7 @@ struct RunningSummaryCard: View {
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text(String(format: "%.2f KM", distance))
+                    Text(String(format: "%.2f KM", summary.totalDistance))
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
@@ -76,7 +73,7 @@ struct RunningSummaryCard: View {
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("\(avgHR) bpm")
+                    Text("\(Int(summary.averageHeartRate)) bpm")
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
@@ -87,7 +84,7 @@ struct RunningSummaryCard: View {
                         .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
-                    Text("\(avgPace) bpm")
+                    Text("\(formattedPace)/Km")
                         .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
@@ -102,8 +99,55 @@ struct RunningSummaryCard: View {
         )
 
     }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, d MMM yy"
+        return formatter.string(from: date)
+    }
+    
+    var formattedTotalTime: String {
+        let totalSeconds = Int(summary.totalTime)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
+    
+    var formattedPace: String {
+        // averagePace is in minutes per km, convert to mm:ss format
+        let totalSeconds = Int(summary.averagePace * 60)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
 }
 
 #Preview {
-    RunningSummaryCard()
+    let sampleTemplate = RunTemplate(
+        id: UUID().uuidString,
+        name: "Easy Run",
+        kind: .maf,
+        focus: .speed
+    )
+    
+    let sampleRun = ScheduledRun(
+        id: UUID().uuidString,
+        date: Date(),
+        template: sampleTemplate
+    )
+    
+    let sampleSummary = RunningSummary(
+        totalTime: 3600,
+        totalDistance: 7.8,
+        averageHeartRate: 145,
+        averagePace: 3.0
+    )
+    
+    RunningSummaryCard(run: sampleRun, summary: sampleSummary)
 }

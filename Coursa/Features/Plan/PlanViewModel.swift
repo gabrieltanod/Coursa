@@ -26,8 +26,17 @@ final class PlanViewModel: ObservableObject {
         } ?? []
     }
 
+    private var cancellables = Set<AnyCancellable>()
+    
     init(data: OnboardingData) {
         self.data = data
+        // Listen for plan updates
+        NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdated"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.ensurePlanUpToDate()
+            }
+            .store(in: &cancellables)
     }
 
     var debugThisWeekMinutes: Int {
@@ -92,7 +101,7 @@ final class PlanViewModel: ObservableObject {
                 }
             }
             
-            let store = UserDefaultsPlanStore.shared
+            let store = StoreManager.shared.currentPlanStore
             store.save(plan)
             generatedPlan = plan
             
@@ -124,7 +133,7 @@ final class PlanViewModel: ObservableObject {
             return
         }
         generatedPlan = generated
-        UserDefaultsPlanStore.shared.save(generated)
+        StoreManager.shared.currentPlanStore.save(generated)
 
         #if DEBUG
             PlanEngineDebug.printInitialPlan(from: data)
@@ -132,7 +141,7 @@ final class PlanViewModel: ObservableObject {
     }
 
     func ensurePlanUpToDate(now: Date = Date()) {
-        let store = UserDefaultsPlanStore.shared
+        let store = StoreManager.shared.currentPlanStore
 
         // If there is no stored plan yet, fall back to initial generation.
         if store.load() == nil {
@@ -203,6 +212,34 @@ final class PlanViewModel: ObservableObject {
         if changed {
             generatedPlan = plan
         }
+    }
+    
+    func updateRunWithSummary(_ summary: RunningSummary, forDate date: Date) {
+        guard var plan = generatedPlan else { return }
+        let calendar = Calendar.current
+        
+        // Find the run for today's date
+        guard let runIndex = plan.runs.firstIndex(where: { run in
+            calendar.isDate(run.date, inSameDayAs: date)
+        }) else {
+            print("⚠️ No run found for date: \(date)")
+            return
+        }
+        
+        // Update the run's actual metrics from summary
+        plan.runs[runIndex].actual.elapsedSec = Int(summary.totalTime)
+        plan.runs[runIndex].actual.distanceKm = summary.totalDistance
+        plan.runs[runIndex].actual.avgHR = Int(summary.averageHeartRate)
+        plan.runs[runIndex].actual.avgPaceSecPerKm = Int(summary.averagePace * 60) // Convert minutes to seconds
+        
+        // Mark as completed
+        plan.runs[runIndex].status = .completed
+        
+        // Save the updated plan
+        StoreManager.shared.currentPlanStore.save(plan)
+        generatedPlan = plan
+        
+        print("✅ Updated run for \(date) with summary data and marked as completed")
     }
 }
 

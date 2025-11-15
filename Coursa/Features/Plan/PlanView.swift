@@ -7,6 +7,7 @@
 
 // PlanView.swift (update)
 import SwiftUI
+import Combine
 
 struct PlanView: View {
     @StateObject var vm: PlanViewModel
@@ -246,7 +247,15 @@ struct PlanView: View {
                             LazyVStack(alignment: .leading, spacing: 16) {
                                 ForEach(activity) { run in
                                     NavigationLink {
-                                        PlanDetailView(run: run)
+                                        // Navigate to RunningSummaryView if run has summary data
+                                        if run.status == .completed && hasActualMetrics(run: run) {
+                                            RunningSummaryView(
+                                                run: run,
+                                                summary: summaryFromRun(run: run)
+                                            )
+                                        } else {
+                                            PlanDetailView(run: run)
+                                        }
                                     } label: {
                                         RunningSessionCard(run: run)
                                     }
@@ -264,6 +273,10 @@ struct PlanView: View {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
                 vm.ensurePlanUpToDate()
                 vm.applyAutoSkipIfNeeded()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdated"))) { _ in
+                // Refresh plan when it's updated from WatchOS
+                vm.ensurePlanUpToDate()
             }
 //            #if DEBUG
 //                .toolbar {
@@ -422,6 +435,27 @@ struct PlanView: View {
                 _value: groups[key]!.sorted { $0.date < $1.date }
             )
         }
+    }
+    
+    // Helper to check if run has actual metrics
+    private func hasActualMetrics(run: ScheduledRun) -> Bool {
+        run.actual.elapsedSec != nil || 
+        run.actual.distanceKm != nil || 
+        run.actual.avgHR != nil || 
+        run.actual.avgPaceSecPerKm != nil
+    }
+    
+    // Create RunningSummary from run's actual metrics
+    private func summaryFromRun(run: ScheduledRun) -> RunningSummary? {
+        // Try to load from SwiftData first
+        if let summaryStore = StoreManager.shared.currentSummaryStore,
+           let storedSummary = summaryStore.load(for: run.id) {
+            return storedSummary
+        }
+        
+        // Fallback to creating from run's actual metrics
+        guard hasActualMetrics(run: run) else { return nil }
+        return RunningSummary(from: run)
     }
 }
 

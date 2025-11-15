@@ -6,6 +6,7 @@ struct OnboardingFlowView: View {
     @State private var showPlanReady = false
     @State private var showGenerating = false
     @State private var generatingProgress: Double = 0
+    @StateObject var planManager = PlanManager()
 
     @ViewBuilder
     private var stepContent: some View {
@@ -44,27 +45,31 @@ struct OnboardingFlowView: View {
             .padding(.horizontal, 24)
             .background(Color("black-500"))
         case .chooseStartDate:
-            ChooseStartDateStepView(onFinish: { date in
-                vm.setStartDate(date)
-                OnboardingStore.save(vm.data)
-                // Gimmick: show a generating overlay for ~2 seconds
-                generatingProgress = 0
-                showGenerating = true
-                
-                // Start progress animation on next runloop so the overlay is already visible
-                DispatchQueue.main.async {
-                    withAnimation(.linear(duration: 2.0)) {
-                        generatingProgress = 1
+            ChooseStartDateStepView(
+                onFinish: { date in
+                    vm.setStartDate(date)
+                    OnboardingStore.save(vm.data)
+                    // Gimmick: show a generating overlay for ~2 seconds
+                    generatingProgress = 0
+                    showGenerating = true
+                    
+                    // Start progress animation on next runloop so the overlay is already visible
+                    DispatchQueue.main.async {
+                        withAnimation(.linear(duration: 2.0)) {
+                            generatingProgress = 1
+                        }
                     }
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    showGenerating = false
-                    onFinished(vm.data)
-                }
-            })
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        showGenerating = false
+                        onFinished(vm.data)
+                    }
+                },
+                onboardingData: vm.data
+            )
             .padding(.horizontal, 24)
             .background(Color("black-500"))
+            .environmentObject(planManager)
         }
     }
 

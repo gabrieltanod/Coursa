@@ -8,12 +8,25 @@
 import SwiftUI
 
 struct PlanDetailsPageView: View {
-//    let name: String
-//    let targetDistance: Double
-//    let targetHRZone: HRZone
-//    let recPace: String
+
+    let recPace: String = "7.30"
     
-    let plan: RunningPlan
+    let run: ScheduledRun
+    
+    var runTemplate: RunTemplate {
+        run.template
+    }
+    
+    var runningType: RunningType {
+        RunningType(from: run.template.kind)
+    }
+    
+    // Check if the run date is today
+    var isToday: Bool {
+        Calendar.current.isDate(run.date, inSameDayAs: Date())
+    }
+    
+    
     @State private var navPath = NavigationPath()
     @Binding var appState: AppState
     
@@ -37,6 +50,7 @@ struct PlanDetailsPageView: View {
     
     @State private var countdownStep: CountdownStep = .idle
     @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var syncService: SyncService
     
     var body: some View {
         ZStack {
@@ -44,13 +58,23 @@ struct PlanDetailsPageView: View {
                 VStack(spacing: 30) {
                     // Header
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.name)
+                        Text(runTemplate.name)
                             .font(.helveticaNeue(size: 20))
-                        Text("Distance: \(plan.targetDistance)")
-                            .font(.helveticaNeue(size: 16))
-                        Text("HR Zone: \(plan.targetHRZone)")
-                            .font(.helveticaNeue(size: 16))
-                        Text("Rec Pace: \(plan.recPace)")
+                        if let distance = runTemplate.targetDistanceKm {
+                            Text("Distance: \(distance, specifier: "%.1f") km")
+                                .font(.helveticaNeue(size: 16))
+                        }
+                        if let hrZone = runTemplate.targetHRZone {
+                            Text("HR Zone: \(hrZone.rawValue)")
+                                .font(.helveticaNeue(size: 16))
+                        }
+                        if let duration = runTemplate.targetDurationSec {
+                            let minutes = duration / 60
+                            let seconds = duration % 60
+                            Text("Duration: \(minutes):\(String(format: "%02d", seconds))")
+                                .font(.helveticaNeue(size: 16))
+                        }
+                        Text("Rec Pace: \(recPace)")
                             .font(.helveticaNeue(size: 16))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,18 +82,21 @@ struct PlanDetailsPageView: View {
                     
                     // Start Button
                     Button(action: {
-                        startCountdownSequence()
-                        workoutManager.startWorkout()
+                        if isToday {
+                            startCountdownSequence()
+                            workoutManager.startWorkout()
+                        }
                     }) {
-                        Text("Start")
+                        Text(isToday ? "Start" : "Not Available")
                             .font(.helveticaNeue(size: 20))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color("secondary"))
+                            .background(isToday ? Color("secondary") : Color.gray)
                             .foregroundColor(.black)
                             .cornerRadius(28)
                     }
                     .buttonStyle(.plain)
+                    .disabled(!isToday)
                     
                 }
                 .padding(.horizontal, 15)
@@ -160,6 +187,9 @@ struct PlanDetailsPageView: View {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             
             try? await Task.sleep(nanoseconds: 1_000_000_000)
+            
+            // Store the current run in workoutManager so we can update it later
+            workoutManager.currentRun = run
             
             appState = .running
         }

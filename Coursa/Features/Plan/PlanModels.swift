@@ -20,7 +20,7 @@ enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
 }
 
 // Replace DayWorkout + old GeneratedPlan with this:
-struct GeneratedPlan: Codable {
+struct GeneratedPlan: Codable, Hashable{
     let plan: Plan
     var runs: [ScheduledRun]
 }
@@ -67,7 +67,7 @@ struct RunMetrics: Codable, Hashable {
     var avgHR: Int?
 }
 
-struct ScheduledRun: Identifiable, Codable {
+struct ScheduledRun: Identifiable, Codable, Hashable {
     var id: String = UUID().uuidString
     var date: Date
     var template: RunTemplate
@@ -86,31 +86,6 @@ struct ScheduledRun: Identifiable, Codable {
     private static func mmss(_ sec: Int) -> String {
         let m = sec / 60, s = sec % 60
         return String(format: "%d:%02d", m, s)
-    }
-}
-
-
-// MARK: - Running Plan Data Model for Send Data to WatchOS
-
-struct RunningPlan: Identifiable, Codable, Hashable{
-    var id: String = UUID().uuidString
-    var date: Date
-    var name: String
-    var kind: RunKind?
-    var targetDistance: Double?
-    var targetHRZone: HRZone?
-    var recPace: String?
-}
-
-extension RunningPlan {
-    init(from scheduledRun: ScheduledRun, recPace: String) {
-        self.id = scheduledRun.id
-        self.date = scheduledRun.date
-        self.name = scheduledRun.template.name
-        self.kind = scheduledRun.template.kind
-        self.targetDistance = scheduledRun.template.targetDistanceKm
-        self.targetHRZone = scheduledRun.template.targetHRZone
-        self.recPace = recPace
     }
 }
 

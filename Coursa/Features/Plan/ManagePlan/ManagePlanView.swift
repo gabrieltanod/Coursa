@@ -24,8 +24,8 @@ struct ManagePlanView: View {
     @State private var showSchedulePicker = false
 
     // Default initializer: uses shared store
-    init(store: PlanStore = UserDefaultsPlanStore.shared) {
-        _vm = StateObject(wrappedValue: ManagePlanViewModel(store: store))
+    init(store: PlanStore? = nil) {
+        _vm = StateObject(wrappedValue: ManagePlanViewModel(store: store ?? StoreManager.shared.currentPlanStore))
     }
 
     var body: some View {

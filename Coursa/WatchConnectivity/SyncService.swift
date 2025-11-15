@@ -8,23 +8,19 @@
 import Foundation
 import WatchConnectivity
 import Combine
+//import SwiftData
 
 class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
     @Published var summary: RunningSummary?
-    @Published var plan: RunningPlan?
+    @Published var plan: GeneratedPlan?
     @Published var isSessionActivated: Bool = false
     
     private var session: WCSession = .default
     
 #if os(iOS)
     // Queue for messages pending activation
-    private var pendingRunningPlan: RunningPlan?
-    //    private var isActivationInProgress: Bool = false
-    //    private var activationRetryTimer: Timer?
-    //    private var activationRetryCount: Int = 0
-    //    private let maxActivationRetries: Int = 5
-    //    private let activationRetryDelay: TimeInterval = 3.0
+    private var pendingRunningPlan: GeneratedPlan?
 #endif
     
 #if os(watchOS)
@@ -88,10 +84,14 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             print("WCSession already activated")
             DispatchQueue.main.async {
                 self.isSessionActivated = true
+#if os(iOS)
+                // Send any pending plan
+                self.sendPendingRunningPlanIfNeeded()
+#endif
             }
 #if os(watchOS)
             // Send any pending summary
-            sendPendingSummaryIfNeeded()
+//            sendPendingSummaryIfNeeded()
 #endif
         } else {
             let stateDescription: String
@@ -144,7 +144,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                     self.isActivationInProgress = false
                     self.activationRetryCount = 0
                     self.activationRetryTimer?.invalidate()
-                    self.sendPendingSummaryIfNeeded()
+//                    self.sendPendingSummaryIfNeeded()
                 }
                 return
             }
@@ -230,6 +230,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 print("iOS: Session reachable: \(session.isReachable)")
                 print("iOS: Watch app installed: \(session.isWatchAppInstalled)")
                 print("iOS: Activation state: \(session.activationState.rawValue)")
+                // Send any pending plan now that session is activated
+                self.sendPendingRunningPlanIfNeeded()
 #endif
 #if os(watchOS)
                 print("watchOS: ✅ WCSession activated successfully")
@@ -241,7 +243,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 self.isActivationInProgress = false
                 self.activationRetryCount = 0
                 // Send any pending summary now that session is activated
-                self.sendPendingSummaryIfNeeded()
+//                self.sendPendingSummaryIfNeeded()
 #endif
             } else {
                 self.isSessionActivated = false
@@ -298,59 +300,111 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     
-    // ========================================== MARK: - Receive Summary (iOS from watchOS) ==========================================
-    
+   // ========================================== MARK: - Receive Summary (iOS from watchOS) ==========================================
+   
 #if os(iOS)
-    // Receive message from watchOS
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        print("iOS: Received message from watchOS")
-        decodeAndStoreSummary(from: message)
-    }
-    
-    // Receive message with reply handler
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
-        print("iOS: Received message from watchOS (with reply handler)")
-        decodeAndStoreSummary(from: message)
-        replyHandler(["status": "received"])
-    }
-    
-    // Receive application context
-    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
-        print("iOS: Received application context from watchOS")
-        decodeAndStoreSummary(from: applicationContext)
-    }
+   // Receive message from watchOS
+   func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+       print("iOS: Received message from watchOS")
+       decodeAndStoreSummary(from: message)
+   }
+   
+   // Receive message with reply handler
+   func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+       print("iOS: Received message from watchOS (with reply handler)")
+       decodeAndStoreSummary(from: message)
+       replyHandler(["status": "received"])
+   }
+   
+   // Receive application context
+   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+       print("iOS: Received application context from watchOS")
+       decodeAndStoreSummary(from: applicationContext)
+   }
 #endif
-    
-    private func decodeAndStoreSummary(from dictionary: [String: Any]) {
-        print("📱 iOS: decodeAndStoreSummary received keys:", dictionary.keys)
-        
-        guard
-            let totalTime = (dictionary["totalTime"] as? Double) ?? (dictionary["totalTime"] as? NSNumber)?.doubleValue,
-            let totalDistance = (dictionary["totalDistance"] as? Double) ?? (dictionary["totalDistance"] as? NSNumber)?.doubleValue,
-            let averageHeartRate = (dictionary["averageHeartRate"] as? Double) ?? (dictionary["averageHeartRate"] as? NSNumber)?.doubleValue,
-            let averagePace = (dictionary["averagePace"] as? Double) ?? (dictionary["averagePace"] as? NSNumber)?.doubleValue
-        else {
-            print("📱 iOS: ❌ Failed to decode RunningSummary from dictionary. Values:", dictionary)
-            return
-        }
-
-        let idString = dictionary["id"] as? String ?? UUID().uuidString
-        
-        let decodedSummary = RunningSummary(
-            id: idString,
-            totalTime: totalTime,
-            totalDistance: totalDistance,
-            averageHeartRate: averageHeartRate,
-            averagePace: averagePace
-        )
-
-        DispatchQueue.main.async {
-            self.summary = decodedSummary
-            print("📱 iOS: ✅ Summary stored: \(decodedSummary)")
-        }
-    }
-
-    
+   
+#if os(iOS)
+   private func decodeAndStoreSummary(from dictionary: [String: Any]) {
+       print("📱 iOS: decodeAndStoreSummary received keys:", dictionary.keys)
+       
+       guard
+           let totalTime = (dictionary["totalTime"] as? Double) ?? (dictionary["totalTime"] as? NSNumber)?.doubleValue,
+           let totalDistance = (dictionary["totalDistance"] as? Double) ?? (dictionary["totalDistance"] as? NSNumber)?.doubleValue,
+           let averageHeartRate = (dictionary["averageHeartRate"] as? Double) ?? (dictionary["averageHeartRate"] as? NSNumber)?.doubleValue,
+           let averagePace = (dictionary["averagePace"] as? Double) ?? (dictionary["averagePace"] as? NSNumber)?.doubleValue
+       else {
+           print("📱 iOS: ❌ Failed to decode RunningSummary from dictionary. Values:", dictionary)
+           return
+       }
+       
+       let idString = dictionary["id"] as? String ?? UUID().uuidString
+       
+       let decodedSummary = RunningSummary(
+           id: idString,
+           totalTime: totalTime,
+           totalDistance: totalDistance,
+           averageHeartRate: averageHeartRate,
+           averagePace: averagePace
+       )
+       
+       DispatchQueue.main.async {
+           self.summary = decodedSummary
+           print("📱 iOS: ✅ Summary stored: \(decodedSummary)")
+           
+           // Update the plan with this summary data
+           self.updatePlanWithSummary(decodedSummary)
+       }
+   }
+   
+   private func updatePlanWithSummary(_ summary: RunningSummary) {
+       let store = StoreManager.shared.currentPlanStore
+       guard var plan = store.load() else {
+           print("⚠️ iOS: No plan found to update with summary")
+           return
+       }
+       
+       let calendar = Calendar.current
+       let today = Date()
+       
+       // Find the run for today's date
+       guard let runIndex = plan.runs.firstIndex(where: { run in
+           calendar.isDate(run.date, inSameDayAs: today)
+       }) else {
+           print("⚠️ iOS: No run found for today's date")
+           return
+       }
+       
+       // Update the run's actual metrics from summary
+       plan.runs[runIndex].actual.elapsedSec = Int(summary.totalTime)
+       plan.runs[runIndex].actual.distanceKm = summary.totalDistance
+       plan.runs[runIndex].actual.avgHR = Int(summary.averageHeartRate)
+       // Convert pace from minutes per km to seconds per km
+       plan.runs[runIndex].actual.avgPaceSecPerKm = Int(summary.averagePace * 60)
+       
+       // Mark as completed
+       plan.runs[runIndex].status = .completed
+       
+       // Save the updated plan
+       store.save(plan)
+       
+       // Save summary to SwiftData
+       if let summaryStore = StoreManager.shared.currentSummaryStore {
+           summaryStore.save(summary, runId: plan.runs[runIndex].id)
+       }
+       
+       // Update the published plan if it matches
+       if self.plan?.runs.count == plan.runs.count {
+           self.plan = plan
+       }
+       
+       // Post notification to refresh PlanView
+       NotificationCenter.default.post(name: NSNotification.Name("PlanUpdated"), object: nil)
+       
+       print("✅ iOS: Updated run for \(today) with summary data and marked as completed")
+   }
+#endif
+   
+   
     
     // ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
     
@@ -376,228 +430,195 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     private func decodeAndStorePlan(from dictionary: [String: Any]) {
-        // Handle UUID as String (since Dictionary can't store UUID directly)
-        var id: UUID
-        if let idString = dictionary["id"] as? String {
-            id = UUID(uuidString: idString) ?? UUID()
-        } else if let idUUID = dictionary["id"] as? UUID {
-            id = idUUID
-        } else {
-            id = UUID()
-        }
         
-        // Decode values safely
-        guard let date = dictionary["date"] as? Date,
-              let name = dictionary["name"] as? String,
-              let kindRaw = dictionary["kind"] as? String,
-              let kind = RunKind(rawValue: kindRaw),
-              let targetDistance = dictionary["targetDistance"] as? Double,
-              let hrZoneRaw = dictionary["targetHRZone"] as? Int,
-              let targetHRZone = HRZone(rawValue: hrZoneRaw),
-              let recPace = dictionary["recPace"] as? String else {
+        // Extract raw Data
+        guard let data = dictionary["generatedPlan"] as? Data else {
 #if os(watchOS)
-            print("watchOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
-#endif
-#if os(iOS)
-            print("iOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
+            print("watchOS: ❌ No generatedPlan data found in dictionary")
 #endif
             return
         }
         
-        let decodedPlan = RunningPlan(
-            id: id.uuidString,
-            date: date,
-            name: name,
-            kind: kind,
-            targetDistance: targetDistance,
-            targetHRZone: targetHRZone,
-            recPace: recPace
-        )
-        
-        DispatchQueue.main.async {
-            self.plan = decodedPlan
-#if os(watchOS)
-            print("watchOS: Successfully decoded and stored PlanTest. Name: \(decodedPlan.name), Target Distance: \(decodedPlan.targetDistance)km")
-#endif
-        }
-    }
-    
-    
-    // ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
-    
-#if os(watchOS)
-    func sendSummaryToiOS(summary: RunningSummary) {
-        // Check activation state first
-        if session.activationState == .activated {
-            // Session is activated - send immediately
-            sendSummaryData(summary: summary)
-        } else {
-            // Session not activated yet - queue it
-            print("watchOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary...")
-            pendingSummary = summary
-            // Don't call activate() here - it's already being called in connect()
-            // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
-        }
-    }
-    
-    private func sendSummaryData(summary: RunningSummary) {
-        // Double-check activation state before attempting to send
-        guard session.activationState == .activated else {
-            let stateDescription: String
-            switch session.activationState {
-            case .notActivated:
-                stateDescription = "notActivated"
-            case .inactive:
-                stateDescription = "inactive"
-            case .activated:
-                stateDescription = "activated"
-            @unknown default:
-                stateDescription = "unknown(\(session.activationState.rawValue))"
-            }
-            print("watchOS: ❌ Cannot send summary - Session is not activated. Current state: \(stateDescription)")
-            print("watchOS: Queueing summary for later...")
-            pendingSummary = summary
-            return
-        }
-        
-        let data: [String: Any] = [
-            "id": summary.id,
-            "totalTime": summary.totalTime,
-            "totalDistance": summary.totalDistance,
-            "averageHeartRate": summary.averageHeartRate,
-            "averagePace": summary.averagePace
-//            "elevationGain": summary.elevationGain,
-//            "zoneDuration": summary.zoneDuration
-        ]
-        
-        print("watchOS: Attempting to send summary (activationState: activated, isReachable: \(session.isReachable))")
-        
-        // Use updateApplicationContext (works even when not reachable)
         do {
-            try session.updateApplicationContext(data)
-            print("watchOS: ✅ Successfully sent summary via updateApplicationContext")
-        } catch {
-            print("watchOS: ❌ Error updating application context: \(error.localizedDescription)")
-            print("watchOS: Error details: \(error)")
+            // Decode with JSONDecoder
+            let decoded = try JSONDecoder().decode(GeneratedPlan.self, from: data)
             
-            // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
-            if session.isReachable {
-                print("watchOS: Trying sendMessage as fallback...")
-                session.sendMessage(data, replyHandler: { reply in
-                    print("watchOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)")
-                }, errorHandler: { error in
-                    print("watchOS: ❌ Error sending message: \(error.localizedDescription)")
-                    print("watchOS: Queueing summary for retry...")
-                    self.pendingSummary = summary
-                })
-            } else {
-                print("watchOS: Session is not reachable. Queueing summary for later...")
-                pendingSummary = summary
+            DispatchQueue.main.async {
+                self.plan = decoded   // <-- store it properly
+#if os(watchOS)
+                print("watchOS: ✅ Successfully decoded GeneratedPlan with \(decoded.runs.count) runs")
+//                print("watchOS: Plan Title: \(decoded.plan.title)")
+#endif
             }
+            
+        } catch {
+#if os(watchOS)
+            print("watchOS: ❌ Failed to decode GeneratedPlan:", error)
+#endif
         }
     }
     
-    private func sendPendingSummaryIfNeeded() {
-        guard let pending = pendingSummary, session.activationState == .activated else {
-            return
-        }
-        
-        print("watchOS: Sending pending summary now that session is activated...")
-        // Clear pending first
-        pendingSummary = nil
-        // Send it
-        sendSummaryData(summary: pending)
-    }
+    
+    
+   // ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
+   
+#if os(watchOS)
+   func sendSummaryToiOS(summary: RunningSummary) {
+       // Check activation state first
+       if session.activationState == .activated {
+           // Session is activated - send immediately
+           sendSummaryData(summary: summary)
+       } else {
+           // Session not activated yet - queue it
+           print("watchOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary...")
+           pendingSummary = summary
+           // Don't call activate() here - it's already being called in connect()
+           // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
+       }
+   }
+   
+   private func sendSummaryData(summary: RunningSummary) {
+       // Double-check activation state before attempting to send
+       guard session.activationState == .activated else {
+           let stateDescription: String
+           switch session.activationState {
+           case .notActivated:
+               stateDescription = "notActivated"
+           case .inactive:
+               stateDescription = "inactive"
+           case .activated:
+               stateDescription = "activated"
+           @unknown default:
+               stateDescription = "unknown(\(session.activationState.rawValue))"
+           }
+           print("watchOS: ❌ Cannot send summary - Session is not activated. Current state: \(stateDescription)")
+           print("watchOS: Queueing summary for later...")
+           pendingSummary = summary
+           return
+       }
+       
+       let data: [String: Any] = [
+           "id": summary.id,
+           "totalTime": summary.totalTime,
+           "totalDistance": summary.totalDistance,
+           "averageHeartRate": summary.averageHeartRate,
+           "averagePace": summary.averagePace
+           //            "elevationGain": summary.elevationGain,
+           //            "zoneDuration": summary.zoneDuration
+       ]
+       
+       print("watchOS: Attempting to send summary (activationState: activated, isReachable: \(session.isReachable))")
+       
+       // Use updateApplicationContext (works even when not reachable)
+       do {
+           try session.updateApplicationContext(data)
+           print("watchOS: ✅ Successfully sent summary via updateApplicationContext")
+       } catch {
+           print("watchOS: ❌ Error updating application context: \(error.localizedDescription)")
+           print("watchOS: Error details: \(error)")
+           
+           // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
+           if session.isReachable {
+               print("watchOS: Trying sendMessage as fallback...")
+               session.sendMessage(data, replyHandler: { reply in
+                   print("watchOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)")
+               }, errorHandler: { error in
+                   print("watchOS: ❌ Error sending message: \(error.localizedDescription)")
+                   print("watchOS: Queueing summary for retry...")
+                   self.pendingSummary = summary
+               })
+           } else {
+               print("watchOS: Session is not reachable. Queueing summary for later...")
+               pendingSummary = summary
+           }
+       }
+   }
+   
+   private func sendPendingSummaryIfNeeded() {
+       guard let pending = pendingSummary, session.activationState == .activated else {
+           return
+       }
+       
+       print("watchOS: Sending pending summary now that session is activated...")
+       // Clear pending first
+       pendingSummary = nil
+       // Send it
+       sendSummaryData(summary: pending)
+   }
 #endif
     
     
-    // ========================================== MARK: - Send Plan (iOS to watchOS) ==========================================
-    
+    // ==========================================
+    // MARK: - Send GeneratedPlan (iOS → watchOS)
+    // ==========================================
     
 #if os(iOS)
-    func sendPlanToWatchOS(plan: RunningPlan) {
-        // Check activation state first
-        if session.activationState == .activated {
-            // Session is activated - send immediately
-            sendRunningPlanData(plan: plan)
-        } else {
-            // Session not activated yet - queue it
-            print("iOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary...")
-            pendingRunningPlan = plan
-            // Don't call activate() here - it's already being called in connect()
-            // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
-        }
-    }
-    
-    private func sendRunningPlanData(plan: RunningPlan) {
-        // Double-check activation state before attempting to send
+    func sendPlanToWatchOS(plan: GeneratedPlan) {
+        
+        // Session not yet activated → queue it
         guard session.activationState == .activated else {
-            let stateDescription: String
-            switch session.activationState {
-            case .notActivated:
-                stateDescription = "notActivated"
-            case .inactive:
-                stateDescription = "inactive"
-            case .activated:
-                stateDescription = "activated"
-            @unknown default:
-                stateDescription = "unknown(\(session.activationState.rawValue))"
-            }
-            print("iOS: ❌ Cannot send plan - Session is not activated. Current state: \(stateDescription)")
-            print("iOS: Queueing plan for later...")
+            print("iOS: Session not activated. Queuing GeneratedPlan for later…")
             pendingRunningPlan = plan
             return
         }
         
-        // ✅ Convert everything to property-list–safe types
-        let data: [String: Any] = [
-            "id": plan.id,                          // UUID → String
-            "date": plan.date,                                 // Date is allowed
-            "name": plan.name,                                 // String
-            "kind": plan.kind?.rawValue ?? 0,                  // RunKind → Int
-            "targetDistance": plan.targetDistance ?? 0.0,       // Double
-            "targetHRZone": plan.targetHRZone?.rawValue ?? 0,   // HRZone → Int
-            "recPace": plan.recPace ?? ""                      // String
-        ]
+        // Activated → send now
+        sendGeneratedPlan(plan)
+    }
+    
+    private func sendGeneratedPlan(_ plan: GeneratedPlan) {
         
-        print("iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))")
+        guard session.activationState == .activated else {
+            print("iOS: ❌ Cannot send – session not activated. Queuing…")
+            pendingRunningPlan = plan
+            return
+        }
         
-        // Use updateApplicationContext (works even when not reachable)
+        print("iOS: Attempting to send GeneratedPlan (isReachable: \(session.isReachable))")
+        
         do {
-            try session.updateApplicationContext(data)
-            print("iOS: ✅ Successfully sent plan via updateApplicationContext")
-        } catch {
-            print("iOS: ❌ Error updating application context: \(error.localizedDescription)")
-            print("iOS: Error details: \(error)")
+            // 👉 ENCODE ENTIRE PLAN AS JSON
+            let encoded = try JSONEncoder().encode(plan)
             
-            // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
+            // 👉 Put into application context
+            let payload: [String: Any] = [
+                "generatedPlan": encoded
+            ]
+            
+            try session.updateApplicationContext(payload)
+            
+            print("iOS: ✅ Successfully sent GeneratedPlan via updateApplicationContext")
+            
+        } catch {
+            print("iOS: ❌ Failed to send GeneratedPlan: \(error.localizedDescription)")
+            pendingRunningPlan = plan
+            
+            // Optional fallback if reachable
             if session.isReachable {
-                print("iOS: Trying sendMessage as fallback...")
-                session.sendMessage(data, replyHandler: { reply in
-                    print("iOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)")
-                }, errorHandler: { error in
-                    print("iOS: ❌ Error sending message: \(error.localizedDescription)")
-                    print("iOS: Queueing send for retry...")
-                    self.pendingRunningPlan = plan
-                })
-            } else {
-                print("iOS: Session is not reachable. Queueing summary for later...")
-                pendingRunningPlan = plan
+                print("iOS: Attempting sendMessage fallback…")
+                
+                session.sendMessage(
+                    ["generatedPlan": try? JSONEncoder().encode(plan)],
+                    replyHandler: { reply in
+                        print("iOS: ✅ Fallback sendMessage succeeded: \(reply)")
+                    },
+                    errorHandler: { err in
+                        print("iOS: ❌ Fallback sendMessage failed: \(err)")
+                        self.pendingRunningPlan = plan
+                    }
+                )
             }
         }
     }
     
     private func sendPendingRunningPlanIfNeeded() {
-        guard let plan = pendingRunningPlan, session.activationState == .activated else {
-            return
-        }
+        guard let plan = pendingRunningPlan,
+              session.activationState == .activated else { return }
         
-        print("iOS: Sending pending summary now that session is activated...")
-        // Clear pending first
+        print("iOS: Sending previously queued GeneratedPlan…")
+        
         pendingRunningPlan = nil
-        // Send it
-        sendRunningPlanData(plan: plan)
+        sendGeneratedPlan(plan)
     }
 #endif
 }
-

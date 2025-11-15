@@ -59,6 +59,15 @@ struct PlanDetailView: View {
                             .foregroundColor(.white)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: 370, alignment: .leading)
+                        
+                        // Show summary if run is completed
+                        if run.status == .completed && hasActualMetrics {
+                            RunningSummaryView(
+                                run: run,
+                                summary: summaryFromRun
+                            )
+                            .padding(.top, 24)
+                        }
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -154,6 +163,20 @@ struct PlanDetailView: View {
     private static func mmText(_ seconds: Int) -> String {
         let m = seconds / 60
         return "\(m) min"
+    }
+    
+    // Check if run has actual metrics
+    private var hasActualMetrics: Bool {
+        run.actual.elapsedSec != nil || 
+        run.actual.distanceKm != nil || 
+        run.actual.avgHR != nil || 
+        run.actual.avgPaceSecPerKm != nil
+    }
+    
+    // Create RunningSummary from run's actual metrics
+    private var summaryFromRun: RunningSummary? {
+        guard hasActualMetrics else { return nil }
+        return RunningSummary(from: run)
     }
 }
 
