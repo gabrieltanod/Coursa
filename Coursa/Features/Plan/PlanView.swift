@@ -9,7 +9,8 @@
 import SwiftUI
 
 struct PlanView: View {
-    @StateObject var vm: PlanViewModel
+    @ObservedObject var vm: PlanViewModel
+    @EnvironmentObject private var planSession: PlanSessionStore
 
     // MARK: - Tab state and enum
     fileprivate enum PlanInnerTab: String, CaseIterable {
@@ -37,7 +38,9 @@ struct PlanView: View {
                 PlanTabs(selectedTab: $selectedTab)
                 
                 if selectedTab == .plan {
-                    if let generated = vm.generatedPlan {
+                    if let generated = planSession.generatedPlan
+                        ?? UserDefaultsPlanStore.shared.load()
+                    {
                         // --- derive plan stats (all runs) ---
                         let allRuns = generated.runs.sorted {
                             $0.date < $1.date
@@ -48,9 +51,9 @@ struct PlanView: View {
                         }.count
 
                         // Runs that are still part of the active plan view
-                        let planRuns = vm.plannedRuns.sorted {
-                            $0.date < $1.date
-                        }
+                        // For now, drive directly from the generated plan so this
+                        // matches what HomeView shows from persisted data.
+                        let planRuns = allRuns
 
                         let progress =
                             totalSessions == 0
@@ -169,6 +172,8 @@ struct PlanView: View {
                             #if DEBUG
                             Button("Debug Adapt") {
                                 vm.debugCompleteThisWeekAndAdapt()
+                                // Reload shared plan from persistence so both tabs see the update
+                                planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
                             }
                             #endif
                         }
@@ -196,7 +201,12 @@ struct PlanView: View {
                     }
                 } else {
                     // Activity tab: completed & skipped runs
-                    let activity = vm.activityRuns.sorted { $0.date > $1.date }
+                    let activitySource = planSession.generatedPlan
+                        ?? UserDefaultsPlanStore.shared.load()
+
+                    let activity = (activitySource?.runs ?? [])
+                        .filter { $0.status == .completed || $0.status == .skipped }
+                        .sorted { $0.date > $1.date }
 
                     if activity.isEmpty {
                         VStack(spacing: 12) {
@@ -260,6 +270,8 @@ struct PlanView: View {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
                 vm.ensurePlanUpToDate()
                 vm.applyAutoSkipIfNeeded()
+                // After any adjustments, reload the shared plan from persistence
+                planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
             }
 //            #if DEBUG
 //                .toolbar {

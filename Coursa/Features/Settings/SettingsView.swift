@@ -10,7 +10,7 @@ import HealthKit
 
 struct SettingsView: View {
     @EnvironmentObject private var router: AppRouter
-    
+    @EnvironmentObject var planSession: PlanSessionStore
     // WatchConnectivity + Plan manager from environment
     @EnvironmentObject private var syncService: SyncService
     @EnvironmentObject private var planManager: PlanManager
@@ -70,7 +70,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
-                        router.reset(hard: true)
+                        router.reset(hard: true, planSession: planSession)
                     } label: {
                         HStack {
                             Image(systemName: "arrow.clockwise.circle.fill")

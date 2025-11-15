@@ -9,11 +9,13 @@ import SwiftUI
 
 struct CoreTabView: View {
     let onboardingData: OnboardingData
+    @StateObject private var planSession = PlanSessionStore()
 
     var body: some View {
         TabView {
             NavigationStack {
                 HomeView()
+                    .environmentObject(planSession)
             }
             .tabItem {
                 Label("Dashboard", systemImage: "house.fill")
@@ -21,6 +23,7 @@ struct CoreTabView: View {
 
             NavigationStack {
                 PlanView(vm: PlanViewModel(data: onboardingData))
+                    .environmentObject(planSession)
             }
             .tabItem {
                 Label("Plan", systemImage: "figure.run")

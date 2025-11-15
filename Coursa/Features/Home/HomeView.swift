@@ -7,6 +7,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
+    @EnvironmentObject private var planSession: PlanSessionStore
     @State private var selectedWeekIndex: Int = 0
     private let calendar = Calendar.current
 
@@ -14,14 +15,39 @@ struct HomeView: View {
         ZStack {
             Color("black-500").ignoresSafeArea()
 
+            Ellipse()
+                .fill(Color.white.opacity(0.7))
+                .frame(width: 261, height: 278)
+                .blur(radius: 175)
+                .offset(x: -250, y: -370)
+
+            Ellipse()
+                .fill(Color.white.opacity(1))
+                .frame(width: 261, height: 162)
+                .blur(radius: 175)
+                .offset(x: 350, y: 294)  // adjust as needed
+                .allowsHitTesting(false)
+
             VStack(alignment: .leading, spacing: 16) {
                 header
 
                 calendarStrip
 
-                sessionsSection
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        sessionsSection
 
-                Spacer(minLength: 0)
+                        planProgressCard
+
+                        weeklyProgressSection
+
+                        weeklyMetricsRow
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.bottom, 24)
+                }
+                .scrollIndicators(.never)
             }
             .padding(.horizontal, 16)
             .padding(.top, 20)
@@ -33,14 +59,15 @@ struct HomeView: View {
     private var header: some View {
         let weekCount = calendarWeeks.count
         // Clamp index safely in case weeks are not yet loaded
-        let safeIndex = weekCount > 0 ? min(max(selectedWeekIndex, 0), weekCount - 1) : 0
+        let safeIndex =
+            weekCount > 0 ? min(max(selectedWeekIndex, 0), weekCount - 1) : 0
 
         return HStack(spacing: 12) {
             HStack(spacing: 2) {
                 Text("Week \(weekCount == 0 ? 1 : safeIndex + 1)")
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(Color("white-500"))
-                
+
                 VStack(spacing: 0) {
                     Text("")
                     if weekCount > 0 {
@@ -60,6 +87,7 @@ struct HomeView: View {
                     Circle()
                         .fill(Color.white.opacity(0.06))
                         .frame(width: 40, height: 40)
+                        .maybeGlassEffect()
                     Image(systemName: "calendar")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Color("white-500"))
@@ -69,6 +97,60 @@ struct HomeView: View {
         }
     }
 
+    private var planProgressCard: some View {
+        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
+
+        // Session-based progress: completed + skipped sessions over total sessions
+        let totalSessions = allRuns.count
+        let completedOrSkippedSessions = allRuns.filter {
+            $0.status == .completed || $0.status == .skipped
+        }.count
+
+        let progress =
+            totalSessions == 0
+            ? 0
+            : Double(completedOrSkippedSessions) / Double(totalSessions)
+        #if DEBUG
+            let statusCounts = Dictionary(grouping: allRuns, by: { $0.status })
+                .mapValues { $0.count }
+            print(
+                "[HomeView] planProgressCard – totalSessions: \(totalSessions), completedOrSkippedSessions: \(completedOrSkippedSessions), progress: \(progress), statusCounts: \(statusCounts)"
+            )
+        #endif
+
+        // Distance completed: prefer actual distance, fall back to template targetDistanceKm
+        let completedKm =
+            allRuns
+            .filter { $0.status == .completed }
+            .reduce(0.0) { sum, run in
+                if let d = run.actual.distanceKm {
+                    return sum + d
+                }
+                if let t = run.template.targetDistanceKm {
+                    return sum + t
+                }
+                return sum
+            }
+
+        // Target distance = sum of template targets (ignore nils)
+        let targetKm =
+            allRuns
+            .compactMap { $0.template.targetDistanceKm }
+            .reduce(0, +)
+
+        // Progress based on completed distance vs total planned distance
+        // let progress = targetKm > 0 ? completedKm / targetKm : 0
+
+        let title = planTitle(from: allRuns)
+
+        return PlanProgressCard(
+            title: title,
+            progress: progress,
+            completedKm: completedKm,
+            targetKm: targetKm
+        )
+        .padding(.top, 20)
+    }
 
     // MARK: - Calendar Strip (week-based)
 
@@ -108,16 +190,18 @@ struct HomeView: View {
                                         )
                                 )
 
-                            if let run = vm.runs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+                            if let run = vm.runs.first(where: {
+                                calendar.isDate($0.date, inSameDayAs: date)
+                            }) {
                                 let kind = run.template.kind
                                 let colorName: String = {
                                     switch kind {
                                     case .long:
-                                        return "long"   // asset for Long Run
+                                        return "long"  // asset for Long Run
                                     case .easy:
-                                        return "easy"   // asset for Easy Run
+                                        return "easy"  // asset for Easy Run
                                     default:
-                                        return "maf"    // asset for MAF / other runs
+                                        return "maf"  // asset for MAF / other runs
                                     }
                                 }()
 
@@ -218,11 +302,28 @@ struct HomeView: View {
         return f.string(from: date)
     }
 
+    private func planTitle(from runs: [ScheduledRun]) -> String {
+        guard let focus = runs.first?.template.focus else {
+            return "Your Plan"
+        }
+
+        switch focus {
+        case .base:
+            return "Base Builder"
+        case .endurance:
+            return "Endurance Plan"
+        case .speed:
+            return "Speed Plan"
+        default:
+            return "Your Plan"
+        }
+    }
+
     // MARK: - Sessions List
 
     private var sessionsSection: some View {
         let sessions = vm.sessions(on: vm.selectedDate)
-        
+
         return VStack(alignment: .leading, spacing: 12) {
             if sessions.isEmpty {
                 EmptyState()
@@ -235,6 +336,52 @@ struct HomeView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var weeklyProgressSection: some View {
+        // Example numbers – replace with your real computed values
+        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
+        let completedKm =
+            allRuns
+            .filter { $0.status == .completed }
+            .reduce(0.0) { sum, run in
+                if let d = run.actual.distanceKm {
+                    return sum + d
+                }
+                if let t = run.template.targetDistanceKm {
+                    return sum + t
+                }
+                return sum
+            }
+
+        // Target distance = sum of template targets (ignore nils)
+        let targetKm =
+            allRuns
+            .compactMap { $0.template.targetDistanceKm }
+            .reduce(0, +)
+
+        return WeeklyProgressCard(
+            title: "Weekly Progress",
+            progressText: "\(Int(completedKm)) / \(Int(targetKm)) KM"
+        )
+    }
+
+    private var weeklyMetricsRow: some View {
+        HStack(spacing: 12) {
+            MetricDetailCard(
+                title: "Average Pace",
+                primaryValue: "8:25/km",
+                secondaryValue: "8:45/km",
+                footer: "Average Pace Last Week and Two Week Ago"
+            )
+
+            MetricDetailCard(
+                title: "Duration in HR Zone 2",
+                primaryValue: "1:43:37",
+                secondaryValue: "1:26:15",
+                footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
+            )
         }
     }
 }
