@@ -117,7 +117,7 @@ extension RunningPlan {
 // MARK: - Running Plan Data Model for Send Data to WatchOS
 
 struct RunningSummary: Identifiable, Codable, Hashable, Sendable {
-    var id: String = UUID().uuidString
+    var id: String
     var totalTime: Double
     var totalDistance: Double
     var averageHeartRate: Double

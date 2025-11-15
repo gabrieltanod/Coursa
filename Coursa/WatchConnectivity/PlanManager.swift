@@ -12,16 +12,16 @@ import SwiftUI
 
 class PlanManager: NSObject, ObservableObject {
     
+    static let shared = PlanManager()
     
     @Published var name: String = ""
     @Published var kind: RunKind?
     @Published var targetDistance: Double = 0.0
     @Published var targetHRZone: HRZone?
     @Published var recPace: String = ""
-    
     @Published var finalPlan: RunningPlan?
-    
     var syncService: SyncService?
+    var planSession: PlanSessionStore?
     
     func buttonSendPlanTapped() -> RunningPlan? {
         
@@ -49,6 +49,38 @@ class PlanManager: NSObject, ObservableObject {
             service.sendPlanToWatchOS(plan: plan)
         }
     }
-    
-    
+}
+
+extension PlanManager {
+    func applyWatchSummary(_ summary: RunningSummary) {
+        // 1. Load the persisted GeneratedPlan from UserDefaults
+        let store = UserDefaultsPlanStore.shared
+        guard var plan = store.load() else {
+            print("[PlanManager] No GeneratedPlan available for summary")
+            return
+        }
+
+        // 2. Find the ScheduledRun that matches this summary.id
+        guard let index = plan.runs.firstIndex(where: { $0.id == summary.id }) else {
+            print("[PlanManager] Could not find ScheduledRun with id \(summary.id)")
+            return
+        }
+
+        // 3. Update that run’s data
+        var run = plan.runs[index]
+        run.status = .completed
+        run.actual.elapsedSec = Int(summary.totalTime)
+        run.actual.distanceKm = summary.totalDistance
+        run.actual.avgHR = Int(summary.averageHeartRate)
+        run.actual.avgPaceSecPerKm = Int(summary.averagePace)
+
+        plan.runs[index] = run
+
+        // 4. Save back and (optionally) propagate if you later inject a session store
+        store.save(plan)
+        
+        planSession?.generatedPlan = plan
+
+        print("[PlanManager] Applied summary to run \(summary.id) and saved plan")
+    }
 }

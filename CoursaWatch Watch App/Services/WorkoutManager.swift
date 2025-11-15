@@ -17,6 +17,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     let healthStore = HKHealthStore()
     var workoutSession: HKWorkoutSession?
     var workoutBuilder: HKLiveWorkoutBuilder?
+    @Published var currentRunId: String? // scheduledRun ID
     
     // Core Location Property [Deprecated]
     let locationManager = CLLocationManager()
@@ -140,7 +141,13 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             return nil
         }
         
+        guard let runId = currentRunId else {
+            print("[WorkoutManager] ERROR: Missing currentRunId")
+            return nil
+        }
+
         let summary = RunningSummary(
+            id: runId,     // ⭐ IMPORTANT
             totalTime: totalTime,
             totalDistance: self.distance,
             averageHeartRate: self.averageHeartRate,
