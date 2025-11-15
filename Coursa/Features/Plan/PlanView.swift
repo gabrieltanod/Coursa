@@ -10,12 +10,13 @@ import SwiftUI
 import Combine
 
 struct PlanView: View {
-    @StateObject var vm: PlanViewModel
+    @ObservedObject var vm: PlanViewModel
+    @EnvironmentObject private var planSession: PlanSessionStore
 
     // MARK: - Tab state and enum
-    private enum PlanInnerTab: String, CaseIterable {
+    fileprivate enum PlanInnerTab: String, CaseIterable {
         case plan = "Plan"
-        case activity = "Activity"
+        case activity = "History"
     }
     @State private var selectedTab: PlanInnerTab = .plan
     @State private var selectedWeekIndex: Int? = nil
@@ -33,12 +34,14 @@ struct PlanView: View {
         #endif
         ZStack {
             VStack(spacing: 16) {
-                header()
+                PlanHeader()
 
-                planTabs()
-
+                PlanTabs(selectedTab: $selectedTab)
+                
                 if selectedTab == .plan {
-                    if let generated = vm.generatedPlan {
+                    if let generated = planSession.generatedPlan
+                        ?? UserDefaultsPlanStore.shared.load()
+                    {
                         // --- derive plan stats (all runs) ---
                         let allRuns = generated.runs.sorted {
                             $0.date < $1.date
@@ -49,9 +52,9 @@ struct PlanView: View {
                         }.count
 
                         // Runs that are still part of the active plan view
-                        let planRuns = vm.plannedRuns.sorted {
-                            $0.date < $1.date
-                        }
+                        // For now, drive directly from the generated plan so this
+                        // matches what HomeView shows from persisted data.
+                        let planRuns = allRuns
 
                         let progress =
                             totalSessions == 0
@@ -119,19 +122,11 @@ struct PlanView: View {
                         }
 
                         ScrollView {
+                            
+                            DynamicPlanCard()
 
                             LazyVStack(alignment: .leading, spacing: 20) {
-                                PlanProgressCard(
-                                    title: vm.recommendedPlan?.rawValue
-                                        ?? "Base Endurance Plan",
-                                    progress: progress,
-                                    weekNow: weekNow,
-                                    weekTotal: weekTotal,
-                                    completedKm: completedKm,
-                                    targetKm: targetKm
-                                )
-
-                                weekSelector(
+                                WeekSelector(
                                     totalWeeks: allGroups.count,
                                     currentIndex: bindingIndex
                                 )
@@ -160,16 +155,6 @@ struct PlanView: View {
                                     }
                                     .padding(.vertical, 4)
                                 }
-
-                                Text("Week \(selectedIndex + 1) Sessions")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        alignment: .leading
-                                    )
-                                    .padding(.top, 4)
-                                    .foregroundStyle(Color("white-500"))
-
                                 ForEach(selectedRunsExcludingToday) { run in
                                     NavigationLink {
                                         PlanDetailView(run: run)
@@ -177,7 +162,6 @@ struct PlanView: View {
                                         RunningSessionCard(run: run)
                                     }
                                 }
-                                .padding(.vertical, -5)
                             }
                             .padding(.vertical)
                             NavigationLink {
@@ -189,6 +173,8 @@ struct PlanView: View {
                             #if DEBUG
                             Button("Debug Adapt") {
                                 vm.debugCompleteThisWeekAndAdapt()
+                                // Reload shared plan from persistence so both tabs see the update
+                                planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
                             }
                             #endif
                         }
@@ -216,7 +202,12 @@ struct PlanView: View {
                     }
                 } else {
                     // Activity tab: completed & skipped runs
-                    let activity = vm.activityRuns.sorted { $0.date > $1.date }
+                    let activitySource = planSession.generatedPlan
+                        ?? UserDefaultsPlanStore.shared.load()
+
+                    let activity = (activitySource?.runs ?? [])
+                        .filter { $0.status == .completed || $0.status == .skipped }
+                        .sorted { $0.date > $1.date }
 
                     if activity.isEmpty {
                         VStack(spacing: 12) {
@@ -243,21 +234,41 @@ struct PlanView: View {
                         )
                         .padding(.top, 32)
                     } else {
+                        let monthGroups = groupByMonth(activity)
+
                         ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 16) {
-                                ForEach(activity) { run in
-                                    NavigationLink {
-                                        // Navigate to RunningSummaryView if run has summary data
-                                        if run.status == .completed && hasActualMetrics(run: run) {
-                                            RunningSummaryView(
-                                                run: run,
-                                                summary: summaryFromRun(run: run)
-                                            )
-                                        } else {
-                                            PlanDetailView(run: run)
-                                        }
-                                    } label: {
-                                        RunningSessionCard(run: run)
+                          LazyVStack(alignment: .leading, spacing: 24) {
+                              ForEach(monthGroups) { group in
+                                  VStack(alignment: .leading, spacing: 12) {
+                                      Text(monthYearTitle(for: group._key))
+                                          .font(.system(size: 15, weight: .semibold))
+                                          .foregroundStyle(Color("white-500"))
+
+                                      LazyVStack(alignment: .leading, spacing: 12) {
+                                          ForEach(group._value) { run in
+                                              NavigationLink {
+                                                  // Keep COUR-88 behavior here
+                                                  if run.status == .completed && hasActualMetrics(run: run) {
+                                                      RunningSummaryView(
+                                                          run: run,
+                                                          summary: summaryFromRun(run: run)
+                                                      )
+                                                  } else {
+                                                      PlanDetailView(run: run)
+                                                  }
+                                              } label: {
+                                                  RunningHistoryCard(
+                                                      run: run,
+                                                      isSkipped: run.status == .skipped
+                                                  )
+                                                  // If you prefer the old card:
+                                                  // RunningSessionCard(run: run)
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
                                     }
                                 }
                             }
@@ -273,6 +284,8 @@ struct PlanView: View {
                 if vm.recommendedPlan == nil { vm.computeRecommendation() }
                 vm.ensurePlanUpToDate()
                 vm.applyAutoSkipIfNeeded()
+                // After any adjustments, reload the shared plan from persistence
+                planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdated"))) { _ in
                 // Refresh plan when it's updated from WatchOS
@@ -291,122 +304,7 @@ struct PlanView: View {
         }
         .background(Color("black-500"))
     }
-    // MARK: - Tab bar
-    @ViewBuilder
-    private func planTabs() -> some View {
-        VStack(spacing: 8) {
-            HStack {
-                ForEach(PlanInnerTab.allCases, id: \.self) { tab in
-                    Button {
-                        selectedTab = tab
-                    } label: {
-                        Text(tab.rawValue)
-                            .font(
-                                .system(
-                                    size: 17,
-                                    weight: selectedTab == tab
-                                        ? .semibold : .regular
-                                )
-                            )
-                            .foregroundStyle(
-                                Color("white-500").opacity(
-                                    selectedTab == tab ? 1.0 : 0.65
-                                )
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 1)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
-            // baseline + underline for selected tab
-            ZStack(alignment: .leading) {
-                Rectangle()
-                    .fill(Color("white-500").opacity(0.15))
-                    .frame(height: 1)
-
-                HStack(spacing: 0) {
-                    Rectangle()
-                        .fill(
-                            selectedTab == .plan ? Color("white-500") : .clear
-                        )
-                        .frame(height: 2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Rectangle()
-                        .fill(
-                            selectedTab == .activity
-                                ? Color("white-500") : .clear
-                        )
-                        .frame(height: 2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func weekSelector(totalWeeks: Int, currentIndex: Binding<Int>)
-        -> some View
-    {
-        VStack(spacing: 10) {
-            HStack {
-                Button {
-                    if currentIndex.wrappedValue > 0 {
-                        currentIndex.wrappedValue -= 1
-                    }
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color.white)
-                        .frame(width: 32, height: 32)
-
-                }
-                .buttonStyle(.plain)
-
-                Text("Week \(currentIndex.wrappedValue + 1)")
-                    .font(.system(size: 17, weight: .medium))
-                    .frame(maxWidth: .infinity)
-                    .foregroundStyle(Color.white)
-
-                Button {
-                    if currentIndex.wrappedValue < totalWeeks - 1 {
-                        currentIndex.wrappedValue += 1
-                    }
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 17, weight: .medium))
-                        .frame(width: 32, height: 32)
-                        .foregroundStyle(Color.white)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color("black-450"))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color("white-500").opacity(0.2), lineWidth: 1)
-            )
-        }
-    }
-
-    // MARK: - Small pieces
-
-    @ViewBuilder
-    private func header() -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Your Plan")
-                .font(.system(size: 35))
-                .foregroundStyle(Color("white-500"))
-                .fontWeight(.medium)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
 
     // group runs by [year, weekOfYear] so weeks don’t mix across years
     private struct WeekKey: Hashable, Comparable {
@@ -435,6 +333,198 @@ struct PlanView: View {
                 _value: groups[key]!.sorted { $0.date < $1.date }
             )
         }
+    }
+
+    // MARK: - Month grouping for history
+
+    private struct MonthKey: Hashable, Comparable {
+        let year: Int
+        let month: Int
+
+        static func < (l: MonthKey, r: MonthKey) -> Bool {
+            (l.year, l.month) < (r.year, r.month)
+        }
+    }
+
+    private struct MonthGroup: Identifiable {
+        let id = UUID()
+        let _key: MonthKey
+        let _value: [ScheduledRun]
+    }
+
+    private func groupByMonth(_ runs: [ScheduledRun]) -> [MonthGroup] {
+        let cal = Calendar.current
+        let groups = Dictionary(grouping: runs) { run -> MonthKey in
+            let comps = cal.dateComponents([.year, .month], from: run.date)
+            return MonthKey(
+                year: comps.year ?? 0,
+                month: comps.month ?? 1
+            )
+        }
+
+        // Newest month first
+        return groups.keys.sorted(by: >).map { key in
+            MonthGroup(
+                _key: key,
+                _value: groups[key]!.sorted { $0.date > $1.date }
+            )
+        }
+    }
+
+    private func monthYearTitle(for key: MonthKey) -> String {
+        var comps = DateComponents()
+        comps.year = key.year
+        comps.month = key.month
+
+        let cal = Calendar.current
+        let date = cal.date(from: comps) ?? Date()
+
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+}
+
+private struct PlanHeader: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Your Plan")
+                .font(.system(size: 34))
+                .foregroundStyle(Color("white-500"))
+                .fontWeight(.medium)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct PlanTabs: View {
+    @Binding var selectedTab: PlanView.PlanInnerTab
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                ForEach(PlanView.PlanInnerTab.allCases, id: \.self) { tab in
+                    Button {
+                        selectedTab = tab
+                    } label: {
+                        Text(tab.rawValue)
+                            .font(
+                                .system(
+                                    size: 17,
+                                    weight: selectedTab == tab
+                                        ? .semibold : .regular
+                                )
+                            )
+                            .foregroundStyle(
+                                Color("white-500").opacity(
+                                    selectedTab == tab ? 1.0 : 0.65
+                                )
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 1)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color("white-500").opacity(0.15))
+                    .frame(height: 1)
+
+                HStack(spacing: 0) {
+                    Rectangle()
+                        .fill(
+                            selectedTab == .plan ? Color("white-500") : .clear
+                        )
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Rectangle()
+                        .fill(
+                            selectedTab == .activity
+                                ? Color("white-500") : .clear
+                        )
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+}
+
+private struct WeekSelector: View {
+    let totalWeeks: Int
+    @Binding var currentIndex: Int
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Button {
+                    if currentIndex > 0 {
+                        currentIndex -= 1
+                    }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+
+                Text("Week \(currentIndex + 1)")
+                    .font(.system(size: 17, weight: .medium))
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(Color.white)
+
+                Button {
+                    if currentIndex < totalWeeks - 1 {
+                        currentIndex += 1
+                    }
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 17, weight: .medium))
+                        .frame(width: 32, height: 32)
+                        .foregroundStyle(Color.white)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color("black-450"))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color("white-500").opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+}
+
+private struct DynamicPlanCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Dynamic Plan")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color("green-500"))
+            Text("Your training plan is totally flexible and adapts to you! We check in on your progress every week to make sure next week's intensity is perfectly tailored.")
+                .font(.system(size: 17, weight: .regular))
+                .foregroundColor(Color("white-500").opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: 395, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.clear)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color("white-500").opacity(0.25), lineWidth: 1)
+        )
     }
     
     // Helper to check if run has actual metrics

@@ -52,6 +52,7 @@ struct CalendarView: View {
                     Circle()
                         .fill(Color.white.opacity(0.06))
                         .frame(width: 40, height: 40)
+                        .maybeGlassEffect()
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Color("white-500"))
@@ -100,10 +101,12 @@ struct CalendarView: View {
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color("black-450"))
+                .maybeGlassEffect()
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(Color.white.opacity(0.18), lineWidth: 1)
+//                .maybeGlassEffect()
         )
     }
 

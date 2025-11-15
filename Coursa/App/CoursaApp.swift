@@ -12,6 +12,7 @@ import SwiftData
 struct CoursaApp: App {
     
     @StateObject private var router = AppRouter()
+    @StateObject private var planSession = PlanSessionStore()
     
     
     // Watch Connectivity
@@ -44,12 +45,20 @@ struct CoursaApp: App {
         WindowGroup {
             AppRootView()
                 .environmentObject(router)
-                .environment(\.colorScheme, .dark)
-                .environmentObject(planManager)
                 .environmentObject(syncService)
+                .environmentObject(planManager)
+                .environmentObject(planSession)
+                .environment(\.colorScheme, .dark)
+
                 .modelContainer(container)
+                .onAppear {
+                    // Ensure a single SyncService instance is used app-wide
+                    if planManager.syncService == nil {
+                        planManager.syncService = syncService
+                    }
+                }
             
-            
+           
             // Watch Connectivity
 //            WatchConnectivityDebugView()
 //                .environmentObject(syncService)

@@ -6,9 +6,20 @@
 //
 
 import SwiftUI
+import HealthKit
 
 struct SettingsView: View {
     @EnvironmentObject private var router: AppRouter
+    @EnvironmentObject var planSession: PlanSessionStore
+    // WatchConnectivity + Plan manager from environment
+    @EnvironmentObject private var syncService: SyncService
+    @EnvironmentObject private var planManager: PlanManager
+    
+    // Local sheets for actions
+    private enum ActiveSheet: Identifiable { case watch, privacy
+        var id: String { String(self.hashValue) }
+    }
+    @State private var activeSheet: ActiveSheet?
 
     var body: some View {
         ZStack {
@@ -27,7 +38,8 @@ struct SettingsView: View {
                         title: "Connect Apple Watch",
                         subtitle: "Apple Watch can upload directly to Coursa."
                     ) {
-                        // TODO: Hook up Apple Watch flow
+                        // Activate/connect WCSession and show status sheet
+                        activeSheet = .watch
                     }
 
                     SettingsCard(
@@ -36,7 +48,7 @@ struct SettingsView: View {
                         title: "Apple Health",
                         subtitle: "Connect with Apple's Health app."
                     ) {
-                        // TODO: Hook up HealthKit
+                        requestHealthKitAuthorization()
                     }
 
                     SettingsCard(
@@ -45,7 +57,7 @@ struct SettingsView: View {
                         title: "Privacy Notes",
                         subtitle: "See how your data is utilized."
                     ) {
-                        // TODO: Show privacy info
+                        activeSheet = .privacy
                     }
                 }
 
@@ -58,7 +70,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
-                        router.reset(hard: true)
+                        router.reset(hard: true, planSession: planSession)
                     } label: {
                         HStack {
                             Image(systemName: "arrow.clockwise.circle.fill")
@@ -81,11 +93,44 @@ struct SettingsView: View {
             .padding(.top, 24)
         }
         .preferredColorScheme(.dark)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .watch:
+                // Simple connectivity status and tools
+                ConnectAppleWatch()
+                    .environmentObject(syncService)
+                    .environmentObject(planManager)
+            case .privacy:
+                PrivacyNotesView()
+                    .presentationDetents([.medium, .large])
+            }
+        }
     }
 }
 
 #Preview {
     SettingsView()
         .environmentObject(AppRouter())
+        .environmentObject(SyncService())
+        .environmentObject(PlanManager())
         .preferredColorScheme(.dark)
+}
+
+// MARK: - Helpers
+private extension SettingsView {
+    func requestHealthKitAuthorization() {
+        // HealthKit is optional on device; guard capability first
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        let store = HKHealthStore()
+        // Minimal read/write types as placeholders; adjust as needed
+        let toShare: Set = [HKObjectType.workoutType()]
+        let toRead: Set = [
+            HKObjectType.quantityType(forIdentifier: .heartRate)!,
+            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
+        ]
+        store.requestAuthorization(toShare: toShare, read: toRead) { success, error in
+            if let error = error { print("HealthKit auth error: \(error)") }
+            print("HealthKit auth success: \(success)")
+        }
+    }
 }

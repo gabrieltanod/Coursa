@@ -33,7 +33,6 @@ struct WatchConnectDisplay: View {
             
             // Check if data summary has been received
             if let summary = syncService.summary {
-                
                 Text("New Summary Received!")
                     .foregroundColor(.green)
                     .font(.headline)

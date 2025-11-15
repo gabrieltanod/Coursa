@@ -14,15 +14,28 @@ class PlanManager: NSObject, ObservableObject {
     @Published var finalPlan: GeneratedPlan?      // The real generated plan
     var syncService: SyncService?
     
-    private func getSyncService() -> SyncService {
-        if let service = syncService { return service }
-        let service = SyncService()
-        syncService = service
-        return service
+    func buttonSendPlanTapped() -> RunningPlan? {
+        
+        let plan = RunningPlan(
+            date: Date(),
+            name: self.name,
+            kind: self.kind,
+            targetDistance: self.targetDistance,
+            targetHRZone: self.targetHRZone,
+            recPace: self.recPace
+        )
+        
+        sendPlanToWatchOS(plan)
+        
+        return plan
     }
+
     
-    func sendPlanToWatchOS(_ plan: GeneratedPlan) {
-        let service = getSyncService()
+    func sendPlanToWatchOS(_ plan: RunningPlan) {
+        guard let service = syncService else {
+            print("PlanManager: SyncService not configured; cannot send plan.")
+            return
+        }
         DispatchQueue.main.async {
             service.sendPlanToWatchOS(plan: plan)
         }

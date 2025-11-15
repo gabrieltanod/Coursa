@@ -11,44 +11,66 @@ import SwiftUI
 struct RunningSessionCard: View {
     let run: ScheduledRun
 
+    private var cardBackgroundName: String {
+        let t = run.title.lowercased()
+        if t.contains("maf") { return "MAFRunningCardBG" }
+        if t.contains("easy") { return "EasyRunningCardBG" }
+        if t.contains("long") { return "LongRunningCardBG" }
+        return "MAFRunningCardBG"
+    }
+
     var body: some View {
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(cardGradient)
+                .fill(Color.clear)
                 .overlay(alignment: .bottomTrailing) {
-                    Image(systemName: overlaySymbol)
+                    Image(cardBackgroundName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .foregroundStyle(.white.opacity(0.15))
-                        .padding(-10)
-//                        .allowsHitTesting(false)
+                        .cornerRadius(20)
                 }
                 .clipped()
-
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20)
+                        .inset(by: 0.5)
+                        .stroke(
+                            Color(red: 0.3, green: 0.29, blue: 0.3),
+                            lineWidth: 1
+                        )
 
-                        .strokeBorder(Color("black-400").opacity(1), lineWidth: 1.5)
                 )
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(formattedDate)
-                    .font(.system(size: 13, weight: .light))
-                    .foregroundStyle(.white.opacity(0.95))
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(formattedDate)
+                        .font(.system(size: 13, weight: .light))
+                        .foregroundStyle(.white.opacity(0.95))
 
-                Text(run.title)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(.white)
+                    Text(run.title)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(.white)
 
-                HStack {
-                    badge(run.subtitle)
+                    HStack {
+                        badge(run.subtitle)
+                    }
                 }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
             }
             .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity, minHeight: 110, maxHeight: 110)
+        .frame(maxWidth: 392, minHeight: 109, maxHeight: 110)
         .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .inset(by: 0.5)
+                .stroke(Color(red: 0.3, green: 0.29, blue: 0.3), lineWidth: 1)
+
+        )
     }
 
     private var formattedDate: String {
@@ -123,9 +145,27 @@ struct RunningSessionCard: View {
                         to: Date()
                     ) ?? Date(),
                     template: RunTemplate(
-                        name: "Tempo Run",
-                        kind: .tempo,
-                        focus: .speed,
+                        name: "Long Run",
+                        kind: .long,
+                        focus: .endurance,
+                        targetDurationSec: 2400,
+                        targetDistanceKm: 6.0,
+                        targetHRZone: .z3,
+                        notes: "Sustain comfortably hard"
+                    )
+                )
+            )
+            RunningSessionCard(
+                run: ScheduledRun(
+                    date: Calendar.current.date(
+                        byAdding: .day,
+                        value: 2,
+                        to: Date()
+                    ) ?? Date(),
+                    template: RunTemplate(
+                        name: "Easy Run",
+                        kind: .easy,
+                        focus: .endurance,
                         targetDurationSec: 2400,
                         targetDistanceKm: 6.0,
                         targetHRZone: .z3,

@@ -20,33 +20,95 @@ struct PlanDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     // Header image + overlay + text
-                    ZStack(alignment: .bottom) {
-                        Image("CoursaImages/Running_Easy")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: UIScreen.main.bounds.height * 0.5)
-                            .clipped()
-                            .overlay(
-                                ZStack {
-                                    overlayColor.opacity(0.55)
-                                    LinearGradient(
-                                        colors: [.clear, Color("black-500")],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
+                    GeometryReader { geo in
+                        ZStack(alignment: .bottom) {
+                            Image("CoursaImages/Running_Easy")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+                                .overlay(
+                                    ZStack {
+                                        overlayColor.opacity(0.55)
+                                        LinearGradient(
+                                            colors: [.clear, Color("black-500")],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    }
+                                )
+
+                            VStack(alignment: .center) {
+                                Text(formattedDate)
+                                    .font(.system(size: 14, weight: .regular))
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .padding(.bottom, 11)
+
+                                Text(run.title)
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 17)
+
+                                metricsRow
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.bottom, 32)
+                        }
+                        .frame(height: geo.size.height)
+                    }
+                    .frame(height: UIScreen.main.bounds.height * 0.5)
+
+                    // Body content
+                    VStack(alignment: .leading, spacing: 24) {
+                        HStack(spacing: 16) {
+                            SmallCard {
+                                HStack(
+                                    alignment: .firstTextBaseline,
+                                    spacing: 6
+                                ) {
+                                    Text("Keep conversational pace for")
+                                        .lineLimit(2, reservesSpace: true)
+                                        .font(
+                                            .system(size: 15, weight: .regular)
+                                        )
+                                        .foregroundColor(.white)
                                 }
-                            )
+                                .padding(.bottom, 9)
+                                Text(conversationalPaceMinutesText)
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(
+                                        Color(red: 0.84, green: 1.0, blue: 0.35)
+                                    )
+                            }
+                            .frame(maxWidth: 172)
+                            .frame(height: 107)
 
-                        VStack(alignment: .center, spacing: 8) {
-                            Text(formattedDate)
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(.white.opacity(0.9))
+                            SmallCard {
+                                Text("Recommended Pace")
+                                    .lineLimit(2, reservesSpace: true)
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 9)
+                                Text("7:30/km")
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(
+                                        Color(red: 0.84, green: 1.0, blue: 0.35)
+                                    )
+                            }
+                            .frame(maxWidth: 172)
+                            .frame(height: 107)
+                        }
 
-                            Text(run.title)
-                                .font(.system(size: 34, weight: .bold))
+                        Text("Description")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white)
+
+                        SmallCard {
+                            Text(descriptionText)
+                                .font(.system(size: 15))
                                 .foregroundColor(.white)
-
-                            metricsRow
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 32)
@@ -71,26 +133,8 @@ struct PlanDetailView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
-
-                    Spacer(minLength: 40)
                 }
             }
-
-            // Back button (top-left)
-            Button {
-                dismiss()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.55))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-            }
-            .padding(.top, 14)
-            .padding(.leading, 16)
         }
         .ignoresSafeArea(edges: .top)
     }
@@ -103,7 +147,7 @@ struct PlanDetailView: View {
                     Text(Self.mmText(dur))
                         .font(.system(size: 15, weight: .regular))
                 } icon: {
-                    Image(systemName: "clock")
+                    Image(systemName: "clock.fill")
                 }
             }
             Text("|")
@@ -116,11 +160,11 @@ struct PlanDetailView: View {
                 }
             }
 
-//            Label {
-//                Text(run.template.focus.rawValue.capitalized)
-//            } icon: {
-//                Image(systemName: "bolt.fill")
-//            }
+            //            Label {
+            //                Text(run.template.focus.rawValue.capitalized)
+            //            } icon: {
+            //                Image(systemName: "bolt.fill")
+            //            }
         }
         .font(.system(size: 13, weight: .medium))
         .foregroundColor(.white.opacity(0.95))
@@ -138,7 +182,8 @@ struct PlanDetailView: View {
         if let notes = run.template.notes, !notes.isEmpty {
             return notes
         } else {
-            return "This session is designed to support your endurance with controlled effort and clear structure. Run at a comfortable pace, stay relaxed, and focus on finishing strong."
+            return
+                "This session is designed to support your endurance with controlled effort and clear structure. Run at a comfortable pace, stay relaxed, and focus on finishing strong."
         }
     }
 
@@ -180,6 +225,15 @@ struct PlanDetailView: View {
     }
 }
 
+    private var conversationalPaceMinutesText: String {
+        if let dur = run.template.targetDurationSec {
+            let m = dur / 60
+            return "\(m) min"
+        } else {
+            return "-- min"
+        }
+    }
+}
 
 #Preview("Plan Detail") {
     let sampleTemplate = RunTemplate(
@@ -189,15 +243,16 @@ struct PlanDetailView: View {
         targetDurationSec: 1800,
         targetDistanceKm: 3.0,
         targetHRZone: .z2,
-        notes: "This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats."
+        notes:
+            "This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats."
     )
-    
+
     let sampleRun = ScheduledRun(
         date: Date(),
         template: sampleTemplate,
         status: .planned
     )
-    
+
     return NavigationStack {
         PlanDetailView(run: sampleRun)
             .preferredColorScheme(.dark)

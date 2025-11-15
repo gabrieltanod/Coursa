@@ -20,28 +20,18 @@ final class HomeViewModel: ObservableObject {
     }
 
     func loadPlan() {
-        guard let data = OnboardingStore.load() else {
+        // Load the same generated plan that PlanView / PlanSessionStore persist
+        guard let generated = UserDefaultsPlanStore.shared.load() else {
             runs = []
             return
         }
 
-        let planVM = PlanViewModel(data: data)
+        runs = generated.runs.sorted { $0.date < $1.date }
 
-        if planVM.recommendedPlan == nil {
-            planVM.computeRecommendation()
-        }
-        if planVM.generatedPlan == nil {
-            planVM.generatePlan()
-        }
-
-        if let generated = planVM.generatedPlan {
-            self.runs = generated.runs.sorted { $0.date < $1.date }
-        } else {
-            self.runs = []
-        }
-        
+        // Keep selectedDate aligned to either "today" (if there is a run today),
+        // or the first available run in the plan.
         if let first = runs.first {
-            if runs.contains(where: { calendar.isDateInToday($0.date)}) {
+            if runs.contains(where: { calendar.isDateInToday($0.date) }) {
                 selectedDate = calendar.startOfDay(for: Date())
             } else {
                 selectedDate = calendar.startOfDay(for: first.date)
