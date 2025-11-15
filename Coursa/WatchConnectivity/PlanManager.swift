@@ -5,22 +5,13 @@
 //  Created by Chairal Octavyanz on 11/11/25.
 //
 
-
 import Foundation
 import Combine
 import SwiftUI
 
 class PlanManager: NSObject, ObservableObject {
     
-    
-    @Published var name: String = ""
-    @Published var kind: RunKind?
-    @Published var targetDistance: Double = 0.0
-    @Published var targetHRZone: HRZone?
-    @Published var recPace: String = ""
-    
-    @Published var finalPlan: RunningPlan?
-    
+    @Published var finalPlan: GeneratedPlan?      // The real generated plan
     var syncService: SyncService?
     
     func buttonSendPlanTapped() -> RunningPlan? {
@@ -50,5 +41,14 @@ class PlanManager: NSObject, ObservableObject {
         }
     }
     
+    func buttonSendPlanTapped() {
+        guard let plan = finalPlan else {
+            print("❌ PlanManager: No GeneratedPlan available to send")
+            return
+        }
+        
+        sendPlanToWatchOS(plan)
+    }
     
+
 }

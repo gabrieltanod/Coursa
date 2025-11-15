@@ -2,17 +2,22 @@ import SwiftUI
 
 struct ChooseStartDateStepView: View {
     let onFinish: (Date) -> Void
+    let onboardingData: OnboardingData
     @State private var activeSheet: Bool = false
     @State private var selectedDate: Date?
     @State private var selectedId: Int?
-
+    
+    
+    @EnvironmentObject var syncService: SyncService
+    @EnvironmentObject var planManager: PlanManager
+    
     private var selectedDateBinding: Binding<Date> {
         Binding<Date>(
             get: { selectedDate ?? Date() },
             set: { selectedDate = $0 }
         )
     }
-
+    
     var body: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
@@ -21,7 +26,7 @@ struct ChooseStartDateStepView: View {
                     caption: "Pick your training plan starting date."
                 )
                 .padding(.bottom, 90)
-
+                
                 VStack(alignment: .leading, spacing: 12) {
                     Button(action: {
                         selectedDate = Date()
@@ -41,7 +46,7 @@ struct ChooseStartDateStepView: View {
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                     }
                     .buttonStyle(.plain)
-
+                    
                     Button(action: {
                         selectedDate = Date(timeIntervalSinceNow: 86400)
                         selectedId = 1
@@ -60,7 +65,7 @@ struct ChooseStartDateStepView: View {
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                     }
                     .buttonStyle(.plain)
-
+                    
                     Button(action: {
                         selectedDate = FindNextWeekMonday()
                         selectedId = 2
@@ -79,7 +84,7 @@ struct ChooseStartDateStepView: View {
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
                     }
                     .buttonStyle(.plain)
-
+                    
                     Button(action: {
                         activeSheet = true
                         selectedId = 3
@@ -112,15 +117,38 @@ struct ChooseStartDateStepView: View {
                     }
                     .buttonStyle(.plain)
                 }
-
+                
                 Spacer()
                 
                 Button("Generate Plan") {
-                    onFinish(selectedDate ?? Date())
+                    let startDate = selectedDate ?? Date()
+                    
+                    // Generate the plan
+                    var dataWithStartDate = onboardingData
+                    dataWithStartDate.startDate = startDate
+                    
+                    if let generatedPlan = PlanMapper.generatePlan(from: dataWithStartDate) {
+                        // Store the plan in planManager
+                        planManager.finalPlan = generatedPlan
+                        
+                        // Save the plan
+                        StoreManager.shared.currentPlanStore.save(generatedPlan)
+                        
+                        // Send plan to WatchOS
+                        planManager.sendPlanToWatchOS(generatedPlan)
+                        
+                        // Continue with onboarding flow
+                        onFinish(startDate)
+                    } else {
+                        print("❌ Failed to generate plan")
+                        // Still call onFinish to continue the flow
+                        onFinish(startDate)
+                    }
                 }
                 .buttonStyle(CustomButtonStyle(isDisabled: selectedDate == nil))
                 .controlSize(.large)
                 .disabled(selectedDate == nil)
+                
                 
             }
         }
@@ -145,5 +173,5 @@ struct ChooseStartDateStepView: View {
 }
 
 #Preview {
-    ChooseStartDateStepView { _ in }
+    ChooseStartDateStepView(onFinish: { _ in }, onboardingData: OnboardingData())
 }

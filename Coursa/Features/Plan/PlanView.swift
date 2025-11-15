@@ -7,6 +7,7 @@
 
 // PlanView.swift (update)
 import SwiftUI
+import Combine
 
 struct PlanView: View {
     @ObservedObject var vm: PlanViewModel
@@ -236,25 +237,38 @@ struct PlanView: View {
                         let monthGroups = groupByMonth(activity)
 
                         ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 24) {
-                                ForEach(monthGroups) { group in
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Text(monthYearTitle(for: group._key))
-                                            .font(.system(size: 15, weight: .semibold))
-                                            .foregroundStyle(Color("white-500"))
+                          LazyVStack(alignment: .leading, spacing: 24) {
+                              ForEach(monthGroups) { group in
+                                  VStack(alignment: .leading, spacing: 12) {
+                                      Text(monthYearTitle(for: group._key))
+                                          .font(.system(size: 15, weight: .semibold))
+                                          .foregroundStyle(Color("white-500"))
 
-                                        LazyVStack(alignment: .leading, spacing: 12) {
-                                            ForEach(group._value) { run in
-                                                NavigationLink {
-                                                    PlanDetailView(run: run)
-                                                } label: {
-                                                    RunningHistoryCard(
-                                                        run: run,
-                                                        isSkipped: run.status == .skipped
-                                                    )
-                                                }
-                                            }
-                                        }
+                                      LazyVStack(alignment: .leading, spacing: 12) {
+                                          ForEach(group._value) { run in
+                                              NavigationLink {
+                                                  // Keep COUR-88 behavior here
+                                                  if run.status == .completed && hasActualMetrics(run: run) {
+                                                      RunningSummaryView(
+                                                          run: run,
+                                                          summary: summaryFromRun(run: run)
+                                                      )
+                                                  } else {
+                                                      PlanDetailView(run: run)
+                                                  }
+                                              } label: {
+                                                  RunningHistoryCard(
+                                                      run: run,
+                                                      isSkipped: run.status == .skipped
+                                                  )
+                                                  // If you prefer the old card:
+                                                  // RunningSessionCard(run: run)
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
                                     }
                                 }
                             }
@@ -272,6 +286,10 @@ struct PlanView: View {
                 vm.applyAutoSkipIfNeeded()
                 // After any adjustments, reload the shared plan from persistence
                 planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PlanUpdated"))) { _ in
+                // Refresh plan when it's updated from WatchOS
+                vm.ensurePlanUpToDate()
             }
 //            #if DEBUG
 //                .toolbar {
@@ -507,6 +525,27 @@ private struct DynamicPlanCard: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color("white-500").opacity(0.25), lineWidth: 1)
         )
+    }
+    
+    // Helper to check if run has actual metrics
+    private func hasActualMetrics(run: ScheduledRun) -> Bool {
+        run.actual.elapsedSec != nil || 
+        run.actual.distanceKm != nil || 
+        run.actual.avgHR != nil || 
+        run.actual.avgPaceSecPerKm != nil
+    }
+    
+    // Create RunningSummary from run's actual metrics
+    private func summaryFromRun(run: ScheduledRun) -> RunningSummary? {
+        // Try to load from SwiftData first
+        if let summaryStore = StoreManager.shared.currentSummaryStore,
+           let storedSummary = summaryStore.load(for: run.id) {
+            return storedSummary
+        }
+        
+        // Fallback to creating from run's actual metrics
+        guard hasActualMetrics(run: run) else { return nil }
+        return RunningSummary(from: run)
     }
 }
 

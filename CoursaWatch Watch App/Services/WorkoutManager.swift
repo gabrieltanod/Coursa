@@ -37,6 +37,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var zoneDurationTracker: [Int: TimeInterval] = [:]
     
     @Published var currentZone: Int = 1
+    @Published var currentRun: ScheduledRun?
     private let userMaxHeartRate: Double = 180.0 // still static data
     private var hapticTimer: Timer?
     
@@ -147,7 +148,8 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             averagePace: self.averagePace
         )
         
-        sendSummaryToiOS(summary)
+        // Don't send summary here - let ControlPageView decide based on 60-second threshold
+        // sendSummaryToiOS(summary)
         
         self.workoutIsActive = false
         self.heartRate = 0

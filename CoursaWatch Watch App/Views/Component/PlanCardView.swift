@@ -12,13 +12,13 @@ enum RunningType: String, CaseIterable, Codable {
     case mafTraining
     case longRun
     
-    var displayName: String {
-        switch self {
-        case .easyRun: return "Easy Run"
-        case .mafTraining: return "MAF Training"
-        case .longRun: return "Long Run"
-        }
-    }
+//    var displayName: String {
+//        switch self {
+//        case .easyRun: return "Easy Run"
+//        case .mafTraining: return "MAF Training"
+//        case .longRun: return "Long Run"
+//        }
+//    }
     
     var displayGradient: LinearGradient {
         let colors: [Color]
@@ -51,26 +51,27 @@ enum RunningType: String, CaseIterable, Codable {
     }
 }
 
+import SwiftUI
+
 struct PlanCardView: View {
     
-    let plan: RunningPlan
+    let run: ScheduledRun
     
     var runningType: RunningType {
-            RunningType(from: plan.kind)
-        }
-
+        RunningType(from: run.template.kind)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(formatDate(plan.date))
+            Text(formatDate(run.date))
                 .font(.helveticaNeue(size: 13, weight: .regular))
                 .foregroundColor(Color("primary"))
             
-            Text(runningType.displayName)
+            Text(run.template.name)
                 .font(.helveticaNeue(size: 20, weight: .bold))
                 .foregroundColor(Color("primary"))
             
-            Text("\(plan.targetDistance) - \(plan.targetHRZone)")
+            Text(run.subtitle)
                 .font(.helveticaNeue(size: 14, weight: .regular))
                 .foregroundColor(Color("primary"))
         }
