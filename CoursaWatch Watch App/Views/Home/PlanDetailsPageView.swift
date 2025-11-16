@@ -11,9 +11,10 @@ struct PlanDetailsPageView: View {
 //    let name: String
 //    let targetDistance: Double
 //    let targetHRZone: HRZone
-//    let recPace: String
     
-    let plan: RunningPlan
+    let recPace: String = "7:30"
+    
+    let plan: ScheduledRun
     @State private var navPath = NavigationPath()
     @Binding var appState: AppState
     
@@ -35,6 +36,8 @@ struct PlanDetailsPageView: View {
         }
     }
     
+        
+    
     @State private var countdownStep: CountdownStep = .idle
     @EnvironmentObject var workoutManager: WorkoutManager
     
@@ -44,13 +47,13 @@ struct PlanDetailsPageView: View {
                 VStack(spacing: 30) {
                     // Header
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.name)
+                        Text(plan.template.name)
                             .font(.helveticaNeue(size: 20))
-                        Text("Distance: \(plan.targetDistance)")
+                        Text("Distance: \(plan.template.targetDistanceKm.map { String(format: "%.2f", $0) } ?? "—") km")
                             .font(.helveticaNeue(size: 16))
-                        Text("HR Zone: \(plan.targetHRZone)")
+                        Text("HR Zone: \(plan.template.targetHRZone.map { String(format: "%.2f", $0 as! CVarArg) } ?? "—")")
                             .font(.helveticaNeue(size: 16))
-                        Text("Rec Pace: \(plan.recPace)")
+                        Text("Rec Pace: \(recPace)")
                             .font(.helveticaNeue(size: 16))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

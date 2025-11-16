@@ -12,19 +12,14 @@ import Combine
 class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
     @Published var summary: RunningSummary?
-    @Published var plan: RunningPlan?
+    @Published var plan: GeneratedPlan?
     @Published var isSessionActivated: Bool = false
     
     private var session: WCSession = .default
     
 #if os(iOS)
     // Queue for messages pending activation
-    private var pendingRunningPlan: RunningPlan?
-    //    private var isActivationInProgress: Bool = false
-    //    private var activationRetryTimer: Timer?
-    //    private var activationRetryCount: Int = 0
-    //    private let maxActivationRetries: Int = 5
-    //    private let activationRetryDelay: TimeInterval = 3.0
+    private var pendingRunningPlan: GeneratedPlan?
 #endif
     
 #if os(watchOS)
@@ -230,6 +225,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 print("iOS: Session reachable: \(session.isReachable)")
                 print("iOS: Watch app installed: \(session.isWatchAppInstalled)")
                 print("iOS: Activation state: \(session.activationState.rawValue)")
+                self.sendPendingRunningPlanIfNeeded()
 #endif
 #if os(watchOS)
                 print("watchOS: ✅ WCSession activated successfully")
@@ -376,51 +372,31 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #endif
     
     private func decodeAndStorePlan(from dictionary: [String: Any]) {
-        // Handle UUID as String (since Dictionary can't store UUID directly)
-        var id: UUID
-        if let idString = dictionary["id"] as? String {
-            id = UUID(uuidString: idString) ?? UUID()
-        } else if let idUUID = dictionary["id"] as? UUID {
-            id = idUUID
-        } else {
-            id = UUID()
+            #if os(watchOS)
+            print("watchOS: decodeAndStorePlan received keys:", dictionary.keys)
+            
+            // 1. Get the Data object from the dictionary
+            guard let planData = dictionary["generatedPlan"] as? Data else {
+                print("watchOS: ❌ Failed to find 'generatedPlan' key or value was not Data.")
+                return
+            }
+            
+            do {
+                // 2. Decode the Data back into your complex struct
+                let decodedPlan = try JSONDecoder().decode(GeneratedPlan.self, from: planData)
+                
+                // 3. Update the @Published property on the main thread
+                DispatchQueue.main.async {
+                    self.plan = decodedPlan
+                    print("watchOS: ✅ Successfully decoded and stored GeneratedPlan. Plan type: \(decodedPlan.plan.rawValue), Run count: \(decodedPlan.runs.count)")
+                }
+                
+            } catch {
+                print("watchOS: ❌ Failed to decode GeneratedPlan: \(error.localizedDescription)")
+                print("watchOS: Error details: \(error)")
+            }
+            #endif
         }
-        
-        // Decode values safely
-        guard let date = dictionary["date"] as? Date,
-              let name = dictionary["name"] as? String,
-              let kindRaw = dictionary["kind"] as? String,
-              let kind = RunKind(rawValue: kindRaw),
-              let targetDistance = dictionary["targetDistance"] as? Double,
-              let hrZoneRaw = dictionary["targetHRZone"] as? Int,
-              let targetHRZone = HRZone(rawValue: hrZoneRaw),
-              let recPace = dictionary["recPace"] as? String else {
-#if os(watchOS)
-            print("watchOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
-#endif
-#if os(iOS)
-            print("iOS: Failed to decode Running Plan from dictionary. Keys: \(dictionary.keys)")
-#endif
-            return
-        }
-        
-        let decodedPlan = RunningPlan(
-            id: id.uuidString,
-            date: date,
-            name: name,
-            kind: kind,
-            targetDistance: targetDistance,
-            targetHRZone: targetHRZone,
-            recPace: recPace
-        )
-        
-        DispatchQueue.main.async {
-            self.plan = decodedPlan
-#if os(watchOS)
-            print("watchOS: Successfully decoded and stored PlanTest. Name: \(decodedPlan.name), Target Distance: \(decodedPlan.targetDistance)km")
-#endif
-        }
-    }
     
     
     // ========================================== MARK: - Send Summary (watchOS to iOS) ==========================================
@@ -505,7 +481,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
     
 #if os(iOS)
-    func sendPlanToWatchOS(plan: RunningPlan) {
+    func sendPlanToWatchOS(plan: GeneratedPlan) {
         // Check activation state first
         if session.activationState == .activated {
             // Session is activated - send immediately
@@ -519,75 +495,44 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         }
     }
     
-    private func sendRunningPlanData(plan: RunningPlan) {
-        // Double-check activation state before attempting to send
-        guard session.activationState == .activated else {
-            let stateDescription: String
-            switch session.activationState {
-            case .notActivated:
-                stateDescription = "notActivated"
-            case .inactive:
-                stateDescription = "inactive"
-            case .activated:
-                stateDescription = "activated"
-            @unknown default:
-                stateDescription = "unknown(\(session.activationState.rawValue))"
-            }
-            print("iOS: ❌ Cannot send plan - Session is not activated. Current state: \(stateDescription)")
-            print("iOS: Queueing plan for later...")
-            pendingRunningPlan = plan
-            return
-        }
-        
-        // ✅ Convert everything to property-list–safe types
-        let data: [String: Any] = [
-            "id": plan.id,                          // UUID → String
-            "date": plan.date,                                 // Date is allowed
-            "name": plan.name,                                 // String
-            "kind": plan.kind?.rawValue ?? 0,                  // RunKind → Int
-            "targetDistance": plan.targetDistance ?? 0.0,       // Double
-            "targetHRZone": plan.targetHRZone?.rawValue ?? 0,   // HRZone → Int
-            "recPace": plan.recPace ?? ""                      // String
-        ]
-        
-        print("iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))")
-        
-        // Use updateApplicationContext (works even when not reachable)
-        do {
-            try session.updateApplicationContext(data)
-            print("iOS: ✅ Successfully sent plan via updateApplicationContext")
-        } catch {
-            print("iOS: ❌ Error updating application context: \(error.localizedDescription)")
-            print("iOS: Error details: \(error)")
-            
-            // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
-            if session.isReachable {
-                print("iOS: Trying sendMessage as fallback...")
-                session.sendMessage(data, replyHandler: { reply in
-                    print("iOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)")
-                }, errorHandler: { error in
-                    print("iOS: ❌ Error sending message: \(error.localizedDescription)")
-                    print("iOS: Queueing send for retry...")
-                    self.pendingRunningPlan = plan
-                })
-            } else {
-                print("iOS: Session is not reachable. Queueing summary for later...")
+    private func sendRunningPlanData(plan: GeneratedPlan) {
+            guard session.activationState == .activated else {
+                print("iOS: ❌ Cannot send plan - Session is not activated.")
                 pendingRunningPlan = plan
+                return
+            }
+            
+            do {
+                // 1. Encode the entire Codable struct into Data
+                let planData = try JSONEncoder().encode(plan)
+                
+                // 2. Create a dictionary with one key
+                let data: [String: Any] = [
+                    "generatedPlan": planData // Send the Data object
+                ]
+
+                print("iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))")
+                
+                // 3. Send using updateApplicationContext
+                try session.updateApplicationContext(data)
+                print("iOS: ✅ Successfully sent plan via updateApplicationContext")
+                
+            } catch {
+                print("iOS: ❌ Error encoding or sending plan: \(error.localizedDescription)")
+                // Queue for retry
+                self.pendingRunningPlan = plan
             }
         }
-    }
-    
-    private func sendPendingRunningPlanIfNeeded() {
-        guard let plan = pendingRunningPlan, session.activationState == .activated else {
-            return
-        }
         
-        print("iOS: Sending pending summary now that session is activated...")
-        // Clear pending first
-        pendingRunningPlan = nil
-        // Send it
-        sendRunningPlanData(plan: plan)
-    }
+        private func sendPendingRunningPlanIfNeeded() {
+            guard let plan = pendingRunningPlan, session.activationState == .activated else {
+                return
+            }
+            
+            print("iOS: Sending pending plan now that session is activated...")
+            pendingRunningPlan = nil
+            sendRunningPlanData(plan: plan)
+        }
 #endif
 }
 

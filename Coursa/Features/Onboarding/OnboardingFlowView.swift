@@ -62,7 +62,7 @@ struct OnboardingFlowView: View {
                     showGenerating = false
                     onFinished(vm.data)
                 }
-            })
+            }, onboardingData: vm.data)
             .padding(.horizontal, 24)
             .background(Color("black-500"))
         }
@@ -137,3 +137,4 @@ private struct GeneratingOverlay: View {
           }
     }
 }
+

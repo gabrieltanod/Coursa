@@ -53,12 +53,12 @@ enum RunningType: String, CaseIterable, Codable {
 
 struct PlanCardView: View {
     
-    let plan: RunningPlan
+    let plan: ScheduledRun
     
     var runningType: RunningType {
-            RunningType(from: plan.kind)
-        }
-
+        RunningType(from: plan.template.kind)
+    }
+    
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -66,11 +66,12 @@ struct PlanCardView: View {
                 .font(.helveticaNeue(size: 13, weight: .regular))
                 .foregroundColor(Color("primary"))
             
-            Text(runningType.displayName)
+            Text(plan.template.name)
                 .font(.helveticaNeue(size: 20, weight: .bold))
                 .foregroundColor(Color("primary"))
             
-            Text("\(plan.targetDistance) - \(plan.targetHRZone)")
+//            Text("\(plan.template.targetDistanceKm) - \(plan.template.targetHRZone)")
+            Text("\(plan.subtitle)")
                 .font(.helveticaNeue(size: 14, weight: .regular))
                 .foregroundColor(Color("primary"))
         }

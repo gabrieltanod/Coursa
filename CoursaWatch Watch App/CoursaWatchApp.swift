@@ -15,11 +15,12 @@ struct CoursaWatch_Watch_AppApp: App {
     
     var body: some Scene {
         WindowGroup {
-            DebugWatchView()
+            HomePageView()
             
             // Test WatchConnectivity
 //            ContentView()
                 .environmentObject(workoutManager)
+                .environmentObject(syncService)
         }
     }
 }
