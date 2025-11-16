@@ -8,8 +8,11 @@
 import SwiftUI
 
 struct HeartRateCard: View {
-    var avgHR: Int = 130
     
+    let run : ScheduledRun
+    private var avgHR: Int? {
+        run.actual.avgHR
+    }
     
     var body: some View {
         VStack (alignment: .leading) {
@@ -38,6 +41,3 @@ struct HeartRateCard: View {
     }
 }
 
-#Preview {
-    HeartRateCard()
-}

@@ -25,25 +25,34 @@ struct PlanView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("DEBUG – This week: \(vm.debugThisWeekMinutes) min")
                 Text("DEBUG – Next week: \(vm.debugNextWeekMinutes) min")
+                Button("Fake Complete First Run") {
+                    if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
+                        let fake = RunningSummary(
+                            id: run.id,
+                            totalTime: 1800,
+                            totalDistance: 5.0,
+                            averageHeartRate: 140,
+                            averagePace: 360
+                        )
+                        planSession.apply(summary: fake)
+                    }
+                }
+                Button("DEBUG – Log all run IDs") {
+                        if let plan = planSession.generatedPlan {
+                            print("===== DEBUG: ScheduledRun IDs in generatedPlan =====")
+                            for run in plan.runs {
+                                print("[DEBUG] id=\(run.id), title=\(run.title), date=\(run.date)")
+                            }
+                            print("====================================================")
+                        } else {
+                            print("[DEBUG] No generatedPlan loaded in PlanSessionStore")
+                        }
+                    }
             }
             .font(.caption)
             .foregroundColor(.secondary)
             .padding(.horizontal)
             .padding(.top, 4)
-        #endif
-        #if DEBUG
-            Button("Fake Complete First Run") {
-                if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
-                    let fake = RunningSummary(
-                        id: run.id,
-                        totalTime: 1800,
-                        totalDistance: 5.0,
-                        averageHeartRate: 140,
-                        averagePace: 360
-                    )
-                    planSession.applyWatchSummary(fake)
-                }
-            }
         #endif
         ZStack {
             VStack(spacing: 16) {
@@ -272,7 +281,7 @@ struct PlanView: View {
                                         ) {
                                             ForEach(group._value) { run in
                                                 NavigationLink {
-                                                    PlanDetailView(run: run)
+                                                    RunningSummaryView(run: run)
                                                 } label: {
                                                     RunningHistoryCard(
                                                         run: run,

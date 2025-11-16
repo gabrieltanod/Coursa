@@ -58,6 +58,7 @@ struct PlanDetailsPageView: View {
                     
                     // Start Button
                     Button(action: {
+                        workoutManager.currentRunId = plan.id
                         startCountdownSequence()
                         workoutManager.startWorkout()
                     }) {
