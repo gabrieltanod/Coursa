@@ -44,6 +44,7 @@ struct CoursaApp: App {
             
             
             
+            
             // Watch Connectivity
 //            WatchConnectivityDebugView()
 //                .environmentObject(syncService)

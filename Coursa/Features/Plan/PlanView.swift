@@ -54,6 +54,20 @@ struct PlanView: View {
             .padding(.horizontal)
             .padding(.top, 4)
         #endif
+        #if DEBUG
+            Button("Fake Complete First Run") {
+                if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
+                    let fake = RunningSummary(
+                        id: run.id,
+                        totalTime: 1800,
+                        totalDistance: 5.0,
+                        averageHeartRate: 140,
+                        averagePace: 360
+                    )
+                    planSession.applyWatchSummary(fake)
+                }
+            }
+        #endif
         ZStack {
             VStack(spacing: 16) {
                 PlanHeader()

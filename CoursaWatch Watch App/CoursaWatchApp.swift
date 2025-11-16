@@ -15,7 +15,7 @@ struct CoursaWatch_Watch_AppApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomePageView()
+            DebugWatchView()
             
             // Test WatchConnectivity
 //            ContentView()
