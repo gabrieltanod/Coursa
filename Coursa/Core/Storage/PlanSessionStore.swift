@@ -23,11 +23,6 @@ final class PlanSessionStore: ObservableObject {
     init(persistence: PlanStore = UserDefaultsPlanStore.shared) {
         self.persistence = persistence
         self.generatedPlan = persistence.load()
-        if let plan = generatedPlan {
-            print("[PlanSessionStore] init: loaded plan with \(plan.runs.count) runs")
-        } else {
-            print("[PlanSessionStore] init: no plan loaded")
-        }
     }
 
     /// Helper: expose all scheduled runs if you want
@@ -46,42 +41,36 @@ final class PlanSessionStore: ObservableObject {
         }
     }
 
-    /// Apply a RunningSummary coming from watch to the matching ScheduledRun
-    func apply(summary: RunningSummary) {
-        print("[PlanSessionStore] apply(summary:) called with id=\(summary.id)")
-
-        // Try in-memory plan, otherwise load from persistence
-        guard var plan = generatedPlan ?? persistence.load() else {
+    func applyWatchSummary(_ summary: RunningSummary) {
+        // Load the current plan from in-memory or persisted storage
+        guard var plan = generatedPlan ?? UserDefaultsPlanStore.shared.load()
+        else {
             print(
-                "[PlanSessionStore] No generatedPlan loaded or persisted when applying summary"
+                "[PlanSessionStore] No plan available when applying watch summary"
             )
             return
         }
 
-        print("[PlanSessionStore] Loaded plan with \(plan.runs.count) runs")
-
+        // Find the ScheduledRun matching this summary
         guard let index = plan.runs.firstIndex(where: { $0.id == summary.id })
         else {
             print(
-                "[PlanSessionStore] No ScheduledRun found for id \(summary.id)"
+                "[PlanSessionStore] Could not find ScheduledRun with id \(summary.id)"
             )
             return
         }
 
+        // Update the run's actual metrics and status
         var run = plan.runs[index]
-
-        // Mark as completed & fill metrics
         run.status = .completed
         run.actual.elapsedSec = Int(summary.totalTime)
         run.actual.distanceKm = summary.totalDistance
         run.actual.avgHR = Int(summary.averageHeartRate)
         run.actual.avgPaceSecPerKm = Int(summary.averagePace)
-
         plan.runs[index] = run
 
-        // Persist and publish so all views update
-        persistence.save(plan)
-        generatedPlan = plan
-        print("[PlanSessionStore] ✅ Applied summary to run \(summary.id)")
+        // Persist and publish back to the app
+        UserDefaultsPlanStore.shared.save(plan)
+        self.generatedPlan = plan
     }
 }

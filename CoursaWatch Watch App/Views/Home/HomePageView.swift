@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 enum NavigationRoute: Hashable {
     case workoutDetail(RunningPlan)
@@ -21,7 +20,7 @@ enum AppState {
 struct HomePageView: View {
     @State private var navPath = NavigationPath()
     @State private var appState: AppState = .planning
-    @EnvironmentObject private var workoutManager: WorkoutManager
+    @StateObject private var workoutManager = WorkoutManager()
     @State private var finalRunningSummary: RunningSummary?
     
     @EnvironmentObject var syncService: SyncService
