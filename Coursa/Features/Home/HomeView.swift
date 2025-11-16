@@ -8,6 +8,7 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
     @EnvironmentObject private var planSession: PlanSessionStore
+    @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
     private let calendar = Calendar.current
 
@@ -334,6 +335,9 @@ struct HomeView: View {
                     } label: {
                         RunningSessionCard(run: run)
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        sendRunToWatch(run)
+                    })
                 }
             }
         }
@@ -383,6 +387,25 @@ struct HomeView: View {
                 footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
             )
         }
+    }
+    
+    private func sendRunToWatch(_ run: ScheduledRun) {
+        // Derive a simple recommended pace from the template if possible
+        let recPace: String
+        if let duration = run.template.targetDurationSec,
+           let distance = run.template.targetDistanceKm,
+           distance > 0 {
+            let secPerKm = Double(duration) / distance
+            let minutes = Int(secPerKm) / 60
+            let seconds = Int(secPerKm) % 60
+            recPace = String(format: "%d:%02d /km", minutes, seconds)
+        } else {
+            recPace = "Easy"
+        }
+
+        let plan = RunningPlan(from: run, recPace: recPace)
+        print("[HomeView] Sending plan to watch for run id: \(run.id)")
+        syncService.sendPlanToWatchOS(plan: plan)
     }
 }
 
