@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct CoursaWatch_Watch_AppApp: App {
-    
+//    @StateObject private var appState = AppState()
     @StateObject private var syncService = SyncService()
     @StateObject private var workoutManager = WorkoutManager()
     
@@ -19,6 +19,8 @@ struct CoursaWatch_Watch_AppApp: App {
             
             // Test WatchConnectivity
 //            ContentView()
+//                .environmentObject(appState)
+                .environmentObject(syncService)
                 .environmentObject(workoutManager)
         }
     }

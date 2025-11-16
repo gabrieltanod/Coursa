@@ -30,12 +30,27 @@ final class UserDefaultsPlanStore: PlanStore {
     private let key = "coursa.generatedPlan"
 
     func load() -> GeneratedPlan? {
-        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(GeneratedPlan.self, from: data)
+        guard let data = UserDefaults.standard.data(forKey: key) else {
+            print("[UserDefaultsPlanStore] load(): no data for key \(key)")
+            return nil
+        }
+        do {
+            let plan = try JSONDecoder().decode(GeneratedPlan.self, from: data)
+            print("[UserDefaultsPlanStore] load(): decoded plan with \(plan.runs.count) runs")
+            return plan
+        } catch {
+            print("[UserDefaultsPlanStore] load(): decode failed – \(error)")
+            return nil
+        }
     }
 
     func save(_ plan: GeneratedPlan) {
-        guard let data = try? JSONEncoder().encode(plan) else { return }
-        UserDefaults.standard.set(data, forKey: key)
+        do {
+            let data = try JSONEncoder().encode(plan)
+            UserDefaults.standard.set(data, forKey: key)
+            print("[UserDefaultsPlanStore] save(): saved plan with \(plan.runs.count) runs")
+        } catch {
+            print("[UserDefaultsPlanStore] save(): encode failed – \(error)")
+        }
     }
 }

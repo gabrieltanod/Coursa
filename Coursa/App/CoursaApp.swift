@@ -10,13 +10,28 @@ import SwiftUI
 @main
 struct CoursaApp: App {
     
-    @StateObject private var router = AppRouter()
-    @StateObject private var planSession = PlanSessionStore()
-    
-    
+    @StateObject private var router: AppRouter
+    @StateObject private var planSession: PlanSessionStore
+
     // Watch Connectivity
-    @StateObject private var syncService = SyncService()
-    @StateObject private var planManager = PlanManager.shared
+    @StateObject private var syncService: SyncService
+    @StateObject private var planManager: PlanManager
+
+    init() {
+        let router = AppRouter()
+        let planSession = PlanSessionStore()
+        let planManager = PlanManager.shared
+        let syncService = SyncService(planSession: planSession)
+
+        _router = StateObject(wrappedValue: router)
+        _planSession = StateObject(wrappedValue: planSession)
+        _planManager = StateObject(wrappedValue: planManager)
+        _syncService = StateObject(wrappedValue: syncService)
+
+        // Wire dependencies so everyone shares the same instances
+        planManager.syncService = syncService
+        planManager.planSession = planSession
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -26,13 +41,7 @@ struct CoursaApp: App {
                 .environmentObject(syncService)
                 .environmentObject(planSession)
                 .environment(\.colorScheme, .dark)
-                .onAppear {
-                    // Ensure a single SyncService instance is used app-wide
-                    if planManager.syncService == nil {
-                        planManager.syncService = syncService
-                    }
-                    planManager.planSession = planSession
-                }
+            
             
             
             
