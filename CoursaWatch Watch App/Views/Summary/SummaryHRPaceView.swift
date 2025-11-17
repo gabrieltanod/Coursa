@@ -62,6 +62,8 @@ struct SummaryHRPaceView: View {
             
             HStack {
                 MetricValueView(value: viewModel.formattedAverageHR, unit: "",color: "primary")
+                    .bold()
+                
                 HRZoneBadgeView(
                     zoneNumber: currentZone,
                     bgColor: currentZoneColors.bg,
@@ -74,6 +76,7 @@ struct SummaryHRPaceView: View {
                 .foregroundColor(Color("primary"))
             
             MetricValueView(value: viewModel.formattedAveragePace, unit: "/KM", color: "primary")
+                .bold()
         }
         .padding(.horizontal, 15)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

@@ -97,6 +97,7 @@ struct RunningPlan: Identifiable, Codable, Hashable{
     var date: Date
     var name: String
     var kind: RunKind?
+    var targetDuration: Int?
     var targetDistance: Double?
     var targetHRZone: HRZone?
     var recPace: String?
@@ -108,6 +109,7 @@ extension RunningPlan {
         self.date = scheduledRun.date
         self.name = scheduledRun.template.name
         self.kind = scheduledRun.template.kind
+        self.targetDuration = scheduledRun.template.targetDurationSec
         self.targetDistance = scheduledRun.template.targetDistanceKm
         self.targetHRZone = scheduledRun.template.targetHRZone
         self.recPace = recPace

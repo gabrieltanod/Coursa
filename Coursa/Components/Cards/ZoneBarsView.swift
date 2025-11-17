@@ -66,7 +66,7 @@ struct ZoneBar: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 16)
+        .padding(.vertical, 8)
         .frame(maxWidth: width)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -134,7 +134,7 @@ struct ZoneBarsView: View {
                 }
             }
         }
-        .frame(height: CGFloat(zones.count) * 52 + CGFloat(zones.count - 1) * 12)
+        .frame(height: CGFloat(zones.count) * 37 + CGFloat(zones.count - 1) * 12)
     }
 }
 

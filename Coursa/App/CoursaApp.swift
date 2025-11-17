@@ -41,13 +41,6 @@ struct CoursaApp: App {
                 .environmentObject(syncService)
                 .environmentObject(planSession)
                 .environment(\.colorScheme, .dark)
-            
-            
-            
-            // Watch Connectivity
-//            WatchConnectivityDebugView()
-//                .environmentObject(syncService)
-//                .environmentObject(planManager)
 
         }
     }

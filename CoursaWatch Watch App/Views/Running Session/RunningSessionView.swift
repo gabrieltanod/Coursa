@@ -31,16 +31,14 @@ struct RunningSessionView: View {
                 )
                 .tag(0)
                 
+                
                 ZStack(alignment: .top) {
                     TabView(selection: $selectedVerticalTab) {
                         // Halaman 1: Overview
                         OverviewPageView()
                             .tag(0)
-                        
-                        // Halaman 2: Pace View
-                        PaceView()
-                            .tag(1)
                     }
+                    .scrollIndicators(.hidden)
                     .tabViewStyle(.verticalPage)
                     .ignoresSafeArea()
                     
