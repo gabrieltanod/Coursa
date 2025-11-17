@@ -538,6 +538,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             let name = dictionary["name"] as? String,
             let kindRaw = dictionary["kind"] as? String,
             let kind = RunKind(rawValue: kindRaw),
+            let targetDuration = dictionary["targetDuration"] as? Int,
             let targetDistance = dictionary["targetDistance"] as? Double,
             let hrZoneRaw = dictionary["targetHRZone"] as? Int,
             let targetHRZone = HRZone(rawValue: hrZoneRaw),
@@ -561,6 +562,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             date: date,
             name: name,
             kind: kind,
+            targetDuration: targetDuration,
             targetDistance: targetDistance,
             targetHRZone: targetHRZone,
             recPace: recPace
@@ -724,6 +726,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 "date": plan.date,  // Date is allowed
                 "name": plan.name,  // String
                 "kind": plan.kind?.rawValue ?? 0,  // RunKind → Int
+                "targetDuration": plan.targetDuration ?? 0,  // RunKind → Int
                 "targetDistance": plan.targetDistance ?? 0.0,  // Double
                 "targetHRZone": plan.targetHRZone?.rawValue ?? 0,  // HRZone → Int
                 "recPace": plan.recPace ?? "",  // String
