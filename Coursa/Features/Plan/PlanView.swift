@@ -21,53 +21,53 @@ struct PlanView: View {
     @State private var selectedWeekIndex: Int? = nil
 
     var body: some View {
-        #if DEBUG
-            VStack(alignment: .leading, spacing: 4) {
-                Text("DEBUG – This week: \(vm.debugThisWeekMinutes) min")
-                Text("DEBUG – Next week: \(vm.debugNextWeekMinutes) min")
-                Button("Fake Complete First Run") {
-                    if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
-                        let fake = RunningSummary(
-                            id: run.id,
-                            totalTime: 1800,
-                            totalDistance: 5.0,
-                            averageHeartRate: 140,
-                            averagePace: 360
-                        )
-                        planSession.apply(summary: fake)
-                    }
-                }
-                Button("DEBUG – Log all run IDs") {
-                        if let plan = planSession.generatedPlan {
-                            print("===== DEBUG: ScheduledRun IDs in generatedPlan =====")
-                            for run in plan.runs {
-                                print("[DEBUG] id=\(run.id), title=\(run.title), date=\(run.date)")
-                            }
-                            print("====================================================")
-                        } else {
-                            print("[DEBUG] No generatedPlan loaded in PlanSessionStore")
-                        }
-                    }
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .padding(.horizontal)
-            .padding(.top, 4)
-        #endif
-        #if DEBUG
-//            Button("Fake Complete First Run") {
-//                if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
-//                    let fake = RunningSummary(
-//                        id: run.id,
-//                        totalTime: 1800,
-//                        totalDistance: 5.0,
-//                        averageHeartRate: 140,
-//                        averagePace: 360
-//                    )
-//                    planSession.applyWatchSummary(fake)
+//        #if DEBUG
+//            VStack(alignment: .leading, spacing: 4) {
+//                Text("DEBUG – This week: \(vm.debugThisWeekMinutes) min")
+//                Text("DEBUG – Next week: \(vm.debugNextWeekMinutes) min")
+//                Button("Fake Complete First Run") {
+//                    if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
+//                        let fake = RunningSummary(
+//                            id: run.id,
+//                            totalTime: 1800,
+//                            totalDistance: 5.0,
+//                            averageHeartRate: 140,
+//                            averagePace: 360
+//                        )
+//                        planSession.apply(summary: fake)
+//                    }
 //                }
+//                Button("DEBUG – Log all run IDs") {
+//                        if let plan = planSession.generatedPlan {
+//                            print("===== DEBUG: ScheduledRun IDs in generatedPlan =====")
+//                            for run in plan.runs {
+//                                print("[DEBUG] id=\(run.id), title=\(run.title), date=\(run.date)")
+//                            }
+//                            print("====================================================")
+//                        } else {
+//                            print("[DEBUG] No generatedPlan loaded in PlanSessionStore")
+//                        }
+//                    }
 //            }
-        #endif
+//            .font(.caption)
+//            .foregroundColor(.secondary)
+//            .padding(.horizontal)
+//            .padding(.top, 4)
+//        #endif
+//        #if DEBUG
+////            Button("Fake Complete First Run") {
+////                if let run = (planSession.generatedPlan ?? UserDefaultsPlanStore.shared.load())?.runs.first {
+////                    let fake = RunningSummary(
+////                        id: run.id,
+////                        totalTime: 1800,
+////                        totalDistance: 5.0,
+////                        averageHeartRate: 140,
+////                        averagePace: 360
+////                    )
+////                    planSession.applyWatchSummary(fake)
+////                }
+////            }
+//        #endif
         ZStack {
             VStack(spacing: 16) {
                 PlanHeader()
@@ -206,14 +206,14 @@ struct PlanView: View {
                                 Text("Manage Plan")
                             }
                             .buttonStyle(SecondaryButtonStyle())
-                            #if DEBUG
-                                Button("Debug Adapt") {
-                                    vm.debugCompleteThisWeekAndAdapt()
-                                    // Reload shared plan from persistence so both tabs see the update
-                                    planSession.generatedPlan =
-                                        UserDefaultsPlanStore.shared.load()
-                                }
-                            #endif
+//                            #if DEBUG
+//                                Button("Debug Adapt") {
+//                                    vm.debugCompleteThisWeekAndAdapt()
+//                                    // Reload shared plan from persistence so both tabs see the update
+//                                    planSession.generatedPlan =
+//                                        UserDefaultsPlanStore.shared.load()
+//                                }
+//                            #endif
                         }
                     } else {
                         Spacer()
@@ -323,16 +323,16 @@ struct PlanView: View {
                 // After any adjustments, reload the shared plan from persistence
                 planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
             }
-            //            #if DEBUG
-            //                .toolbar {
-            //                    ToolbarItem(placement: .topBarTrailing) {
-            //                        Button("Debug Adapt") {
-            //                            vm.debugCompleteThisWeekAndAdapt()
-            //                        }
-            //                    }
-            //                }
-            //                .navigationBarTitleDisplayMode(.inline)
-            //            #endif
+//                        #if DEBUG
+//                            .toolbar {
+//                                ToolbarItem(placement: .topBarTrailing) {
+//                                    Button("Debug Adapt") {
+//                                        vm.debugCompleteThisWeekAndAdapt()
+//                                    }
+//                                }
+//                            }
+//                            .navigationBarTitleDisplayMode(.inline)
+//                        #endif
         }
         .background(Color("black-500"))
     }

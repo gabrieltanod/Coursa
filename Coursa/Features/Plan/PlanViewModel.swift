@@ -63,7 +63,7 @@ final class PlanViewModel: ObservableObject {
         }
     }
 
-    #if DEBUG
+//    #if DEBUG
         func debugCompleteThisWeekAndAdapt() {
             let store = UserDefaultsPlanStore.shared
             guard var plan = store.load() ?? generatedPlan else { return }
@@ -105,11 +105,11 @@ final class PlanViewModel: ObservableObject {
                     plan.runs[idx].actual.avgHR = 130
                 }
             }
-            #if DEBUG
+//            #if DEBUG
                 print(
                     "[DEBUG] after – completed: \(plan.runs.filter { $0.status == .completed }.count)"
                 )
-            #endif
+//            #endif
             store.save(plan)
             generatedPlan = plan
 
@@ -130,7 +130,7 @@ final class PlanViewModel: ObservableObject {
             store.save(adapted)
             generatedPlan = adapted
         }
-    #endif
+//    #endif
 
     func computeRecommendation() {
         recommendedPlan = PlanLibrary.recommend(for: data)

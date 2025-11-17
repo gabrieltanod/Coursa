@@ -10,6 +10,7 @@ struct HomeView: View {
     @EnvironmentObject private var planSession: PlanSessionStore
     @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
+    @State private var showAdjustCard = true
     private let calendar = Calendar.current
 
     var body: some View {
@@ -36,6 +37,70 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+
+                        if showAdjustCard {
+                            SmallCard {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Adjust your plan")
+                                        .font(
+                                            .system(size: 18, weight: .semibold)
+                                        )
+                                        .foregroundColor(Color("white-500"))
+
+                                    Text(
+                                        "Confirm the adjustment to ensure your runs this week are realistic and on track. Review the changes before your next run."
+                                    )
+                                    .font(.system(size: 14))
+                                    .foregroundColor(
+                                        Color("white-500").opacity(0.7)
+                                    )
+                                    .fixedSize(
+                                        horizontal: false,
+                                        vertical: true
+                                    )
+
+                                    Button(action: {
+                                        // TEMP PlanViewModel just for debug adapt
+                                        if let onboarding =
+                                            OnboardingStore.load()
+                                        {
+                                            let debugVM = PlanViewModel(
+                                                data: onboarding
+                                            )
+                                            debugVM
+                                                .debugCompleteThisWeekAndAdapt()
+                                        }
+
+                                        // Reload shared plan so Home/Plan stay in sync
+                                        planSession.generatedPlan =
+                                            UserDefaultsPlanStore.shared.load()
+
+                                        // Hide the card after one use
+                                        showAdjustCard = false
+                                    }) {
+                                        Text("Adjust")
+                                            .font(
+                                                .system(
+                                                    size: 16,
+                                                    weight: .semibold
+                                                )
+                                            )
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 10)
+                                            .background(
+                                                RoundedRectangle(
+                                                    cornerRadius: 999
+                                                )
+                                                .fill(Color.white)
+                                            )
+                                            .foregroundColor(.black)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .padding(.top, 4)
+                                }
+                            }
+                        }
+
                         sessionsSection
 
                         planProgressCard
@@ -335,9 +400,11 @@ struct HomeView: View {
                     } label: {
                         RunningSessionCard(run: run)
                     }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        sendRunToWatch(run)
-                    })
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            sendRunToWatch(run)
+                        }
+                    )
                 }
             }
         }
@@ -388,13 +455,14 @@ struct HomeView: View {
             )
         }
     }
-    
+
     private func sendRunToWatch(_ run: ScheduledRun) {
         // Derive a simple recommended pace from the template if possible
         let recPace: String
         if let duration = run.template.targetDurationSec,
-           let distance = run.template.targetDistanceKm,
-           distance > 0 {
+            let distance = run.template.targetDistanceKm,
+            distance > 0
+        {
             let secPerKm = Double(duration) / distance
             let minutes = Int(secPerKm) / 60
             let seconds = Int(secPerKm) % 60
