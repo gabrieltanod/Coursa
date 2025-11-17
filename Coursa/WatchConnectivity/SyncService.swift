@@ -451,7 +451,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             let averageHeartRate = (dictionary["averageHeartRate"] as? Double)
                 ?? (dictionary["averageHeartRate"] as? NSNumber)?.doubleValue,
             let averagePace = (dictionary["averagePace"] as? Double)
-                ?? (dictionary["averagePace"] as? NSNumber)?.doubleValue
+                ?? (dictionary["averagePace"] as? NSNumber)?.doubleValue,
+            let rawZone = dictionary["zoneDuration"] as? [String: Any]
         else {
             print(
                 "📱 iOS: ❌ Failed to decode RunningSummary from dictionary. Values:",
@@ -459,6 +460,16 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             )
             return
         }
+        
+        let zoneDuration: [Int: Double] = rawZone.compactMapValues { value in
+                if let d = value as? Double { return d }
+                if let n = value as? NSNumber { return n.doubleValue }
+                return nil
+            }.reduce(into: [:]) { result, pair in
+                if let intKey = Int(pair.key) {
+                    result[intKey] = pair.value
+                }
+            }
 
         let idString = dictionary["id"] as? String ?? UUID().uuidString
 
@@ -467,7 +478,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             totalTime: totalTime,
             totalDistance: totalDistance,
             averageHeartRate: averageHeartRate,
-            averagePace: averagePace
+            averagePace: averagePace,
+            zoneDuration: zoneDuration
         )
 
         DispatchQueue.main.async {
@@ -614,8 +626,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 "totalDistance": summary.totalDistance,
                 "averageHeartRate": summary.averageHeartRate,
                 "averagePace": summary.averagePace,
-                //            "elevationGain": summary.elevationGain,
-                //            "zoneDuration": summary.zoneDuration
+                "zoneDuration": summary.zoneDuration
             ]
 
             print(

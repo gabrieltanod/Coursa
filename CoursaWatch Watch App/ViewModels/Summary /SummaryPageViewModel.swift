@@ -50,9 +50,6 @@ class SummaryPageViewModel: ObservableObject {
         return String(format: "%d:%02d", minutes, seconds)
     }
     
-//    private var maxTimeInZone: Double {
-//        return summary.zoneDuration.values.max() ?? 0
-//    }
     
     private func formatTime(seconds: Double) -> String {
         let totalSeconds = Int(seconds)
@@ -68,29 +65,33 @@ class SummaryPageViewModel: ObservableObject {
         }
     }
     
-//    var zoneChartData: [(zone: Int, timeString: String, percentage: Double, isMax: Bool)] {
-//        var chartData: [(zone: Int, timeString: String, percentage: Double, isMax: Bool)] = []
-//        
-//        let totalTime = summary.totalTime
-//        let maxTime = self.maxTimeInZone
-//        
-//        for zone in 1...5 {
-//            let timeInSeconds = summary.zoneDuration[zone] ?? 0.0
-//            let formattedTimeString = formatTime(seconds: timeInSeconds)
-//            
-//            var percentage = 0.0
-//            if totalTime > 0 {
-//                percentage = (timeInSeconds / totalTime) * 100
-//            }
-//            
-//            let isMax = (timeInSeconds == maxTime && timeInSeconds > 0)
-//            
-//            chartData.append(
-//                (zone: zone, timeString: formattedTimeString, percentage: percentage, isMax: isMax)
-//            )
-//        }
-//        return chartData
-//    }
+    private var maxTimeInZone: Double {
+        return summary.zoneDuration.values.max() ?? 0
+    }
+    
+    var zoneChartData: [(zone: Int, timeString: String, percentage: Double, isMax: Bool)] {
+        var chartData: [(zone: Int, timeString: String, percentage: Double, isMax: Bool)] = []
+        
+        let totalTime = summary.totalTime
+        let maxTime = self.maxTimeInZone
+        
+        for zone in 1...5 {
+            let timeInSeconds = summary.zoneDuration[zone] ?? 0.0
+            let formattedTimeString = formatTime(seconds: timeInSeconds)
+            
+            var percentage = 0.0
+            if totalTime > 0 {
+                percentage = (timeInSeconds / totalTime) * 100
+            }
+            
+            let isMax = (timeInSeconds == maxTime && timeInSeconds > 0)
+            
+            chartData.append(
+                (zone: zone, timeString: formattedTimeString, percentage: percentage, isMax: isMax)
+            )
+        }
+        return chartData
+    }
     
     
 }
