@@ -8,10 +8,6 @@
 import SwiftUI
 
 struct PlanDetailsPageView: View {
-//    let name: String
-//    let targetDistance: Double
-//    let targetHRZone: HRZone
-//    let recPace: String
     
     let plan: RunningPlan
     @State private var navPath = NavigationPath()
@@ -21,14 +17,12 @@ struct PlanDetailsPageView: View {
     
     enum CountdownStep: Hashable {
         case idle
-        case paceRec
         case number(Int)
         case start
         
         var stateType: String {
             switch self {
             case .idle: return "idle"
-            case .paceRec: return "pace"
             case .number: return "number"
             case .start: return "start"
             }
@@ -40,48 +34,46 @@ struct PlanDetailsPageView: View {
     
     var body: some View {
         ZStack {
-//            ScrollView {
-                VStack(spacing: 30) {
+            VStack(spacing: 30) {
+                
+                Spacer()
+                
+                // Header
+                VStack(spacing: 2) {
+                    Text("Recommended Pace:")
+                        .font(.helveticaNeue(size: 17))
+                        .foregroundColor(Color("secondary"))
                     
-                    Spacer()
-                    
-                    // Header
-                    VStack(spacing: 2) {
-                        Text("Recommended Pace:")
-                            .font(.helveticaNeue(size: 17))
-                            .foregroundColor(Color("secondary"))
-                        
-                        Text("7:30/KM")
-                            .font(.helveticaNeue(size: 30))
-                            .foregroundColor(Color("secondary"))
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    // Start Button
-                    VStack{
-                        Button(action: {
-                            workoutManager.currentRunId = plan.id
-                            startCountdownSequence()
-                            workoutManager.startWorkout()
-                        }) {
-                            Text("Start")
-                                .font(.helveticaNeue(size: 20))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color("secondary"))
-                                .foregroundColor(.black)
-                                .cornerRadius(28)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .bottom)
-                    
+                    Text("7:30/KM")
+                        .font(.helveticaNeue(size: 30))
+                        .foregroundColor(Color("secondary"))
                 }
-                .padding(.horizontal, 15)
-                .padding(.bottom, 20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
-//            }
+                .frame(maxWidth: .infinity)
+                
+                // Start Button
+                VStack{
+                    Button(action: {
+                        workoutManager.currentRunId = plan.id
+                        startCountdownSequence()
+                        workoutManager.startWorkout()
+                    }) {
+                        Text("Start")
+                            .font(.helveticaNeue(size: 20))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color("secondary"))
+                            .foregroundColor(.black)
+                            .cornerRadius(28)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity, alignment: .bottom)
+                
+            }
+            .padding(.horizontal, 15)
+            .padding(.bottom, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
             .disabled(isCountingDown)
             
             
@@ -95,21 +87,6 @@ struct PlanDetailsPageView: View {
                         
                     case .idle:
                         EmptyView()
-                        
-                    case .paceRec:
-                        VStack {
-                            VStack(spacing: 2) {
-                                Text("Recommended Pace")
-                                    .font(.helveticaNeue(size: 16, weight: .bold))
-                                    .foregroundColor(Color("secondary"))
-                                
-                                Text("7:30/KM")
-                                    .font(.helveticaNeue(size: 30, weight: .bold))
-                                    .foregroundColor(Color("secondary"))
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .transition(.opacity.combined(with: .scale))
                         
                     case .number(let num):
                         VStack (spacing: 32){
@@ -148,9 +125,6 @@ struct PlanDetailsPageView: View {
     func startCountdownSequence() {
         Task {
             isCountingDown = true
-            
-//            withAnimation { countdownStep = .paceRec }
-//            try? await Task.sleep(nanoseconds: 2_000_000_000)
             
             withAnimation { countdownStep = .number(3) }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
