@@ -43,9 +43,9 @@ struct PersonalInfoStepView: View {
         VStack(spacing: 20) {
             VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
-                    question: "Personal data",
+                    question: "Tell us about yourself",
                     caption:
-                        "Help Coursa determine the best plan for you based on your goals."
+                        "Your running plan should fit your unique needs. Help us refine it by sharing a bit of your personal data."
                 )
                 .padding(.bottom, 40)
 
@@ -55,7 +55,7 @@ struct PersonalInfoStepView: View {
                         HStack {
                             Text("Date of Birth")
                                 .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
+                                .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("white-500"))
                             Spacer()
                             Text(
@@ -64,7 +64,7 @@ struct PersonalInfoStepView: View {
                                     time: .omitted
                                 ) ?? ""
                             )
-                            .font(.custom("Helvetica Neue", size: 18))
+                            .font(.custom("Helvetica Neue", size: 17))
                             .foregroundColor(Color("white-400"))
                             Label("", systemImage: "calendar")
                                 .foregroundStyle(Color("white-500"))
@@ -79,7 +79,7 @@ struct PersonalInfoStepView: View {
                         HStack {
                             Text("Gender")
                                 .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
+                                .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("white-500"))
                             Spacer()
                             if gender.isEmpty {
@@ -88,7 +88,7 @@ struct PersonalInfoStepView: View {
                             } else {
                                 Text(gender)
                                     .font(.body)
-                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .font(.custom("Helvetica Neue", size: 17))
                                     .foregroundColor(Color("white-500"))
                             }
                         }
@@ -102,7 +102,7 @@ struct PersonalInfoStepView: View {
                         HStack {
                             Text("Weight")
                                 .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
+                                .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("white-500"))
                             Spacer()
                             if weightKg.isEmpty {
@@ -111,7 +111,7 @@ struct PersonalInfoStepView: View {
                             } else {
                                 Text(weightKg)
                                     .font(.body)
-                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .font(.custom("Helvetica Neue", size: 17))
                                     .foregroundColor(Color("white-500"))
                             }
                         }
@@ -124,20 +124,16 @@ struct PersonalInfoStepView: View {
                         HStack {
                             Text("Height")
                                 .font(.body)
-                                .font(.custom("Helvetica Neue", size: 22))
+                                .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("white-500"))
                             Spacer()
-                            //                        TextField("75.0", text: $heightCm)
-                            //                            .keyboardType(.decimalPad)
-                            //                            .frame(width: 80)
-                            //                            .allowsHitTesting(false)
                             if heightCm.isEmpty {
                                 Label("", systemImage: "ruler.fill")
                                     .foregroundStyle(Color("white-500"))
                             } else {
                                 Text(heightCm)
                                     .font(.body)
-                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .font(.custom("Helvetica Neue", size: 17))
                                     .foregroundColor(Color("white-500"))
                             }
                         }
@@ -146,6 +142,7 @@ struct PersonalInfoStepView: View {
                     .contentShape(Rectangle())
                 }
 
+                Spacer()
                 Spacer()
                 
                 if !isValid {
@@ -159,7 +156,7 @@ struct PersonalInfoStepView: View {
                     }
                 }
 
-                Button("Continue") {
+                Button("Next") {
                     let personalInfo = PersonalInfo(
                         age: convertDateToAge(date: date ?? Date()),
                         gender: gender,
@@ -173,7 +170,7 @@ struct PersonalInfoStepView: View {
                 .padding(.top, 16)
                 
             }
-            .padding(.top, 36)
+//            .padding(.top, 36)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .showDatePicker:

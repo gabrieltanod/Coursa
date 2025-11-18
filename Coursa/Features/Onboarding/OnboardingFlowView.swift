@@ -10,13 +10,6 @@ struct OnboardingFlowView: View {
     @ViewBuilder
     private var stepContent: some View {
         switch vm.step {
-        case .goals:
-            GoalsStepView(onGoalSelected: { goal in
-                vm.setGoal(goal)
-                vm.next()
-            })
-            .padding(.horizontal, 24)
-            .background(Color("black-500"))
         case .personalInfo:
             PersonalInfoStepView(onContinue: { personalInfo in
                 vm.setPersonalInfo(personalInfo)
@@ -57,7 +50,6 @@ struct OnboardingFlowView: View {
                         generatingProgress = 1
                     }
                 }
-                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     showGenerating = false
                     onFinished(vm.data)

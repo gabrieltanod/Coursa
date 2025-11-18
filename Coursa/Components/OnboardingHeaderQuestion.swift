@@ -9,7 +9,7 @@ import SwiftUI
 
 struct OnboardingHeaderQuestion: View {
     var question: String
-    var caption: String
+    var caption: AttributedString
     
     var body: some View {
         VStack(alignment: .leading) {

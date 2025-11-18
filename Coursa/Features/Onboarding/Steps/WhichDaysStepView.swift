@@ -7,33 +7,30 @@ struct WhichDaysStepView: View {
 
     private let weekdays = Calendar.current.weekdaySymbols
     private let weekdayIndices = Array(1...7)  // Sunday = 1, Monday = 2, etc.
+    
+    func makeColoredCaption() -> AttributedString {
+        var string = AttributedString("Choose the days that work best for you. We recommend 3-4 days of training as the most ideal.")
+
+        if let range = string.range(of: "3-4 days") {
+            var container = AttributeContainer()
+            container.foregroundColor = Color("green-500")
+            container.font = .custom("Helvetica Neue", size: 17)
+            string[range].setAttributes(container)
+        }
+
+        return string
+    }
 
     var body: some View {
         VStack() {
             VStack(alignment: .leading) {
                 VStack(alignment: .leading, spacing: 8) {
                     OnboardingHeaderQuestion(
-                        question: "Which Days You’re Free to Run?",
-                        caption:
-                            "Space out your available days to ensure balanced rest  and training days."
+                        question: "When do you usually run?",
+                        caption: makeColoredCaption()
                     )
-                    
-                    if selectedDays.count < 3 {
-                        Text("Please select at least 3-4 days.")
-                            .font(Font.custom("Helvetica Neue", size: 17))
-                            .font(.body)
-                            .fontWeight(.regular)
-                            .foregroundStyle(Color("green-500"))
-                    } else {
-                        Text("Please select at least 3-4 days.")
-                            .font(Font.custom("Helvetica Neue", size: 17))
-                            .font(.body)
-                            .fontWeight(.regular)
-                            .foregroundStyle(Color("green-500"))
-                            .opacity(0)
-                    }
                 }
-                .padding(.bottom, 28)
+                .padding(.bottom, 20)
 
                 
                 LazyVStack(spacing: 12) {
@@ -50,10 +47,10 @@ struct WhichDaysStepView: View {
                             HStack {
                                 Text(weekdays[index])
                                     .font(.body)
-                                    .font(.custom("Helvetica Neue", size: 22))
+                                    .font(.custom("Helvetica Neue", size: 17))
                                     .foregroundColor(
                                         (selectedDays.count >= 4 && !selectedDays.contains(weekdayIndex))
-                                            ? Color("black-300")
+                                            ? Color("black-400")
                                             : Color("white-500")
                                     )
 
@@ -66,7 +63,7 @@ struct WhichDaysStepView: View {
 
                                     // Border drawn above the fill
                                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .stroke(Color("grey-70"), lineWidth: 1)
+                                        .stroke(selectedDays.count >= 4 ? Color("grey-70") : Color("grey-10") , lineWidth: 1)
 
                                     if selectedDays.contains(weekdayIndex) {
                                         Image(systemName: "checkmark")
@@ -76,13 +73,9 @@ struct WhichDaysStepView: View {
                                 }
                                 .frame(width: 20, height: 20)
                             }
-                            .padding()
-                            .background(Color("black-400"))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color("grey-70"), lineWidth: 1.5)
-                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 20)
+                            .background(Color("black-450"))
                             .cornerRadius(20)
                         }
                         .contentShape(Rectangle())

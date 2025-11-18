@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CarouselIndicator: View {
     var currentIndex: Int
-    var total: Int = 5
+    var total: Int = 4
 
     var body: some View {
         HStack(spacing: 4) {
