@@ -147,8 +147,8 @@ struct HomeView: View {
                 }
                 .scrollIndicators(.never)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 20)
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
             .onAppear {
                 // Ensure Home hydrates PlanSessionStore from persistence
                 if planSession.allRuns.isEmpty,

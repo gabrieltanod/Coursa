@@ -66,7 +66,7 @@ struct RunningHistoryCard: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
         }
-        .frame(maxWidth: 392, minHeight: 90, maxHeight: 96)
+        .frame(maxWidth: .infinity, minHeight: 90, maxHeight: 96)
         .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
         .opacity(isSkipped ? 0.7 : 1)
     }
