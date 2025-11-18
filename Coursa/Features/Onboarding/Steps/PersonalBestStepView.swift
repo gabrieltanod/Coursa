@@ -23,16 +23,9 @@ struct PersonalBestStepView: View {
         VStack(alignment: .leading, spacing: 27) {
             VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
-                    question: "Your personal best",
-                    caption: ""
+                    question: "What is your best run?",
+                    caption: "Pick your furthest distance you ran in the last 1–3 months, fill in the best duration you got. If you haven’t reached a (3K/5K/10K) record yet, now is a good time to take your first 3K."
                 )
-                Group {
-                    Text("Fill in your ")
-                        + Text("current PB")
-                        .foregroundStyle(Color("green-500"))
-                        + Text(" to determine your current performance.")
-                }
-                .foregroundStyle(Color("white-800"))
             }
 
             HStack(spacing: 8) {
@@ -138,7 +131,7 @@ struct PersonalBestStepView: View {
 
             Spacer()
 
-            Button("Continue") {
+            Button("Next") {
                 let distance = distanceKm.isEmpty ? nil : Double(distanceKm)
                 let duration = durationText.isEmpty ? nil : durationText
                 onContinue(distance, duration)

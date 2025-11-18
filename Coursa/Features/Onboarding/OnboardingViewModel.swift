@@ -4,11 +4,10 @@ import Combine
 
 @MainActor
 final class OnboardingViewModel: ObservableObject {
-    @Published var step: OnboardingStep = .goals
+    @Published var step: OnboardingStep = .personalInfo
     @Published var data = OnboardingData()
     
     private let steps: [OnboardingStep] = [
-        .goals,
         .personalInfo,
 //        .daysPerWeek,
         .whichDays,
@@ -17,6 +16,7 @@ final class OnboardingViewModel: ObservableObject {
 //        .choosePlan,
         .chooseStartDate,
 //        .home
+//        .connectWatch
     ]
     var index: Int {
         steps.firstIndex(of: step) ?? 0

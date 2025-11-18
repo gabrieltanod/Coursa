@@ -40,7 +40,7 @@ struct CoursaApp: App {
                 .environmentObject(planManager)
                 .environmentObject(syncService)
                 .environmentObject(planSession)
-                .environment(\.colorScheme, .dark)
+                .preferredColorScheme(.dark)
 
         }
     }

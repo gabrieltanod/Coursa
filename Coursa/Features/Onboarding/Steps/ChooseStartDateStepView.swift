@@ -18,9 +18,9 @@ struct ChooseStartDateStepView: View {
             VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
                     question: "When do you want to start your plan?",
-                    caption: "Pick your training plan starting date."
+                    caption: "Pick the best date to kick off your new plan. We recommend you to start the plan as quickly as possible."
                 )
-                .padding(.bottom, 90)
+                .padding(.bottom, 40)
 
                 VStack(alignment: .leading, spacing: 12) {
                     Button(action: {
