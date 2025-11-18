@@ -26,116 +26,57 @@ struct PlanProgressCard: View {
     }
 
     var percentText: String {
-        "\(Int((progress * 100).rounded()))% of goal"
+        "\(Int((progress * 100).rounded()))% of your goal"
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Kickoff banner + title
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 12) {
-                    Image("PlanRocket")
-                    //                        .font(.system(size: 20, weight: .semibold))
-                    //                        .foregroundStyle(Color("green-500"))
-
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 20) {
+                // Left: circular progress ring with rocket icon
+                ZStack {
+                    // Base ring
+                    Circle()
+                        .stroke(Color("white-500").opacity(0.25), lineWidth: 7)
+                    
+                    // Progress arc
+                    Circle()
+                        .trim(from: 0, to: CGFloat(max(0, min(progress, 1))))
+                        .stroke(
+                            Color("green-500"),
+                            style: StrokeStyle(lineWidth: 7, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                    
+                    // Rocket image in the center
+                    Image("PlanRocketWhite")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 33, height: 33)
+                }
+                .frame(width: 75, height: 75)
+                
+                // Right: text stack
+                VStack(alignment: .leading, spacing: 4) {
                     Text(progressMessage)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.system(size: 16))
                         .foregroundStyle(Color("green-500"))
-                }
-                .padding(.bottom, 14)
-
-                Text(title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color("white-500"))
-                    .lineLimit(1)
-
-            }
-
-            // Progress label + percent pill
-            HStack(alignment: .center) {
-                Text("Your Progress")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(Color("white-500").opacity(0.85))
-
-                Spacer(minLength: 12)
-
-                Text(percentText)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color("white-500"))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(
-                        Capsule().fill(Color("white-500").opacity(0.18))
-                    )
-            }
-
-            // Progress bar
-            VStack(spacing: 6) {
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color("white-500").opacity(0.22))
-                        .frame(height: 6)
-                    GeometryReader { geo in
-                        Capsule()
-                            .fill(
-                                Color("green-500")
-                            )
-                            .frame(
-                                width: max(0, min(progress, 1))
-                                    * geo.size.width,
-                                height: 6
-                            )
-                            .animation(
-                                .easeInOut(duration: 0.35),
-                                value: progress
-                            )
-                    }
-                    .frame(height: 6)
+                    
+                    Text(title)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                    
+                    Text(percentText)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color("white-500").opacity(0.7))
                 }
             }
-
-            // Bottom row
-            //            HStack {
-            //                Text("Week  \(weekNow) / \(weekTotal)")
-            //                    .font(.system(size: 18, weight: .regular))
-            //                    .foregroundStyle(Color("white-500"))
-            //
-            //                Spacer()
-            //
-            //                Text("Distance  ")
-            //                    .font(.system(size: 17, weight: .regular))
-            //                    .foregroundStyle(Color("white-500")) +
-            //                Text("\(completedKm.clean) / \(targetKm.clean) KM")
-            //                    .font(.system(size: 17, weight: .bold))
-            //                    .foregroundStyle(Color("white-500"))
-            //            }
         }
-        .frame(width: .infinity, height: 100)
         .padding(16)
-        .background(
-            ZStack {
-                // Full-card gradient background from Figma
-
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color("black-450"))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .inset(by: 0.5)
-                            .stroke(
-                                Color(red: 0.3, green: 0.29, blue: 0.3),
-                                lineWidth: 1
-                            )
-
-                    )
-                Image("PlanProgressCardBG")
-                    .resizable()
-                    .scaledToFill()
-                    //                    .frame(width: 392, height: 149)
-                    .clipped()
-                // Dark tint card on top of the gradient, but still behind content
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        )
+        .frame(width: 392, alignment: .topLeading)
+        .background(Color("black-700"))
+        .cornerRadius(20)
     }
 }
 
@@ -148,10 +89,10 @@ extension Double {
 
 #Preview {
     PlanProgressCard(
-        title: "Endurance",
+        title: "Endurance Training",
         progress: 0.25,
-//        weekNow: 1,
-//        weekTotal: 4,
+        //        weekNow: 1,
+        //        weekTotal: 4,
         completedKm: 15,
         targetKm: 60
     )

@@ -11,21 +11,24 @@ struct SmallCard<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 4) {
             content()
         }
-        .padding(10)
+        .padding(16)
         .frame(maxWidth: .infinity, maxHeight: 200, alignment: .topLeading)
         .background(
             LinearGradient(
                 stops: [
-                    .init(color: Color(red: 0.23, green: 0.23, blue: 0.23), location: 0.00),
-                    .init(color: Color(red: 0.18, green: 0.16, blue: 0.17), location: 0.52)
+                    Gradient.Stop(
+                        color: Color(red: 0.11, green: 0.11, blue: 0.11),
+                        location: 0.00
+                    ),
+                    Gradient.Stop(color: .black, location: 1.00),
                 ],
-                startPoint: UnitPoint(x: 0.91, y: 0.11),
-                endPoint: UnitPoint(x: 0.28, y: 1.24)
+                startPoint: UnitPoint(x: 0.76, y: 0),
+                endPoint: UnitPoint(x: 0.24, y: 1)
             )
         )
-        .cornerRadius(12)
+        .cornerRadius(20)
     }
 }
