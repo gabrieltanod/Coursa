@@ -10,6 +10,7 @@ import SwiftUI
 struct HeartRateCard: View {
     
     let run : ScheduledRun
+    
     private var avgHR: Int? {
         run.actual.avgHR
     }
@@ -19,6 +20,7 @@ struct HeartRateCard: View {
     }
     
     var body: some View {
+        
         VStack (alignment: .leading){
             Text("Heart Rate")
                 .font(Font.custom("Helvetica Neue", size: 15))
@@ -49,8 +51,7 @@ struct HeartRateCard: View {
                         .fontWeight(.regular)
                         .foregroundStyle(Color("black-200"))
                     
-                    // Masukin value ke zone bar views yes
-                    ZoneBarsView()
+                    ZoneBarsView(run: run)
                 }
             }
             .padding(16)

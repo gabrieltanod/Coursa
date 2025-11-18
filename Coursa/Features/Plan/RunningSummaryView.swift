@@ -11,11 +11,11 @@ struct RunningSummaryView: View {
     let run: ScheduledRun
 
     var body: some View {
+        
         ScrollView {
             VStack (spacing: 20) {
-                // Masukin value ke RS card yes
                 RunningSummaryCard(run: run)
-                // Masukin value ke HR card yers
+                
                 HeartRateCard(run: run)
             }
             .padding(24)
@@ -24,20 +24,20 @@ struct RunningSummaryView: View {
     }
 }
 
-#Preview("RunningSummaryView – Sample") {
-    let sampleRun = ScheduledRun(
-        date: Date(),
-        template: RunTemplate(
-            name: "Easy Run",
-            kind: .easy,
-            focus: .base,
-            targetDurationSec: 30 * 60,
-            targetDistanceKm: 5.0,
-            targetHRZone: .z2,
-            notes: "Easy aerobic run"
-        )
-    )
-
-    return RunningSummaryView(run: sampleRun)
-        .background(Color("black-500"))
-}
+//#Preview("RunningSummaryView – Sample") {
+//    let sampleRun = ScheduledRun(
+//        date: Date(),
+//        template: RunTemplate(
+//            name: "Easy Run",
+//            kind: .easy,
+//            focus: .base,
+//            targetDurationSec: 30 * 60,
+//            targetDistanceKm: 5.0,
+//            targetHRZone: .z2,
+//            notes: "Easy aerobic run"
+//        )
+//    )
+//
+//    return RunningSummaryView(run: sampleRun)
+//        .background(Color("black-500"))
+//}

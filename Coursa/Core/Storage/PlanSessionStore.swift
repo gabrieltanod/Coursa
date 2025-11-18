@@ -76,6 +76,7 @@ final class PlanSessionStore: ObservableObject {
         run.actual.distanceKm = summary.totalDistance
         run.actual.avgHR = Int(summary.averageHeartRate)
         run.actual.avgPaceSecPerKm = Int(summary.averagePace)
+        run.actual.zoneDuration = summary.zoneDuration
 
         plan.runs[index] = run
 
