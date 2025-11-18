@@ -14,10 +14,11 @@ struct StatisticsView: View {
     var body: some View {
         VStack {
             planProgressCard
-            weeklyProgressSection
             weeklyMetricsRow
         }
         .navigationTitle("Statistics").foregroundStyle(Color.white)
+        .padding(.horizontal, 24)
+        .background(Color("black-500"))
     }
     
     private var planProgressCard: some View {
@@ -84,34 +85,6 @@ struct StatisticsView: View {
         default:
             return "Your Plan"
         }
-    }
-    
-    private var weeklyProgressSection: some View {
-        // Example numbers – replace with your real computed values
-        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
-        let completedKm =
-            allRuns
-            .filter { $0.status == .completed }
-            .reduce(0.0) { sum, run in
-                if let d = run.actual.distanceKm {
-                    return sum + d
-                }
-                if let t = run.template.targetDistanceKm {
-                    return sum + t
-                }
-                return sum
-            }
-
-        // Target distance = sum of template targets (ignore nils)
-        let targetKm =
-            allRuns
-            .compactMap { $0.template.targetDistanceKm }
-            .reduce(0, +)
-
-        return WeeklyProgressCard(
-            title: "Weekly Progress",
-            progressText: "\(Int(completedKm)) / \(Int(targetKm)) KM"
-        )
     }
 
     private var weeklyMetricsRow: some View {
