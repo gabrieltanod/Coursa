@@ -11,8 +11,10 @@ struct HomeView: View {
     @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
     @State private var showAdjustCard = true
+    @State private var showDynamicPlanCard = true
+    @State private var showPlanSchedule = false
     private let calendar = Calendar.current
-
+ 
     var body: some View {
         ZStack {
             Color("black-500").ignoresSafeArea()
@@ -48,7 +50,7 @@ struct HomeView: View {
                                         .foregroundColor(Color("white-500"))
 
                                     Text(
-                                        "Confirm the adjustment to ensure your runs this week are realistic and on track. Review the changes before your next run."
+                                        "Take a quick moment to confirm this adjustment. We adjust it according to your performance last week. Give the changes a final review before you head out for your next run!"
                                     )
                                     .font(.system(size: 14))
                                     .foregroundColor(
@@ -101,13 +103,43 @@ struct HomeView: View {
                             }
                         }
 
+                        if showDynamicPlanCard {
+                            dynamicPlanCard
+                        }
+
                         sessionsSection
 
-                        planProgressCard
+                        Divider()
 
-                        weeklyProgressSection
+                        let weekRuns = planSession.allRuns.filter {
+                            calendar.isDate(
+                                $0.date,
+                                equalTo: vm.selectedDate,
+                                toGranularity: .weekOfYear
+                            )
+                        }
 
-                        weeklyMetricsRow
+                        // Hidden navigation link driven by state
+                        NavigationLink(
+                            destination: PlanScheduleView(),
+                            isActive: $showPlanSchedule
+                        ) {
+                            EmptyView()
+                        }
+                        .hidden()
+
+                        WeeklyPlanOverviewCard(
+                            weekIndex: selectedWeekIndex + 1,
+                            runs: weekRuns,
+                            onSeeOverview: {
+                                showPlanSchedule = true
+                            },
+                            showsButton: true
+                        )
+
+                        //                        planProgressCard
+                        //                        weeklyProgressSection
+                        //                        weeklyMetricsRow
 
                         Spacer(minLength: 0)
                     }
@@ -163,60 +195,38 @@ struct HomeView: View {
         }
     }
 
-    private var planProgressCard: some View {
-        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
+    private var dynamicPlanCard: some View {
+        SmallCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    Text("Dynamic Plan")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Color("white-500"))
 
-        // Session-based progress: completed + skipped sessions over total sessions
-        let totalSessions = allRuns.count
-        let completedOrSkippedSessions = allRuns.filter {
-            $0.status == .completed || $0.status == .skipped
-        }.count
+                    Spacer()
 
-        let progress =
-            totalSessions == 0
-            ? 0
-            : Double(completedOrSkippedSessions) / Double(totalSessions)
-        #if DEBUG
-            let statusCounts = Dictionary(grouping: allRuns, by: { $0.status })
-                .mapValues { $0.count }
-            print(
-                "[HomeView] planProgressCard – totalSessions: \(totalSessions), completedOrSkippedSessions: \(completedOrSkippedSessions), progress: \(progress), statusCounts: \(statusCounts)"
-            )
-        #endif
-
-        // Distance completed: prefer actual distance, fall back to template targetDistanceKm
-        let completedKm =
-            allRuns
-            .filter { $0.status == .completed }
-            .reduce(0.0) { sum, run in
-                if let d = run.actual.distanceKm {
-                    return sum + d
+                    Button(action: {
+                        showDynamicPlanCard = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color("white-500"))
+                            .padding(4)
+                    }
+                    .buttonStyle(.plain)
                 }
-                if let t = run.template.targetDistanceKm {
-                    return sum + t
-                }
-                return sum
+
+                Text(
+                    "We will adjust your plan according to your weekly performance. This feature will equip you with the best fitted plan for your next run!"
+                )
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("white-700").opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
             }
-
-        // Target distance = sum of template targets (ignore nils)
-        let targetKm =
-            allRuns
-            .compactMap { $0.template.targetDistanceKm }
-            .reduce(0, +)
-
-        // Progress based on completed distance vs total planned distance
-        // let progress = targetKm > 0 ? completedKm / targetKm : 0
-
-        let title = planTitle(from: allRuns)
-
-        return PlanProgressCard(
-            title: title,
-            progress: progress,
-            completedKm: completedKm,
-            targetKm: targetKm
-        )
-        .padding(.top, 20)
+        }
     }
+
+
 
     // MARK: - Calendar Strip (week-based)
 
@@ -231,7 +241,6 @@ struct HomeView: View {
                             date,
                             inSameDayAs: vm.selectedDate
                         )
-                        let hasRun = vm.hasRun(on: date)
 
                         VStack(spacing: 6) {
                             Text(weekdayString(for: date).uppercased())
@@ -256,7 +265,7 @@ struct HomeView: View {
                                         )
                                 )
 
-                            if let run = vm.runs.first(where: {
+                            if let run = planSession.allRuns.first(where: {
                                 calendar.isDate($0.date, inSameDayAs: date)
                             }) {
                                 let kind = run.template.kind
@@ -281,7 +290,6 @@ struct HomeView: View {
                                     .frame(width: 6, height: 6)
                                     .offset(y: 2)
                             }
-
                         }
                         .padding(.vertical, 6)
                         .padding(.horizontal, 4)
@@ -297,31 +305,65 @@ struct HomeView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 80)
+        .onChange(of: selectedWeekIndex) { newIndex in
+            let weeks = calendarWeeks
+            guard weeks.indices.contains(newIndex) else { return }
+
+            let days = weeks[newIndex]
+            let currentWeekday = calendar.component(
+                .weekday,
+                from: vm.selectedDate
+            )
+
+            // Try to keep the same weekday when switching weeks; otherwise fall back to first day
+            if let matchedDay = days.first(where: {
+                calendar.component(.weekday, from: $0) == currentWeekday
+            }) {
+                vm.selectedDate = matchedDay
+            } else if let firstDay = days.first {
+                vm.selectedDate = firstDay
+            }
+        }
     }
 
     // Weeks from first plan week to last plan week, each exactly 7 days.
     // No pre-plan weeks → no empty calendar before your plan.
     private var calendarWeeks: [[Date]] {
-        guard let firstRunDate = vm.runs.first?.date,
-            let lastRunDate = vm.runs.last?.date
+        let runs = planSession.allRuns.sorted { $0.date < $1.date }
+
+        guard let firstRunDate = runs.first?.date,
+            let lastRunDate = runs.last?.date
         else {
             return []
         }
 
-        let startComponents = calendar.dateComponents(
-            [.yearForWeekOfYear, .weekOfYear],
-            from: firstRunDate
-        )
-        let endComponents = calendar.dateComponents(
-            [.yearForWeekOfYear, .weekOfYear],
-            from: lastRunDate
-        )
-
-        guard let startOfFirstWeek = calendar.date(from: startComponents),
-            let startOfLastWeek = calendar.date(from: endComponents)
+        // Compute week boundaries and force them to start on Monday
+        guard
+            let rawStart = calendar.dateInterval(
+                of: .weekOfYear,
+                for: firstRunDate
+            )?.start,
+            let rawEnd = calendar.dateInterval(
+                of: .weekOfYear,
+                for: lastRunDate
+            )?.start
         else {
             return []
         }
+
+        // Shift both to Monday
+        let startOfFirstWeek =
+            calendar.nextDate(
+                after: rawStart,
+                matching: DateComponents(weekday: 2),
+                matchingPolicy: .nextTimePreservingSmallerComponents
+            ) ?? rawStart
+        let startOfLastWeek =
+            calendar.nextDate(
+                after: rawEnd,
+                matching: DateComponents(weekday: 2),
+                matchingPolicy: .nextTimePreservingSmallerComponents
+            ) ?? rawEnd
 
         var weeks: [[Date]] = []
         var currentWeekStart = startOfFirstWeek
@@ -388,7 +430,9 @@ struct HomeView: View {
     // MARK: - Sessions List
 
     private var sessionsSection: some View {
-        let sessions = vm.sessions(on: vm.selectedDate)
+        let sessions = planSession.allRuns
+            .filter { calendar.isDate($0.date, inSameDayAs: vm.selectedDate) }
+            .sorted { $0.date < $1.date }
 
         return VStack(alignment: .leading, spacing: 12) {
             if sessions.isEmpty {
@@ -409,53 +453,7 @@ struct HomeView: View {
             }
         }
     }
-
-    private var weeklyProgressSection: some View {
-        // Example numbers – replace with your real computed values
-        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
-        let completedKm =
-            allRuns
-            .filter { $0.status == .completed }
-            .reduce(0.0) { sum, run in
-                if let d = run.actual.distanceKm {
-                    return sum + d
-                }
-                if let t = run.template.targetDistanceKm {
-                    return sum + t
-                }
-                return sum
-            }
-
-        // Target distance = sum of template targets (ignore nils)
-        let targetKm =
-            allRuns
-            .compactMap { $0.template.targetDistanceKm }
-            .reduce(0, +)
-
-        return WeeklyProgressCard(
-            title: "Weekly Progress",
-            progressText: "\(Int(completedKm)) / \(Int(targetKm)) KM"
-        )
-    }
-
-    private var weeklyMetricsRow: some View {
-        HStack(spacing: 12) {
-            MetricDetailCard(
-                title: "Average Pace",
-                primaryValue: "8:25/km",
-                secondaryValue: "8:45/km",
-                footer: "Average Pace Last Week and Two Week Ago"
-            )
-
-            MetricDetailCard(
-                title: "Duration in HR Zone 2",
-                primaryValue: "1:43:37",
-                secondaryValue: "1:26:15",
-                footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
-            )
-        }
-    }
-
+    
     private func sendRunToWatch(_ run: ScheduledRun) {
         // Derive a simple recommended pace from the template if possible
         let recPace: String
@@ -478,9 +476,17 @@ struct HomeView: View {
 }
 
 #Preview("HomeView") {
+    // Lightweight preview setup
+    let planSession = PlanSessionStore(
+        persistence: UserDefaultsPlanStore.shared
+    )
+    let syncService = SyncService()
+
     NavigationStack {
         HomeView()
             .background(Color("black-500"))
             .preferredColorScheme(.dark)
     }
+    .environmentObject(planSession)
+    .environmentObject(syncService)
 }

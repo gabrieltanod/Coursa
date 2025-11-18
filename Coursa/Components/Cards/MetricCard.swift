@@ -18,16 +18,8 @@ struct MetricBlob<Content: View>: View {
         content
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .topLeading)
-            .background(Color(red: 0.13, green: 0.12, blue: 0.12))
+            .background(Color("black-700"))
             .cornerRadius(20)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .inset(by: 0.5)
-                    .stroke(
-                        Color(red: 0.3, green: 0.29, blue: 0.3),
-                        lineWidth: 1
-                    )
-            )
     }
 }
 
@@ -65,24 +57,15 @@ struct MetricDetailCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Color("white-500"))
+                    .foregroundStyle(Color("white-700"))
                     .lineLimit(2, reservesSpace: true)
 
                 Text(primaryValue)
                     .font(.system(size: 34, weight: .medium))
-                    .foregroundStyle(Color("green-500"))
-
-                Text(secondaryValue)
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(Color("white-700"))
-
-                Text(footer)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(Color("white-700"))
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(Color("white-500"))
             }
         }
-        .frame(width: 180, height: 172, alignment: .topLeading)
+        .frame(width: .infinity, height: 172, alignment: .topLeading)
     }
 }
 
@@ -105,7 +88,7 @@ struct MetricDetailCard: View {
                 )
 
                 MetricDetailCard(
-                    title: "Duration in HR Zone 2",
+                    title: "Aerobic Time",
                     primaryValue: "1:43:37",
                     secondaryValue: "1:26:15",
                     footer: "Your Duration in Zone 2 Last Week and Two Week Ago"

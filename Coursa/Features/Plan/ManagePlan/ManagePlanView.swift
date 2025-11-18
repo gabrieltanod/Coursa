@@ -37,13 +37,6 @@ struct ManagePlanView: View {
 
                 VStack(spacing: 16) {
                     ManageRow(
-                        title: "Goal",
-                        value: vm.plan.displayName
-                    ) {
-                        // hook up goal picker later
-                    }
-
-                    ManageRow(
                         title: "Schedule",
                         value: vm.selectedDays.weekdayShortString()
                     ) {

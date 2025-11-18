@@ -18,15 +18,15 @@ struct CoreTabView: View {
                     .environmentObject(planSession)
             }
             .tabItem {
-                Label("Dashboard", systemImage: "house.fill")
+                Label("Plan", systemImage: "chart.bar.fill")
             }
 
             NavigationStack {
-                PlanView(vm: PlanViewModel(data: onboardingData))
+                StatisticsView()
                     .environmentObject(planSession)
             }
             .tabItem {
-                Label("Plan", systemImage: "figure.run")
+                Label("Statistics", systemImage: "square.grid.2x2.fill")
             }
 
             NavigationStack {
