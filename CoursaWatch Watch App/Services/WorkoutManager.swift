@@ -169,7 +169,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             totalDistance: self.distance,
             averageHeartRate: self.averageHeartRate,
             averagePace: self.averagePace,
-            zoneDuration: self.zoneDurationTracker
+            zoneDuration: zoneDurationTracker
         )
         
         sendSummaryToiOS(summary)
@@ -178,6 +178,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.heartRate = 0
         self.distance = 0
         self.pace = 0
+        workoutIsActive = false
         
         // [Deprecated]
         self.elevation = 0

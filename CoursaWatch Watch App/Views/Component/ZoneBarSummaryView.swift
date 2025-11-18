@@ -1,54 +1,89 @@
 //
-//  ZoneBarView.swift
-//  WatchTestCoursa Watch App
+//  ZoneBarsView.swift
+//  Coursa
 //
-//  Created by Chairal Octavyanz on 28/10/25.
+//  Created by Zikar Nurizky on 11/11/25.
 //
 
 import SwiftUI
 
-struct ZoneBarSummaryView: View {
-    let zone: Int
-    let time: String
-    let percentage: Double
-    let isMaxZone: Bool
+struct ZoneBar: View {
+    let label: String
+    let time: String?
+    let width: CGFloat
+    let isHighest: Bool
     
-    private var zoneColor: Color {
-        if isMaxZone {
-            return Color("secondary")
-        }
-        
-        switch zone {
-        case 1...3:
-            return Color("accent")
-        case 4...5:
-            return Color("accentSecondary")
-        default:
-            return Color.gray
-        }
+    var gradientHighest: LinearGradient {
+        LinearGradient(
+            colors: [Color("er1"), Color("er2")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    var gradient: LinearGradient {
+        LinearGradient(
+            colors: [Color("maf1"), Color("maf2")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            HStack {
-                HStack(spacing: 6) {
-                    Text("Zone \(zone)")
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text(time)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 10)
-                .frame(width: max(20, geometry.size.width * (percentage / 100)))
-                .frame(height: 30)
-                .background(zoneColor)
-                .cornerRadius(8)
-                
-                Spacer(minLength: 0)
+        HStack {
+            Text(label)
+                .font(.custom("Helvetica Neue", size: 14))
+                .foregroundColor(isHighest ? Color("secondary") : .white)
+            
+            Spacer()
+            
+            if let time = time {
+                Text(time)
+                    .font(.custom("Helvetica Neue", size: 14))
+                    .foregroundColor(isHighest ? Color("secondary") : .white)
             }
         }
-        .frame(height: 30)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .frame(maxWidth: width, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isHighest ? gradientHighest : gradient)
+        )
+        .animation(.easeInOut(duration: 0.3), value: width)
+        .animation(.easeInOut(duration: 0.3), value: isHighest)
     }
+}
+
+struct ZoneBarSummaryView: View {
+    @ObservedObject var viewModel: SummaryPageViewModel
+    
+    var body: some View {
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 12) {
+                
+                ForEach(viewModel.zoneChartData, id: \.zone) { zone in
+                    ZoneBar(
+                        label: "Zone \(zone.zone)",
+                        time: zone.timeString.isEmpty ? nil : zone.timeString,
+                        width: geometry.size.width * CGFloat(zone.percentage / 100),
+                        isHighest: zone.isMax
+                    )
+                }
+            }
+            .padding(8)
+        }
+    }
+}
+
+
+#Preview {
+    //    ZoneBarSummaryView(zoneDuration: [
+    //        1: 272,
+    //        2: 6032,
+    //        3: 152,
+    //        4: 0,
+    //        5: 0
+    //    ])
+    
 }

@@ -10,12 +10,12 @@ import SwiftUI
 struct ZoneData: Identifiable {
     let id = UUID()
     let label: String
-    let time: String?
+    let seconds: Double
 }
 
 struct ZoneBar: View {
     let label: String
-    let time: String?
+    let seconds: Double
     let width: CGFloat
     let isHighest: Bool
     var gradientHighest: LinearGradient {
@@ -28,7 +28,7 @@ struct ZoneBar: View {
         ]
         let startPoint: UnitPoint = .init(x: 0.3, y: 0.35)
         let endPoint: UnitPoint = .init(x: 0.75, y: 1.7)
-
+        
         return LinearGradient(
             stops: stops,
             startPoint: startPoint,
@@ -43,24 +43,24 @@ struct ZoneBar: View {
         ]
         let startPoint: UnitPoint = .init(x: 0.3, y: 0.35)
         let endPoint: UnitPoint = .init(x: 0.75, y: 1.7)
-
+        
         return LinearGradient(
             stops: stops,
             startPoint: startPoint,
             endPoint: endPoint
         )
     }
-
+    
     var body: some View {
         HStack {
             Text(label)
                 .font(.custom("Helvetica Neue", size: 16))
                 .foregroundColor(isHighest ? Color("black-500") : .white)
-
+            
             Spacer()
-
-            if let time = time {
-                Text(time)
+            
+            if seconds > 0 {
+                Text(formatSeconds(seconds))
                     .font(.custom("Helvetica Neue", size: 16))
                     .foregroundColor(isHighest ? Color("black-500") : .white)
             }
@@ -75,60 +75,55 @@ struct ZoneBar: View {
         .animation(.easeInOut(duration: 0.3), value: width)
         .animation(.easeInOut(duration: 0.3), value: isHighest)
     }
+    
+    private func formatSeconds(_ sec: Double) -> String {
+        if sec <= 0 { return "0:00" }
+        let m = Int(sec) / 60
+        let s = Int(sec) % 60
+        return String(format: "%d:%02d", m, s)
+    }
 }
 
 struct ZoneBarsView: View {
-    var times: [String?] = ["4:32", "15:32", "2:32", nil, nil]
     
-    // Computed property to generate zones based on times
+    let run: ScheduledRun
+    
+    private var zoneDurationInt: [Int: Double] {
+        run.actual.zoneDuration
+    }
+    
     private var zones: [ZoneData] {
-        times.enumerated().map { index, time in
-            ZoneData(label: "Zone \(index + 1)", time: time)
+        (1...5).map { zone in
+            let sec = zoneDurationInt[zone] ?? 0
+            return ZoneData(label: "Zone \(zone)", seconds: sec)
         }
     }
 
-    // Convert time string to seconds
-    private func timeToSeconds(_ timeStr: String?) -> Int {
-        guard let timeStr = timeStr else { return 0 }
-        let components = timeStr.split(separator: ":").compactMap { Int($0) }
-        guard components.count == 2 else { return 0 }
-        return components[0] * 60 + components[1]
+    
+    private var maxSeconds: Double {
+        zones.map { $0.seconds }.max() ?? 0
     }
-
-    // Calculate maximum time value
-    private var maxTime: Int {
-        zones.map { timeToSeconds($0.time) }.max() ?? 0
-    }
-
-    // Calculate width for each bar
-    private func getWidth(for time: String?, maxWidth: CGFloat) -> CGFloat {
-        guard let time = time else { return maxWidth * 0.3 }  // 30% for bars without values
-
-        let seconds = timeToSeconds(time)
-        guard maxTime > 0 else { return maxWidth * 0.4 }
-
+    
+    private func getWidth(seconds: Double, maxWidth: CGFloat) -> CGFloat {
+        guard maxSeconds > 0 else { return maxWidth * 0.3 }
         // Map to 40-100% range
-        let percentage = 0.4 + (Double(seconds) / Double(maxTime)) * 0.6
+        let percentage = 0.4 + (seconds / maxSeconds) * 0.5
         return maxWidth * CGFloat(percentage)
     }
-
-    // Check if this zone has the highest value
+    
     private func isHighest(_ zone: ZoneData) -> Bool {
-        guard maxTime > 0 else { return false }
-        return timeToSeconds(zone.time) == maxTime
+        guard maxSeconds > 0 else { return false }
+        return zone.seconds == maxSeconds
     }
-
+    
     var body: some View {
         GeometryReader { geometry in
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(zones) { zone in
                     ZoneBar(
                         label: zone.label,
-                        time: zone.time,
-                        width: getWidth(
-                            for: zone.time,
-                            maxWidth: geometry.size.width
-                        ),
+                        seconds: zone.seconds,
+                        width: getWidth(seconds: zone.seconds, maxWidth: geometry.size.width),
                         isHighest: isHighest(zone)
                     )
                 }
@@ -138,6 +133,6 @@ struct ZoneBarsView: View {
     }
 }
 
-#Preview {
-    ZoneBarsView()
-}
+//#Preview {
+//    ZoneBarsView()
+//}

@@ -65,6 +65,7 @@ struct RunMetrics: Codable, Hashable {
     var distanceKm: Double?
     var avgPaceSecPerKm: Int?
     var avgHR: Int?
+    var zoneDuration: [Int: Double] = [:]
 }
 
 struct ScheduledRun: Identifiable, Codable {
@@ -137,8 +138,7 @@ extension RunningSummary {
         self.totalDistance = metrics.distanceKm ?? 0
         self.averageHeartRate = Double(metrics.avgHR ?? 0)
         self.averagePace = Double(metrics.avgPaceSecPerKm ?? 0)
-        // TODO: Populate zoneDuration from detailed HR data when available
-        self.zoneDuration = [:]
+        self.zoneDuration = metrics.zoneDuration
     }
 }
 
