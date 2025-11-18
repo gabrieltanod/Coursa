@@ -10,29 +10,67 @@ import Foundation
 import SwiftUI
 
 final class PlanSessionStore: ObservableObject {
-    @Published var generatedPlan: GeneratedPlan? {
-        didSet {
-            if let plan = generatedPlan {
-                persistence.save(plan)
-            }
-        }
-    }
+    @Published var generatedPlan: GeneratedPlan?
 
-    private let persistence: PlanStore
-
-    init(persistence: PlanStore = UserDefaultsPlanStore.shared) {
-        self.persistence = persistence
-        self.generatedPlan = persistence.load()
-        if let plan = generatedPlan {
-            print("[PlanSessionStore] init: loaded plan with \(plan.runs.count) runs")
-        } else {
-            print("[PlanSessionStore] init: no plan loaded")
-        }
-    }
-
-    /// Helper: expose all scheduled runs if you want
+    /// Convenience: all runs in the current plan
     var allRuns: [ScheduledRun] {
-        generatedPlan?.runs ?? []  // adjust to your real property name
+        generatedPlan?.runs ?? []
+    }
+
+    private let planStore: PlanStore
+
+    init(planStore: PlanStore = UserDefaultsPlanStore.shared) {
+        self.planStore = planStore
+
+        // 👇 Load any existing plan at startup
+        if let stored = planStore.load() {
+            self.generatedPlan = stored
+        } else {
+            self.generatedPlan = nil
+        }
+    }
+
+    /// Replace the current plan, save it, and notify listeners.
+    func replacePlan(with newPlan: GeneratedPlan) {
+        self.generatedPlan = newPlan
+        planStore.save(newPlan)
+    }
+
+    /// Reload from persistence if needed.
+    func reloadFromStore() {
+        if let stored = planStore.load() {
+            self.generatedPlan = stored
+        } else {
+            self.generatedPlan = nil
+        }
+    }
+
+    /// 🔑 Bootstrap at app level:
+    /// - If a plan exists in storage, use it.
+    /// - Otherwise, generate one from onboarding data using existing logic.
+    func bootstrapIfNeeded(using onboarding: OnboardingData) {
+        // already have a plan? do nothing
+        if generatedPlan != nil { return }
+
+        // Prefer whatever is persisted
+        if let stored = planStore.load() {
+            self.generatedPlan = stored
+            return
+        }
+
+        // Otherwise, generate using your existing PlanViewModel logic
+        let vm = PlanViewModel(data: onboarding)
+        if vm.recommendedPlan == nil {
+            vm.computeRecommendation()
+        }
+        vm.ensurePlanUpToDate()
+        vm.applyAutoSkipIfNeeded()
+
+        // Your PlanViewModel already writes to UserDefaultsPlanStore.
+        // After that, load it back into this store:
+        if let newStored = planStore.load() {
+            self.generatedPlan = newStored
+        }
     }
 
     /// Mutating helper: mark a run as completed/skipped here
@@ -51,7 +89,7 @@ final class PlanSessionStore: ObservableObject {
         print("[PlanSessionStore] apply(summary:) called with id=\(summary.id)")
 
         // Try in-memory plan, otherwise load from persistence
-        guard var plan = generatedPlan ?? persistence.load() else {
+        guard var plan = generatedPlan ?? planStore.load() else {
             print(
                 "[PlanSessionStore] No generatedPlan loaded or persisted when applying summary"
             )
@@ -81,7 +119,7 @@ final class PlanSessionStore: ObservableObject {
         plan.runs[index] = run
 
         // Persist and publish so all views update
-        persistence.save(plan)
+        planStore.save(plan)
         generatedPlan = plan
         print("[PlanSessionStore] ✅ Applied summary to run \(summary.id)")
     }
