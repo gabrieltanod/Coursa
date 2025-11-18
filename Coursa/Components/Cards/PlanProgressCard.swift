@@ -74,7 +74,7 @@ struct PlanProgressCard: View {
             }
         }
         .padding(16)
-        .frame(width: 392, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color("black-700"))
         .cornerRadius(20)
     }
