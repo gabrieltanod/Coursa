@@ -12,12 +12,28 @@ struct StatisticsView: View {
     @EnvironmentObject private var planSession: PlanSessionStore
 
     var body: some View {
-        VStack {
-            planProgressCard
-            weeklyProgressSection
-            weeklyMetricsRow
+        ZStack {
+            Color("black-500")
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Statistics")
+                        .font(.system(size: 34, weight: .semibold))
+                        .foregroundStyle(Color("white-500"))
+                        .padding(.top, 8)
+                    planProgressCard
+//                    weeklyProgressSection
+                    weeklyMetricsRow
+                    recentActivitySection
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
         }
-        .navigationTitle("Statistics").foregroundStyle(Color.white)
+        .navigationTitle("Statistics")
+        .foregroundStyle(Color.white)
     }
     
     private var planProgressCard: some View {
@@ -86,34 +102,6 @@ struct StatisticsView: View {
         }
     }
     
-    private var weeklyProgressSection: some View {
-        // Example numbers – replace with your real computed values
-        let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
-        let completedKm =
-            allRuns
-            .filter { $0.status == .completed }
-            .reduce(0.0) { sum, run in
-                if let d = run.actual.distanceKm {
-                    return sum + d
-                }
-                if let t = run.template.targetDistanceKm {
-                    return sum + t
-                }
-                return sum
-            }
-
-        // Target distance = sum of template targets (ignore nils)
-        let targetKm =
-            allRuns
-            .compactMap { $0.template.targetDistanceKm }
-            .reduce(0, +)
-
-        return WeeklyProgressCard(
-            title: "Weekly Progress",
-            progressText: "\(Int(completedKm)) / \(Int(targetKm)) KM"
-        )
-    }
-
     private var weeklyMetricsRow: some View {
         HStack(spacing: 12) {
             MetricDetailCard(
@@ -124,17 +112,51 @@ struct StatisticsView: View {
             )
 
             MetricDetailCard(
-                title: "Duration in HR Zone 2",
+                title: "Aerobic Time",
                 primaryValue: "1:43:37",
                 secondaryValue: "1:26:15",
                 footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
             )
         }
     }
+    
+    private var recentActivitySection: some View {
+        let historyRuns = planSession.allRuns
+            .filter { $0.status == .completed || $0.status == .skipped }
+            .sorted { $0.date > $1.date }
+
+        let topThree = Array(historyRuns.prefix(3))
+
+        return VStack(alignment: .leading, spacing: 12) {
+            if !topThree.isEmpty {
+                HStack {
+                    Text("Recent Activity")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+
+                    Spacer()
+
+                    NavigationLink {
+                        // TODO: Hook this up to a full history screen (e.g. Plan history)
+                        RunHistoryView()
+                    } label: {
+                        Text("See All")
+                            .font(.system(size: 15, weight: .light))
+                            .foregroundStyle(Color("white-500"))
+                    }
+                }
+
+                ForEach(topThree) { run in
+                    RunningHistoryCard(
+                        run: run,
+                        isSkipped: run.status == .skipped
+                    )
+                }
+            }
+        }
+    }
 }
-//                        planProgressCard
-//                        weeklyProgressSection
-//                        weeklyMetricsRow
+
 #Preview {
     StatisticsView()
 }

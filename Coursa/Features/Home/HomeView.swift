@@ -147,8 +147,22 @@ struct HomeView: View {
                 }
                 .scrollIndicators(.never)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 20)
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .onAppear {
+                // Ensure Home hydrates PlanSessionStore from persistence
+                if planSession.allRuns.isEmpty,
+                   let stored = UserDefaultsPlanStore.shared.load() {
+                    // Assigning generatedPlan is enough; allRuns is derived from it
+                    planSession.generatedPlan = stored
+
+                    // Set selectedDate to the first run in the plan so calendar & sessions show immediately
+                    if let firstDate = stored.runs.sorted(by: { $0.date < $1.date }).first?.date {
+                        vm.selectedDate = firstDate
+                        selectedWeekIndex = 0
+                    }
+                }
+            }
         }
     }
 
@@ -478,7 +492,7 @@ struct HomeView: View {
 #Preview("HomeView") {
     // Lightweight preview setup
     let planSession = PlanSessionStore(
-        persistence: UserDefaultsPlanStore.shared
+        planStore: UserDefaultsPlanStore.shared
     )
     let syncService = SyncService()
 

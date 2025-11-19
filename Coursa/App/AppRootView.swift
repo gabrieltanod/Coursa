@@ -10,6 +10,7 @@ import SwiftUI
 struct AppRootView: View {
     @EnvironmentObject private var router: AppRouter
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @StateObject private var planSession = PlanSessionStore()
 
     @State private var showSplash = true
 
@@ -20,8 +21,15 @@ struct AppRootView: View {
                     if router.didOnboard {
                         if let existing = OnboardingStore.load() {
                             CoreTabView(onboardingData: existing)
+                                .onAppear {
+                                    planSession.bootstrapIfNeeded(using: existing)
+                                }
                         } else {
-                            CoreTabView(onboardingData: OnboardingData())
+                            let emptyData = OnboardingData()
+                            CoreTabView(onboardingData: emptyData)
+                                .onAppear {
+                                    planSession.bootstrapIfNeeded(using: emptyData)
+                                }
                         }
                     } else {
                         if hasSeenWelcome {
@@ -39,14 +47,18 @@ struct AppRootView: View {
                 .navigationDestination(for: Route.self) { route in
                     switch route {
                     case .plan(let data):
-                        PlanView(vm: PlanViewModel(data: data))
+                        StatisticsView()
                     case .home:
                         HomeView()
                     case .coreApp(let data):
                         CoreTabView(onboardingData: data)
+                            .onAppear {
+                                planSession.bootstrapIfNeeded(using: data)
+                            }
                     }
                 }
             }
+            .environmentObject(planSession)
             .onAppear {
                 // If we have onboarding data saved, skip onboarding on fresh launch
                 if !router.didOnboard, OnboardingStore.load() != nil {

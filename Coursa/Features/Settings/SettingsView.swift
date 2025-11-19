@@ -25,7 +25,7 @@ struct SettingsView: View {
         ZStack {
             Color("black-500").ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Settings")
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(Color("white-500"))
@@ -89,8 +89,8 @@ struct SettingsView: View {
                 }
                 #endif
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
         }
         .preferredColorScheme(.dark)
         .sheet(item: $activeSheet) { sheet in
