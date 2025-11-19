@@ -14,6 +14,8 @@ struct RunningSummaryView: View {
         
         ScrollView {
             VStack (spacing: 20) {
+//                GoalCard(type: type)
+                
                 RunningSummaryCard(run: run)
                 
                 HeartRateCard(run: run)

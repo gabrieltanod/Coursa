@@ -55,7 +55,6 @@ struct WhichDaysStepView: View {
                                     )
 
                                 Spacer()
-
                                 ZStack {
                                     // Fill respects the rounded shape; avoids overflow beyond border
                                     RoundedRectangle(cornerRadius: 6, style: .continuous)

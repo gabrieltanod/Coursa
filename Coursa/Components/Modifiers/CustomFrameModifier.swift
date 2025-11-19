@@ -21,6 +21,14 @@ struct CustomFrameModifier: ViewModifier {
                     : Color("black-450")  // default background
             )
             .cornerRadius(20)
+            .overlay(
+                Group {
+                    if isActivePage && isSelected {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color("white-500"), lineWidth: 1.5)
+                    }
+                }
+            )
     }
 }
 struct CustomChipModifier: ViewModifier {

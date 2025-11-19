@@ -12,14 +12,35 @@ struct PlanDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isRunning = false
     @State private var didComplete = false
+    @State private var showingInfoSheet = false
+
+    enum CountdownStep: Hashable {
+        case idle
+        case number(Int)
+        case start
+
+        var stateType: String {
+            switch self {
+            case .idle:
+                return "idle"
+            case .number(let n):
+                // include the number so each numeric step has a unique id for transitions
+                return "number_\(n)"
+            case .start:
+                return "start"
+            }
+        }
+    }
+
+    @State private var isCountingDown = false
+    @State private var countdownStep: CountdownStep = .idle
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .bottomLeading) {
             Color("black-500").ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    // Header image + overlay + text
                     GeometryReader { geo in
                         ZStack(alignment: .bottom) {
                             Image("CoursaImages/Running_Easy")
@@ -40,12 +61,13 @@ struct PlanDetailView: View {
 
                             VStack(alignment: .center) {
                                 Text(formattedDate)
-                                    .font(.system(size: 14, weight: .regular))
+                                    .font(.custom("Helvetica Neue", size: 14))
                                     .foregroundColor(.white.opacity(0.9))
                                     .padding(.bottom, 11)
 
                                 Text(run.title)
-                                    .font(.system(size: 34, weight: .bold))
+                                    .font(.custom("Helvetica Neue", size: 34))
+                                    .bold()
                                     .foregroundColor(.white)
                                     .padding(.bottom, 17)
 
@@ -54,79 +76,141 @@ struct PlanDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.bottom, 32)
                         }
-                        .frame(height: geo.size.height)
                     }
                     .frame(height: UIScreen.main.bounds.height * 0.5)
 
                     // Body content
                     VStack(alignment: .leading, spacing: 24) {
-                        HStack(spacing: 16) {
+                        HStack(spacing: 8) {
                             SmallCard {
-                                HStack(
-                                    alignment: .firstTextBaseline,
-                                    spacing: 6
-                                ) {
-                                    Text("Keep conversational pace for")
-                                        .lineLimit(2, reservesSpace: true)
-                                        .font(
-                                            .system(size: 15, weight: .regular)
-                                        )
+                                VStack(alignment: .leading){
+                                    Text("Keep conversational")
+                                        .font(.custom("Helvetica Neue", size: 14))
                                         .foregroundColor(.white)
+
+                                    HStack(alignment: .center, spacing: 5) {
+                                        Text("pace for")
+                                            .font(.custom("Helvetica Neue", size: 14))
+                                            .foregroundColor(.white)
+
+                                        Button {
+                                            showingInfoSheet.toggle()
+                                        } label: {
+                                            Image(systemName: "info.circle")
+                                                .font(.custom("Helvetica Neue", size: 12))
+                                                .foregroundColor(.white)
+                                        }
+                                    }
                                 }
-                                .padding(.bottom, 9)
+                                Spacer()
+
                                 Text(conversationalPaceMinutesText)
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(
-                                        Color(red: 0.84, green: 1.0, blue: 0.35)
-                                    )
+                                    .font(.custom("Helvetica Neue", size: 28))
+                                    .foregroundColor(Color("green-500"))
+                                    .bold()
                             }
-                            .frame(maxWidth: 172)
-                            .frame(height: 107)
 
                             SmallCard {
                                 Text("Recommended Pace")
                                     .lineLimit(2, reservesSpace: true)
-                                    .font(.system(size: 15, weight: .regular))
+                                    .font(.custom("Helvetica Neue", size: 16))
                                     .foregroundColor(.white)
-                                    .padding(.bottom, 9)
+
+                                Spacer()
+
                                 Text("7:30/km")
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(
-                                        Color(red: 0.84, green: 1.0, blue: 0.35)
-                                    )
+                                    .font(.custom("Helvetica Neue", size: 28))
+                                    .foregroundColor(Color("green-500"))
+                                    .bold()
                             }
-                            .frame(maxWidth: 172)
-                            .frame(height: 107)
                         }
 
-                        Text("Description")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.white)
+                        VStack (alignment: .leading, spacing: 8){
+                            Text("Description")
+                                .font(.custom("Helvetica Neue", size: 20))
+                                .foregroundColor(.white)
 
-                        SmallCard {
                             Text(descriptionText)
-                                .font(.system(size: 15))
+                                .font(.custom("Helvetica Neue", size: 15))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxWidth: .infinity)
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 24)
                 }
+                .padding(.bottom, 142)
+            }
+
+            VStack {
+                Button {
+                    startCountdownSequence()
+                } label: {
+                    Text("Let's Go")
+                        .font(.custom("Helvetica Neue", size: 17))
+                        .foregroundColor(Color.black)
+                        .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
+                }
+                .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
+                .background(Color.white)
+                .cornerRadius(20)
+                .padding(.top, 10)
+                .padding(.bottom, 40)
+                .padding(.horizontal)
+                .background(Color("black-500"))
+            }
+            .frame(maxWidth: .infinity)
+
+            if isCountingDown {
+                Color("black-500")
+                    .ignoresSafeArea()
+
+                Group {
+                    switch countdownStep {
+
+                    case .idle:
+                        EmptyView()
+
+                    case .number(let num):
+                        VStack (spacing: 32){
+                            Text("\(num)")
+                                .font(.custom("Helvetica Neue", size: 96))
+                                .bold()
+                                .foregroundColor(Color("orange-500"))
+                                .transition(.opacity.combined(with: .scale))
+                                .id(num)
+
+                            Text("Be Ready!")
+                                .font(.custom("Helvetica Neue", size: 30))
+                                .bold()
+                                .foregroundColor(Color("orange-500"))
+                        }
+
+                    case .start:
+                        Text("START!")
+                            .font(.custom("Helvetica Neue", size: 64))
+                            .bold()
+                            .foregroundColor(Color("green-500"))
+                            .transition(.opacity.combined(with: .scale))
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
+                .id(countdownStep.stateType)
             }
         }
-        .ignoresSafeArea(edges: .top)
+        .ignoresSafeArea()
+        .sheet(isPresented: $showingInfoSheet) {
+            RunningNotesModalView()
+                .presentationDetents([.fraction(0.35)])
+        }
     }
 
     // Metrics row under title
     private var metricsRow: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 20) {
             if let dur = run.template.targetDurationSec {
                 Label {
                     Text(Self.mmText(dur))
-                        .font(.system(size: 15, weight: .regular))
                 } icon: {
                     Image(systemName: "clock.fill")
                 }
@@ -134,21 +218,15 @@ struct PlanDetailView: View {
             Text("|")
             if let z = run.template.targetHRZone {
                 Label {
-                    Text("HR Zone \(z.rawValue)")
-                        .font(.system(size: 15, weight: .regular))
+                    Text("Heart Rate Zone \(z.rawValue)")
+
                 } icon: {
                     Image(systemName: "heart.fill")
                 }
             }
-
-            //            Label {
-            //                Text(run.template.focus.rawValue.capitalized)
-            //            } icon: {
-            //                Image(systemName: "bolt.fill")
-            //            }
         }
-        .font(.system(size: 13, weight: .medium))
-        .foregroundColor(.white.opacity(0.95))
+        .font(.custom("Helvetica Neue", size: 15))
+        .foregroundColor(Color("white-500"))
         .labelStyle(.titleAndIcon)
         .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -164,7 +242,7 @@ struct PlanDetailView: View {
             return notes
         } else {
             return
-                "This session is designed to support your endurance with controlled effort and clear structure. Run at a comfortable pace, stay relaxed, and focus on finishing strong."
+            "This session is designed to support your endurance with controlled effort and clear structure. Run at a comfortable pace, stay relaxed, and focus on finishing strong."
         }
     }
 
@@ -199,7 +277,45 @@ struct PlanDetailView: View {
             return "-- min"
         }
     }
+
+    func startCountdownSequence() {
+        // Do countdown on a Task to allow async sleeps without blocking UI
+        Task {
+            // begin countdown UI
+            await MainActor.run {
+                isCountingDown = true
+                countdownStep = .idle
+            }
+
+            // 3
+            await MainActor.run { withAnimation { countdownStep = .number(3) } }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            // 2
+            await MainActor.run { withAnimation { countdownStep = .number(2) } }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            // 1
+            await MainActor.run { withAnimation { countdownStep = .number(1) } }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            // START!
+            await MainActor.run { withAnimation { countdownStep = .start } }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            // finish countdown and start run
+            await MainActor.run {
+                isCountingDown = false
+                countdownStep = .idle
+                isRunning = true
+            }
+
+            // Optionally: navigate to your running screen or do other actions here.
+            // e.g. present workout view, start HK workout, or navigate via NavigationPath
+        }
+    }
 }
+
 
 #Preview("Plan Detail") {
     let sampleTemplate = RunTemplate(
@@ -212,13 +328,13 @@ struct PlanDetailView: View {
         notes:
             "This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats.This is a very long description that repeats. This is a very long description that repeats."
     )
-
+    
     let sampleRun = ScheduledRun(
         date: Date(),
         template: sampleTemplate,
         status: .planned
     )
-
+    
     return NavigationStack {
         PlanDetailView(run: sampleRun)
             .preferredColorScheme(.dark)
