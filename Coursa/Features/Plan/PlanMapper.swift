@@ -99,7 +99,8 @@ enum PlanMapper {
     static func applyWeeklyAdaptationIfDue(
         existing: GeneratedPlan,
         selectedDays: Set<Int>,
-        now: Date = Date()
+        now: Date = Date(),
+        onboarding: OnboardingData? = nil
     ) -> GeneratedPlan {
         // If already beyond 16 weeks, bail
         guard let first = existing.runs.first else { return existing }
@@ -120,7 +121,20 @@ enum PlanMapper {
         let thisWeekRuns = runs(in: existing, weekStart: closingWeekStart)
         guard !thisWeekRuns.isEmpty else { return existing }
         
-        let thisWeekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: thisWeekRuns)
+        // Compute TRIMP using real user metrics (age -> maxHR, gender, avgHR per run)
+        let ob = onboarding ?? OnboardingStore.load()
+        let age = ob?.personalInfo.age ?? 0
+        let derivedMaxHR: Double = age > 0 ? Double(220 - age) : 200 // fallback if missing
+        let derivedGender: TRIMPGender = {
+            let g = (ob?.personalInfo.gender ?? "").lowercased()
+            if g.hasPrefix("fem") { return .female } else { return .male }
+        }()
+        
+        let thisWeekTRIMP = TRIMP.totalTRIMP(
+            for: thisWeekRuns,
+            maxHR: derivedMaxHR,
+            gender: derivedGender
+        )
         
         // Look one week back to get last week's TRIMP and minutes, if available.
         let lastWeekStart = closingWeekStart.addingWeeks(-1)
@@ -131,7 +145,11 @@ enum PlanMapper {
         
         if !lastWeekRuns.isEmpty {
             // Normal case: we have a previous training week.
-            lastWeekTRIMP = TRIMP.totalTRIMPUsingDefaults(for: lastWeekRuns)
+            lastWeekTRIMP = TRIMP.totalTRIMP(
+                for: lastWeekRuns,
+                maxHR: derivedMaxHR,
+                gender: derivedGender
+            )
             lastWeekMinutes = WeeklyPlanner.estimatedWeeklyMinutes(from: lastWeekRuns)
         } else {
             // First adaptive week: treat the closing week as baseline.
@@ -143,6 +161,17 @@ enum PlanMapper {
         // - Undertrained or overreached -> overloadFactor = 1.0 (repeat week)
         // - Good progression (TRIMP within [1.0, 1.1] * lastWeekTRIMP) -> overloadFactor = 1.05
         // - Always respect +10% cap.
+        #if DEBUG
+            print("[ADAPT] Derived user params — age=\(age), gender=\(derivedGender), maxHR=\(Int(derivedMaxHR))")
+            let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
+            print("[ADAPT] Week \(fmt.string(from: closingWeekStart)) TRIMP=\(String(format: "%.2f", thisWeekTRIMP))")
+            if !lastWeekRuns.isEmpty {
+                print("[ADAPT] Prev Week \(fmt.string(from: lastWeekStart)) TRIMP=\(String(format: "%.2f", lastWeekTRIMP))")
+            } else {
+                print("[ADAPT] No previous week; baseline TRIMP=")
+            }
+        #endif
+
         let nextTarget = AdaptationEngine.nextWeekMinutes(
             lastWeekTRIMP: lastWeekTRIMP,
             thisWeekTRIMP: thisWeekTRIMP,
@@ -290,4 +319,3 @@ private extension Date {
         Calendar.current.date(byAdding: .day, value: 7*n, to: self)!
     }
 }
-
