@@ -58,16 +58,20 @@ struct PersonalInfoStepView: View {
                                 .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("white-500"))
                             Spacer()
-                            Text(
-                                date?.formatted(
-                                    date: .abbreviated,
-                                    time: .omitted
-                                ) ?? ""
-                            )
-                            .font(.custom("Helvetica Neue", size: 17))
-                            .foregroundColor(Color("white-400"))
-                            Label("", systemImage: "calendar")
-                                .foregroundStyle(Color("white-500"))
+                            if date == nil {
+                                Label("", systemImage: "calendar")
+                                    .foregroundStyle(Color("white-500"))
+                            } else {
+                                Text(
+                                    date?.formatted(
+                                        date: .abbreviated,
+                                        time: .omitted
+                                    ) ?? ""
+                                )
+                                .font(.custom("Helvetica Neue", size: 17))
+                                .foregroundColor(Color("white-400"))
+                            }
+                            
                         }
                         .customFrameModifier(isActivePage: false, isSelected: false)
                         .contentShape(Rectangle())  // This makes the whole area of HStack tappable
