@@ -24,20 +24,10 @@ final class CalendarViewModel: ObservableObject {
     }
 
     func load() {
-        guard let data = OnboardingStore.load() else {
-            runs = []
-            return
-        }
+        // Load the same persisted plan used by PlanSessionStore / the rest of the app
+        let storedPlan = UserDefaultsPlanStore.shared.load()
 
-        let planVM = PlanViewModel(data: data)
-        if planVM.recommendedPlan == nil {
-            planVM.computeRecommendation()
-        }
-        if planVM.generatedPlan == nil {
-            planVM.generatePlan()
-        }
-
-        if let generated = planVM.generatedPlan {
+        if let generated = storedPlan {
             runs = generated.runs.sorted { $0.date < $1.date }
         } else {
             runs = []

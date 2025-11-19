@@ -19,6 +19,7 @@
 import SwiftUI
 
 struct ManagePlanView: View {
+    @EnvironmentObject private var planSession: PlanSessionStore
     @StateObject private var vm: ManagePlanViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showSchedulePicker = false
@@ -33,8 +34,6 @@ struct ManagePlanView: View {
             Color("black-500").ignoresSafeArea()
 
             VStack(spacing: 24) {
-//                header
-
                 VStack(spacing: 16) {
                     ManageRow(
                         title: "Schedule",
@@ -55,6 +54,10 @@ struct ManagePlanView: View {
                 Button {
                     if vm.hasChanges {
                         vm.saveChanges()
+
+                        // Reload the updated plan into the shared PlanSessionStore
+                        let updatedPlan = UserDefaultsPlanStore.shared.load()
+                        planSession.generatedPlan = updatedPlan
                     }
                     dismiss()
                 } label: {
@@ -78,33 +81,6 @@ struct ManagePlanView: View {
         .navigationTitle("Manage Plan")
 
     }
-    
-//    private var header: some View {
-//        HStack (alignment: .center){
-////            Button {
-////                dismiss()
-////            } label: {
-////                Circle()
-////                    .fill(Color.white.opacity(0.06))
-////                    .frame(width: 32, height: 32)
-////                    .overlay(
-////                        Image(systemName: "chevron.left")
-////                            .foregroundColor(.white)
-////                            .font(.system(size: 17, weight: .semibold))
-////                    )
-////            }
-//            Text("Manage Plan")
-//                .foregroundColor(.white)
-//                .font(.system(size: 20, weight: .semibold))
-//
-//            Spacer()
-//
-//            // spacer to balance the back button
-//            Color.clear.frame(width: 32, height: 32)
-//        }
-//        .padding(.horizontal, 20)
-//        .padding(.top, 16)
-//    }
 }
 
 // MARK: - Row component
