@@ -142,10 +142,10 @@ struct RunningSummaryCard: View {
                 }
             }
         }
-        .padding(16) // Padding internal card
-        .background(gradient) // Background gradient yang Anda berikan
-        .cornerRadius(20) // Sudut membulat pada card
-        .shadow(radius: 5) // Bayangan kecil untuk kedalaman
+//        .padding(16) // Padding internal card
+//        .background(gradient) // Background gradient yang Anda berikan
+//        .cornerRadius(20) // Sudut membulat pada card
+//        .shadow(radius: 5) // Bayangan kecil untuk kedalaman
         
     }
 }

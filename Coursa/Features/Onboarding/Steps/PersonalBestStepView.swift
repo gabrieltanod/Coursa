@@ -2,23 +2,23 @@ import SwiftUI
 
 struct PersonalBestStepView: View {
     let onContinue: (Double?, String?) -> Void
-
+    
     @State private var selectedHour = -1
     @State private var selectedMinute = -1
     @State private var selectedSecond = -1
     @State private var distanceKm = ""
     @State private var durationText = ""
     @State private var showDurationWheel: Bool = false
-
+    
     let hours = Array(0...23)
     let minutes = Array(0...59)
     let seconds = Array(0...59)
-
+    
     private var isValid: Bool {
         !distanceKm.isEmpty && !durationText.isEmpty
-            && Double(distanceKm) != nil && isValidTimeFormat(durationText)
+        && Double(distanceKm) != nil && isValidTimeFormat(durationText)
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 27) {
             VStack(alignment: .leading) {
@@ -27,68 +27,81 @@ struct PersonalBestStepView: View {
                     caption: "Pick your furthest distance you ran in the last 1–3 months, fill in the best duration you got. If you haven’t reached a (3K/5K/10K) record yet, now is a good time to take your first 3K."
                 )
             }
-
+            
             HStack(spacing: 8) {
                 Button(action: {
                     distanceKm = "3"
                 }) {
-                    Text("🏃🏿‍♂️ 3K")
+                    Text("3K")
                         .foregroundStyle(Color("white-500"))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 6)
                         .cornerRadius(20)
                         .background(
                             distanceKm == "3"
-                                ? Color("black-200") : Color("black-400")
+                            ? Color("black-200") : Color("black-400")
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                            Group {
+                                if distanceKm == "3"{
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color("white-500"), lineWidth: 1.5)
+                                }
+                            }
                         )
                         .cornerRadius(20)
                 }
-
+                
                 Button(action: {
                     distanceKm = "5"
                 }) {
-                    Text("👏 5K")
+                    Text("5K")
                         .foregroundStyle(Color("white-500"))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 6)
                         .cornerRadius(20)
                         .background(
                             distanceKm == "5"
-                                ? Color("black-200") : Color("black-400")
+                            ? Color("black-200") : Color("black-400")
                         )
+                    
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                            Group {
+                                if distanceKm == "5"{
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color("white-500"), lineWidth: 1.5)
+                                }
+                            }
                         )
                         .cornerRadius(20)
                 }
-
+                
                 Button(action: {
                     distanceKm = "10"
                 }) {
-                    Text("🔥 10K")
+                    Text("10K")
                         .foregroundStyle(Color("white-500"))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 6)
                         .cornerRadius(20)
                         .background(
                             distanceKm == "10"
-                                ? Color("black-200") : Color("black-400")
+                            ? Color("black-200") : Color("black-400")
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color("grey-70"), lineWidth: 1.5)
+                            Group {
+                                if distanceKm == "10"{
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color("white-500"), lineWidth: 1.5)
+                                }
+                            }
                         )
                         .cornerRadius(20)
-
+                    
                 }
                 Spacer()
             }
-
+            
             Button(action: { showDurationWheel = true }) {
                 HStack {
                     if selectedHour > 0
@@ -128,9 +141,9 @@ struct PersonalBestStepView: View {
                 .contentShape(Rectangle())  // This makes the whole area of HStack tappable
             }
             .buttonStyle(.plain)
-
+            
             Spacer()
-
+            
             Button("Next") {
                 let distance = distanceKm.isEmpty ? nil : Double(distanceKm)
                 let duration = durationText.isEmpty ? nil : durationText
@@ -139,7 +152,7 @@ struct PersonalBestStepView: View {
             .buttonStyle(
                 CustomButtonStyle(
                     isDisabled: !isValid && !distanceKm.isEmpty
-                        && !durationText.isEmpty
+                    && !durationText.isEmpty
                 )
             )
         }
@@ -157,16 +170,16 @@ struct PersonalBestStepView: View {
                         .frame(width: 60)
                         .onChange(of: selectedHour) { _ in
                             durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
                         }
                         .onAppear {
                             if selectedHour < 0 {
                                 selectedHour = 1
                             }
                         }
-
+                        
                         Text(":")
-
+                        
                         Picker("Minute", selection: $selectedMinute) {
                             ForEach(minutes, id: \.self) { min in
                                 Text(String(format: "%02dm", min))
@@ -176,16 +189,16 @@ struct PersonalBestStepView: View {
                         .frame(width: 100)
                         .onChange(of: selectedMinute) { _ in
                             durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
                         }
                         .onAppear {
                             if selectedMinute < 0 {
                                 selectedMinute = 1
                             }
                         }
-
+                        
                         Text(":")
-
+                        
                         Picker("Second", selection: $selectedSecond) {
                             ForEach(seconds, id: \.self) { sec in
                                 Text(String(format: "%02ds", sec))
@@ -195,7 +208,7 @@ struct PersonalBestStepView: View {
                         .frame(width: 60)
                         .onChange(of: selectedSecond) { _ in
                             durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
                         }
                         .onAppear {
                             if selectedSecond < 0 {
@@ -204,14 +217,14 @@ struct PersonalBestStepView: View {
                         }
                     }
                     .labelsHidden()
-
+                    
                 }
                 .presentationDetents([.medium])
                 .padding(24)
             }
         )
     }
-
+    
     private func isValidTimeFormat(_ time: String) -> Bool {
         let components = time.split(separator: ":")
         return components.count >= 2 && components.allSatisfy { Int($0) != nil }
