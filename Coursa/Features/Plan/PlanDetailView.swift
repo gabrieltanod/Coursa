@@ -20,7 +20,6 @@ struct PlanDetailView: View {
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    // Header image + overlay + text
                     GeometryReader { geo in
                         ZStack(alignment: .bottom) {
                             Image("CoursaImages/Running_Easy")
@@ -56,7 +55,6 @@ struct PlanDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.bottom, 32)
                         }
-                        //                        .frame(height: geo.size.height)
                     }
                     .frame(height: UIScreen.main.bounds.height * 0.5)
                     
@@ -69,7 +67,7 @@ struct PlanDetailView: View {
                                         .font(.custom("Helvetica Neue", size: 14))
                                         .foregroundColor(.white)
                                     
-                                    HStack(alignment: .center, spacing: 5) { // <-- Use center alignment
+                                    HStack(alignment: .center, spacing: 5) {
                                         Text("pace for")
                                             .font(.custom("Helvetica Neue", size: 14))
                                             .foregroundColor(.white)
@@ -116,39 +114,35 @@ struct PlanDetailView: View {
                                 .font(.custom("Helvetica Neue", size: 15))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .multilineTextAlignment(.leading) // Ensure text aligns to the left
-                                .lineLimit(nil) // Allow unlimited lines
-                                .fixedSize(horizontal: false, vertical: true) // Allow vertical expansion
                         }
                     }
                     .padding(.horizontal, 24)
                 }
+                .padding(.bottom, 142)
+                
             }
             
             VStack {
                 Button {
-                    // TODO: Implement the navigation/logic for the "Let's Go" button here.
+                    // TODO: masukin func logic start kalo udah ada di sini
                 } label: {
                     Text("Let's Go")
                         .font(.custom("Helvetica Neue", size: 17))
                         .foregroundColor(Color.black)
+                        .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
                 }
                 .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
                 .background(Color.white)
                 .cornerRadius(20)
-                //                        .controlSize(.large) // Make it prominent
-                .padding(.top, 10) // Add padding for safety margin from the screen edge
-                .padding(.bottom, 40) // Add padding for safety margin from the screen edge
-                .padding(.horizontal) // Optional: Add padding on the sides
-                .background(.ultraThinMaterial)
+                .padding(.top, 10)
+                .padding(.bottom, 40)
+                .padding(.horizontal)
+                .background(Color("black-500"))
             }
-            .frame(maxWidth: .infinity) // Ensure the container spans the full width
-            //                        .background(.ultraThinMaterial) // Optional: Add a subtle background blur for contrast
+            .frame(maxWidth: .infinity)
         }
         .ignoresSafeArea()
         .sheet(isPresented: $showingInfoSheet) {
-            // Your Half-Screen Modal Content
             RunningNotesModalView()
                 .presentationDetents([.fraction(0.35)])
         }
