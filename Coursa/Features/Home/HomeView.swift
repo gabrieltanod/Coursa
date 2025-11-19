@@ -14,7 +14,7 @@ struct HomeView: View {
     @State private var showDynamicPlanCard = true
     @State private var showPlanSchedule = false
     private let calendar = Calendar.current
- 
+
     var body: some View {
         ZStack {
             Color("black-500").ignoresSafeArea()
@@ -42,19 +42,20 @@ struct HomeView: View {
 
                         if showAdjustCard {
                             SmallCard {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Adjust your plan")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Adjust Your Plan")
                                         .font(
-                                            .system(size: 18, weight: .semibold)
+                                            .system(size: 20, weight: .semibold)
                                         )
                                         .foregroundColor(Color("white-500"))
 
                                     Text(
                                         "Take a quick moment to confirm this adjustment. We adjust it according to your performance last week. Give the changes a final review before you head out for your next run!"
                                     )
-                                    .font(.system(size: 14))
+                                    .lineLimit(4)
+                                    .font(.system(size: 15))
                                     .foregroundColor(
-                                        Color("white-500").opacity(0.7)
+                                        Color("white-700")
                                     )
                                     .fixedSize(
                                         horizontal: false,
@@ -80,10 +81,10 @@ struct HomeView: View {
                                         // Hide the card after one use
                                         showAdjustCard = false
                                     }) {
-                                        Text("Adjust")
+                                        Text("Review Plan")
                                             .font(
                                                 .system(
-                                                    size: 16,
+                                                    size: 15,
                                                     weight: .semibold
                                                 )
                                             )
@@ -98,7 +99,6 @@ struct HomeView: View {
                                             .foregroundColor(.black)
                                     }
                                     .buttonStyle(.plain)
-                                    .padding(.top, 4)
                                 }
                             }
                         }
@@ -153,7 +153,9 @@ struct HomeView: View {
                 // Use the plan already loaded into PlanSessionStore
                 if let stored = planSession.generatedPlan {
                     // Set selectedDate to the first run in the plan so calendar & sessions show immediately
-                    if let firstDate = stored.runs.sorted(by: { $0.date < $1.date }).first?.date {
+                    if let firstDate = stored.runs.sorted(by: {
+                        $0.date < $1.date
+                    }).first?.date {
                         vm.selectedDate = firstDate
                         selectedWeekIndex = 0
                     }
@@ -225,18 +227,15 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                 }
-
                 Text(
                     "We will adjust your plan according to your weekly performance. This feature will equip you with the best fitted plan for your next run!"
                 )
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("white-700").opacity(0.8))
+                .foregroundColor(Color("white-700"))
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
-
-
 
     // MARK: - Calendar Strip (week-based)
 
@@ -463,7 +462,7 @@ struct HomeView: View {
             }
         }
     }
-    
+
     private func sendRunToWatch(_ run: ScheduledRun) {
         // Derive a simple recommended pace from the template if possible
         let recPace: String

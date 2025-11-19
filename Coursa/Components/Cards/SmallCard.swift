@@ -14,8 +14,8 @@ struct SmallCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 4) {
             content()
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, maxHeight: 107, alignment: .topLeading)
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color("black-700"))
         .cornerRadius(20)
     }

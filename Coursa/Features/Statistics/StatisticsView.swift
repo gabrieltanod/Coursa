@@ -103,19 +103,50 @@ struct StatisticsView: View {
     }
 
     private var weeklyMetricsRow: some View {
-        HStack(spacing: 12) {
+
+        let allRuns = planSession.allRuns
+            .filter { $0.status == .completed }
+            .sorted { $0.date > $1.date }
+
+        let cal = Calendar.current
+        let now = Date()
+
+        // Week ranges
+        let thisWeekStart = cal.dateInterval(of: .weekOfYear, for: now)!.start
+        let lastWeekStart = cal.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)!
+        let lastWeekEnd = thisWeekStart
+
+        // Filter runs by week
+        let thisWeekRuns = allRuns.filter { $0.date >= thisWeekStart }
+        let lastWeekRuns = allRuns.filter { $0.date >= lastWeekStart && $0.date < lastWeekEnd }
+
+        // Compute average paces
+        let thisWeekPaceSec = computeAveragePace(for: thisWeekRuns)
+        let lastWeekPaceSec = computeAveragePace(for: lastWeekRuns)
+
+        // Format
+        let thisWeekPaceText = formatPace(thisWeekPaceSec)
+        let lastWeekPaceText = formatPace(lastWeekPaceSec)
+        
+        let thisWeekZone2Seconds = totalZone2SecondsForWeek(offset: 0)
+        let lastWeekZone2Seconds = totalZone2SecondsForWeek(offset: 1)
+
+        let thisWeekAerobicText = formatHMS(thisWeekZone2Seconds)
+        let lastWeekAerobicText = formatHMS(lastWeekZone2Seconds)
+
+        return HStack(spacing: 12) {
             MetricDetailCard(
                 title: "Average Pace",
-                primaryValue: "8:25/km",
-                secondaryValue: "8:45/km",
+                primaryValue: thisWeekPaceText,
+                secondaryValue: lastWeekPaceText,
                 footer: "Average Pace Last Week and Two Week Ago"
             )
 
             MetricDetailCard(
                 title: "Aerobic Time",
-                primaryValue: "1:43:37",
-                secondaryValue: "1:26:15",
-                footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
+                primaryValue: thisWeekAerobicText,
+                secondaryValue: lastWeekAerobicText,
+                footer: "Your time in Zone 2 this week vs last week"
             )
         }
     }
@@ -159,8 +190,107 @@ struct StatisticsView: View {
             }
         }
     }
+
+    private func totalZone2SecondsForWeek(offset: Int) -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+
+        guard
+            let thisWeekInterval = calendar.dateInterval(
+                of: .weekOfYear,
+                for: now
+            )
+        else {
+            return 0
+        }
+
+        // Figure out which week we’re targeting
+        let targetStart: Date
+        if offset == 0 {
+            targetStart = thisWeekInterval.start
+        } else {
+            guard
+                let shifted = calendar.date(
+                    byAdding: .weekOfYear,
+                    value: -offset,
+                    to: thisWeekInterval.start
+                ),
+                let interval = calendar.dateInterval(
+                    of: .weekOfYear,
+                    for: shifted
+                )
+            else {
+                return 0
+            }
+            targetStart = interval.start
+        }
+
+        guard
+            let targetEnd = calendar.date(
+                byAdding: .day,
+                value: 7,
+                to: targetStart
+            )
+        else {
+            return 0
+        }
+
+        let interval = DateInterval(start: targetStart, end: targetEnd)
+
+        // Runs inside that week
+        let weekRuns = planSession.allRuns.filter { interval.contains($0.date) }
+
+        // 🔑 Sum Zone 2 seconds from your friend’s zoneDuration dictionary
+        let totalSecondsDouble = weekRuns.reduce(0.0) { partial, run in
+            let z2 = run.actual.zoneDuration[2] ?? 0  // Zone 2 = key 2
+            return partial + z2
+        }
+
+        return Int(totalSecondsDouble)
+    }
+
+    /// Format seconds like "1:43:37" or "43:05"
+    private func formatHMS(_ seconds: Int) -> String {
+        guard seconds > 0 else { return "0:00:00" }
+
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        let secs = seconds % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            return String(format: "%d:%02d", minutes, secs)
+        }
+    }
+    
+    private func computeAveragePace(for runs: [ScheduledRun]) -> Double {
+        let paceValues: [Double] = runs.compactMap { run in
+            guard let distance = run.actual.distanceKm, distance > 0,
+                  let duration = run.actual.elapsedSec else {
+                return nil
+            }
+            return Double(duration) / distance   // seconds per km
+        }
+
+        guard !paceValues.isEmpty else { return 0 }
+        return paceValues.reduce(0, +) / Double(paceValues.count)
+    }
+
+    private func formatPace(_ secondsPerKm: Double) -> String {
+        if secondsPerKm <= 0 { return "0:00/km" }
+        let minutes = Int(secondsPerKm) / 60
+        let seconds = Int(secondsPerKm) % 60
+        return String(format: "%d:%02d/km", minutes, seconds)
+    }
 }
 
 #Preview {
-    StatisticsView()
+    let planSession = PlanSessionStore()
+    return NavigationStack {
+        StatisticsView()
+            .environmentObject(planSession)
+            .background(Color("black-500"))
+            .preferredColorScheme(.dark)
+    }
 }
