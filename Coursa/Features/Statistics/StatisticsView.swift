@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StatisticsView: View {
-
+    
     @EnvironmentObject private var planSession: PlanSessionStore
 
     var body: some View {
@@ -23,7 +23,7 @@ struct StatisticsView: View {
                         .foregroundStyle(Color("white-500"))
                         .padding(.top, 8)
                     planProgressCard
-                    //                    weeklyProgressSection
+//                    weeklyProgressSection
                     weeklyMetricsRow
                     recentActivitySection
                 }
@@ -35,7 +35,7 @@ struct StatisticsView: View {
         .navigationTitle("Statistics")
         .foregroundStyle(Color.white)
     }
-
+    
     private var planProgressCard: some View {
         let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
 
@@ -84,7 +84,7 @@ struct StatisticsView: View {
         )
         .padding(.top, 20)
     }
-
+    
     private func planTitle(from runs: [ScheduledRun]) -> String {
         guard let focus = runs.first?.template.focus else {
             return "Your Plan"
@@ -101,7 +101,7 @@ struct StatisticsView: View {
             return "Your Plan"
         }
     }
-
+    
     private var weeklyMetricsRow: some View {
 
         let allRuns = planSession.allRuns
@@ -166,9 +166,8 @@ struct StatisticsView: View {
             )
         }
     }
-
+    
     private var recentActivitySection: some View {
-
         let historyRuns = planSession.allRuns
             .filter { $0.status == .completed || $0.status == .skipped }
             .sorted { $0.date > $1.date }
@@ -185,6 +184,7 @@ struct StatisticsView: View {
                     Spacer()
 
                     NavigationLink {
+                        // TODO: Hook this up to a full history screen (e.g. Plan history)
                         RunHistoryView()
                     } label: {
                         Text("See All")
@@ -194,14 +194,10 @@ struct StatisticsView: View {
                 }
 
                 ForEach(topThree) { run in
-                    NavigationLink {
-                        RunningSummaryView(run: run)
-                    } label: {
-                        RunningHistoryCard(
-                            run: run,
-                            isSkipped: run.status == .skipped
-                        )
-                    }
+                    RunningHistoryCard(
+                        run: run,
+                        isSkipped: run.status == .skipped
+                    )
                 }
             }
         }

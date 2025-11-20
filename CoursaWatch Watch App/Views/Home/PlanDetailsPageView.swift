@@ -31,6 +31,7 @@ struct PlanDetailsPageView: View {
     
     @State private var countdownStep: CountdownStep = .idle
     @EnvironmentObject var workoutManager: WorkoutManager
+    @StateObject private var syncService = SyncService()
     
     var body: some View {
         ZStack {
@@ -54,8 +55,7 @@ struct PlanDetailsPageView: View {
                 VStack{
                     Button(action: {
                         workoutManager.currentRunId = plan.id
-                        startCountdownSequence()
-                        workoutManager.startWorkout()
+                        workoutManager.startCountdown()
                     }) {
                         Text("Start")
                             .font(.helveticaNeue(size: 20))
@@ -113,6 +113,8 @@ struct PlanDetailsPageView: View {
             }
             
         }
+        .onAppear {
+            syncService.connect()}
         .navigationBarBackButtonHidden(isCountingDown)
     }
     
