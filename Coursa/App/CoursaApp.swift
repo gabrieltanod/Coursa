@@ -14,8 +14,9 @@ struct CoursaApp: App {
     @StateObject private var planSession: PlanSessionStore
     
     // Watch Connectivity
-    @StateObject private var syncService: SyncService
+    @StateObject private var syncService = SyncService.shared
     @StateObject private var planManager: PlanManager
+    
     
     init() {
         let router = AppRouter()
@@ -45,7 +46,6 @@ struct CoursaApp: App {
                     print("📱 App: Attaching PlanSessionStore to SyncService")
                     SyncService.shared.attach(planSession: planSession)
                 }
-            
         }
     }
 }

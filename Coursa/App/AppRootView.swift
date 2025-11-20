@@ -11,9 +11,10 @@ struct AppRootView: View {
     @EnvironmentObject private var router: AppRouter
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @StateObject private var planSession = PlanSessionStore()
-
+    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+    
     @State private var showSplash = true
-
+    
     var body: some View {
         ZStack {
             NavigationStack(path: $router.path) {
@@ -65,7 +66,7 @@ struct AppRootView: View {
                     router.didOnboard = true
                 }
             }
-
+            
             if showSplash {
                 SplashView()
                     .transition(.opacity)
@@ -79,13 +80,27 @@ struct AppRootView: View {
                     }
             }
         }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    self.showSplash = false
+                }
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { !showSplash && !hasCompletedOnboarding },
+            set: { _ in } // We don't set false here; OnboardingView updates the AppStorage
+        )) {
+            HealthPermissionView()
+        }
+        
     }
 }
 
 // Minimal, self-contained Welcome screen that matches your mock
 private struct WelcomeView: View {
     var onNext: () -> Void
-
+    
     var body: some View {
         ZStack {
             // Hero image
@@ -93,7 +108,7 @@ private struct WelcomeView: View {
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-                // Fallback if asset missing: dark background
+            // Fallback if asset missing: dark background
                 .overlay(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -105,7 +120,7 @@ private struct WelcomeView: View {
                         endPoint: .bottom
                     )
                 )
-
+            
             // Subtle bottom gradient for text/button legibility
             LinearGradient(
                 colors: [.clear, .black.opacity(0.85)],
@@ -113,30 +128,30 @@ private struct WelcomeView: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
-
+            
             VStack(alignment: .center, spacing: 8) {
                 // Top spacer to push text down a bit like the mock
                 Spacer().frame(height: 30)
-
+                
                 Text("Welcome to Coursa")
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(.white)
-
+                
                 Text("Join us on your endurance journey.")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(.white.opacity(0.9))
-
+                
                 Spacer()
-
+                
                 // Bottom CTA
                 Button(action: onNext) {
                     Text("Next")
                 }
                 .buttonStyle(CustomButtonStyle(isDisabled: false))
-
+                
             }
             .padding(.horizontal, 24)
-//            .padding(.bottom, 24)
+            //            .padding(.bottom, 24)
         }
         .preferredColorScheme(.dark)
         .navigationBarHidden(true)

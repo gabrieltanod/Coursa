@@ -38,7 +38,7 @@ struct PlanDetailView: View {
     // Inside PlanDetailView struct
     @State private var showDuringRunView = false // <--- ADD THIS
     
-    @StateObject private var syncService = SyncService()
+    @ObservedObject var syncService = SyncService.shared
     @State private var plan: RunningPlan?
     
     var body: some View {

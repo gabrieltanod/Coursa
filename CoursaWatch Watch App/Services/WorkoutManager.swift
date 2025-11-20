@@ -12,7 +12,7 @@ import HealthKit
 import SwiftUI
 import WatchKit
 
-class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+class WorkoutManager: NSObject, ObservableObject{
     
     static let shared = WorkoutManager()  // ✅ singleton
     
@@ -144,25 +144,38 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             print("Gagal memulai sesi workout: \(error.localizedDescription)")
         }
     }
-
+    
     func stopWorkoutAndReturnSummary() -> RunningSummary? {
-        
+        // 1. Stop the HealthKit Session
         workoutSession?.end()
         
-        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
+        // 2. End Collection AND Check Success
+        let endDate = Date()
+        workoutBuilder?.endCollection(withEnd: endDate) { (success, error) in
+            
+            // 🛑 SAFETY CHECK: Only try to finish if collection ended successfully
+            if success {
                 self.workoutBuilder?.finishWorkout { (workout, error) in
-                    if success {
-                        print("Watch: ✅ Workout saved to HealthKit successfully.")
-                    } else {
-                        print("Watch: ❌ Failed to save workout: \(String(describing: error))")
+                    if let workout = workout {
+                        print("Watch: ✅ Workout saved successfully. Duration: \(workout.duration)")
+                    } else if let error = error {
+                        print("Watch: ❌ Failed to finish workout: \(error.localizedDescription)")
                     }
                 }
+            } else {
+                print("Watch: ⚠️ endCollection failed, skipping finishWorkout. Error: \(String(describing: error))")
             }
+        }
         
+        // ... rest of your existing code (Timer cleanup, calculations, etc.) ...
+        
+        // 3. Clean up timers
         hapticTimer?.invalidate()
         hapticTimer = nil
         
-        let endDate = Date()
+        // ... (Keep the rest of your calculation logic exactly the same) ...
+        
+        // 4. Validation
         let totalTime: TimeInterval
         if let start = self.workoutStartDate {
             totalTime = endDate.timeIntervalSince(start)
@@ -172,13 +185,15 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         guard totalTime > 0 else {
             print("[WorkoutManager] ⚠️ Total time is 0")
+            DispatchQueue.main.async { self.isRunning = false }
             return nil
         }
         
+        // 5. ID & Summary Creation (Your existing logic)
         let runId = currentRunId ?? UUID().uuidString
         
         let summary = RunningSummary(
-            id: runId,  // ⭐ IMPORTANT
+            id: runId,
             totalTime: totalTime,
             totalDistance: self.distance,
             averageHeartRate: self.averageHeartRate,
@@ -189,6 +204,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Watch: 📤 Sending summary to iOS...")
         sendSummaryToiOS(summary)
         
+        // 6. Update UI
         DispatchQueue.main.async {
             self.finalSummary = summary
             self.showingSummary = true
@@ -200,6 +216,62 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         return summary
     }
+    
+    //    func stopWorkoutAndReturnSummary() -> RunningSummary? {
+    //
+    //        workoutSession?.end()
+    //
+    //        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
+    //                self.workoutBuilder?.finishWorkout { (workout, error) in
+    //                    if success {
+    //                        print("Watch: ✅ Workout saved to HealthKit successfully.")
+    //                    } else {
+    //                        print("Watch: ❌ Failed to save workout: \(String(describing: error))")
+    //                    }
+    //                }
+    //            }
+    //
+    //        hapticTimer?.invalidate()
+    //        hapticTimer = nil
+    //
+    //        let endDate = Date()
+    //        let totalTime: TimeInterval
+    //        if let start = self.workoutStartDate {
+    //            totalTime = endDate.timeIntervalSince(start)
+    //        } else {
+    //            totalTime = 0
+    //        }
+    //
+    //        guard totalTime > 0 else {
+    //            print("[WorkoutManager] ⚠️ Total time is 0")
+    //            return nil
+    //        }
+    //
+    //        let runId = currentRunId ?? UUID().uuidString
+    //
+    //        let summary = RunningSummary(
+    //            id: runId,
+    //            totalTime: totalTime,
+    //            totalDistance: self.distance,
+    //            averageHeartRate: self.averageHeartRate,
+    //            averagePace: self.averagePace,
+    //            zoneDuration: zoneDurationTracker
+    //        )
+    //
+    //        print("Watch: 📤 Sending summary to iOS...")
+    //        sendSummaryToiOS(summary)
+    //
+    //        DispatchQueue.main.async {
+    //            self.finalSummary = summary
+    //            self.showingSummary = true
+    //            self.isRunning = false
+    //            self.isCountingDown = false
+    //        }
+    //
+    //        self.resetWorkoutData()
+    //
+    //        return summary
+    //    }
     
     func endWorkout() {
         print("Watch: WorkoutManager stopping session...")
