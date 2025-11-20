@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showAdjustCard = true
     @State private var showDynamicPlanCard = true
     @State private var showPlanSchedule = false
+    @State private var showReviewSheet = false
     private let calendar = Calendar.current
     
     
@@ -65,23 +66,8 @@ struct HomeView: View {
                                     )
                                     
                                     Button(action: {
-                                        // TEMP PlanViewModel just for debug adapt
-                                        if let onboarding =
-                                            OnboardingStore.load()
-                                        {
-                                            let debugVM = PlanViewModel(
-                                                data: onboarding
-                                            )
-                                            debugVM
-                                                .debugCompleteThisWeekAndAdapt()
-                                        }
-                                        
-                                        // Reload shared plan so Home/Plan stay in sync
-                                        planSession.generatedPlan =
-                                        UserDefaultsPlanStore.shared.load()
-                                        
-                                        // Hide the card after one use
-                                        showAdjustCard = false
+                                        // Open review sheet instead of adjusting immediately
+                                        showReviewSheet = true
                                     }) {
                                         Text("Review Plan")
                                             .font(
@@ -151,20 +137,6 @@ struct HomeView: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
-            //            .onAppear {
-            //                // Ensure Home hydrates PlanSessionStore from persistence
-            //                if planSession.allRuns.isEmpty,
-            //                   let stored = UserDefaultsPlanStore.shared.load() {
-            //                    // Assigning generatedPlan is enough; allRuns is derived from it
-            //                    planSession.generatedPlan = stored
-            //
-            //                    // Set selectedDate to the first run in the plan so calendar & sessions show immediately
-            //                    if let firstDate = stored.runs.sorted(by: { $0.date < $1.date }).first?.date {
-            //                        vm.selectedDate = firstDate
-            //                        selectedWeekIndex = 0
-            //                    }
-            //                }
-            //            }
             .onAppear {
                 // Use the plan already loaded into PlanSessionStore
                 if let stored = planSession.generatedPlan {
@@ -176,6 +148,70 @@ struct HomeView: View {
                         selectedWeekIndex = 0
                     }
                 }
+            }
+            .sheet(isPresented: $showReviewSheet) {
+                // Build review rows from this week's runs so the sheet is ready for real data
+                let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
+                let thisWeekRuns = allRuns.filter { run in
+                    calendar.isDate(run.date, equalTo: Date(), toGranularity: .weekOfYear)
+                }
+
+                let reviewRows: [ReviewPlanSheet.ReviewSessionRow] = thisWeekRuns.map { run in
+                    // Session name
+                    let sessionName = run.title
+
+                    // Distance text (prefer actual distance, fallback to template target)
+                    let distanceKm: String
+                    if let actual = run.actual.distanceKm {
+                        distanceKm = String(format: "%.1f", actual)
+                    } else if let target = run.template.targetDistanceKm {
+                        distanceKm = String(format: "%.1f", target)
+                    } else {
+                        distanceKm = "-"
+                    }
+
+                    // Average HR text
+                    let heartRateText: String
+                    if let hr = run.actual.avgHR {
+                        heartRateText = String(Int(hr))
+                    } else {
+                        heartRateText = "-"
+                    }
+
+                    return ReviewPlanSheet.ReviewSessionRow(
+                        session: sessionName,
+                        distanceText: distanceKm,
+                        heartRateText: heartRateText,
+                        isDone: run.status == .completed
+                    )
+                }
+
+                ReviewPlanSheet(
+                    onDismiss: {
+                        showReviewSheet = false
+                    },
+                    onAdjust: {
+                        // TEMP: reuse debug adapt for now
+                        if let onboarding = OnboardingStore.load() {
+                            let debugVM = PlanViewModel(data: onboarding)
+                            debugVM.debugCompleteThisWeekAndAdapt()
+                        }
+
+                        // Reload shared plan so Home/Plan stay in sync
+                        planSession.generatedPlan = UserDefaultsPlanStore.shared.load()
+
+                        // Hide the card after confirming
+                        showAdjustCard = false
+                        showReviewSheet = false
+                    },
+                    onKeepCurrent: {
+                        // Keep existing plan, just hide the card
+                        showAdjustCard = false
+                        showReviewSheet = false
+                    },
+                    rows: reviewRows
+                )
+                .preferredColorScheme(.dark)
             }
         }
     }
