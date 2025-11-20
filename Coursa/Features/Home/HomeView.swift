@@ -306,6 +306,7 @@ struct HomeView: View {
                             date,
                             inSameDayAs: vm.selectedDate
                         )
+                        let isToday = calendar.isDateInToday(date)
                         
                         VStack(spacing: 6) {
                             Text(weekdayString(for: date).uppercased())
@@ -320,7 +321,7 @@ struct HomeView: View {
                                 .font(.system(size: 17, weight: .semibold))
                                 .frame(width: 32, height: 32)
                                 .foregroundStyle(
-                                    isSelected ? .black : Color("white-500")
+                                    isSelected ? .black : (isToday ? .red : Color("white-500"))
                                 )
                                 .background(
                                     Circle()
