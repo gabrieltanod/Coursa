@@ -189,3 +189,14 @@ struct UserProfile: Codable, Hashable, Identifiable {
     var activePlan: PlanInstance?
 }
 
+extension RunMetrics {
+    static var empty: RunMetrics {
+        RunMetrics(
+            elapsedSec: nil,
+            distanceKm: nil,
+            avgPaceSecPerKm: nil,
+            avgHR: nil,
+            zoneDuration: [:]
+        )
+    }
+}

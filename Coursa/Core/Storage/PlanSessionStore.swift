@@ -124,3 +124,87 @@ final class PlanSessionStore: ObservableObject {
         print("[PlanSessionStore] ✅ Applied summary to run \(summary.id)")
     }
 }
+
+
+#if DEBUG
+extension PlanSessionStore {
+    func loadDebugSampleDataForStatistics() {
+        let cal = Calendar.current
+        let now = Date()
+
+        func dayOffset(_ days: Int) -> Date {
+            cal.date(byAdding: .day, value: days, to: now) ?? now
+        }
+
+        func makeRun(
+            title: String,
+            daysAgo: Int,
+            distanceKm: Double,
+            elapsedSec: Int,
+            zone2Sec: Double
+        ) -> ScheduledRun {
+            var actual = RunMetrics.empty
+            actual.distanceKm = distanceKm
+            actual.elapsedSec = elapsedSec
+            actual.zoneDuration = [2: zone2Sec]
+
+            return ScheduledRun(
+                id: UUID().uuidString,
+                date: dayOffset(-daysAgo),
+                template: RunTemplate(
+                    name: title,
+                    kind: .easy,
+                    focus: .endurance,
+                    targetDurationSec: elapsedSec,
+                    targetDistanceKm: distanceKm,
+                    targetHRZone: .z2,
+                    notes: nil
+                ),
+                status: .completed,
+                actual: actual
+            )
+        }
+
+        // This week (0–6 days ago)
+        let run1 = makeRun(
+            title: "This Week Run 1",
+            daysAgo: 1,
+            distanceKm: 5,
+            elapsedSec: 5 * 60 * 8,   // 8:00/km
+            zone2Sec: 30 * 60         // 30 min
+        )
+
+        let run2 = makeRun(
+            title: "This Week Run 2",
+            daysAgo: 3,
+            distanceKm: 3,
+            elapsedSec: 3 * 60 * 7,   // 7:00/km
+            zone2Sec: 20 * 60         // 20 min
+        )
+
+        // Last week (7–13 days ago)
+        let run3 = makeRun(
+            title: "Last Week Run 1",
+            daysAgo: 8,
+            distanceKm: 4,
+            elapsedSec: 4 * 60 * 9,   // 9:00/km
+            zone2Sec: 25 * 60
+        )
+
+        let run4 = makeRun(
+            title: "Last Week Run 2",
+            daysAgo: 10,
+            distanceKm: 6,
+            elapsedSec: 6 * 60 * 8,   // 8:00/km
+            zone2Sec: 35 * 60
+        )
+
+        let plan = GeneratedPlan(
+            plan: .endurance,
+            runs: [run1, run2, run3, run4].sorted { $0.date < $1.date }
+        )
+
+        generatedPlan = plan
+    }
+}
+#endif
