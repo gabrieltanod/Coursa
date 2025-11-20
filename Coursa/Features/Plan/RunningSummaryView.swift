@@ -11,7 +11,6 @@ struct RunningSummaryView: View {
     let run: ScheduledRun
 
     var body: some View {
-        
         ScrollView {
             VStack (spacing: 20) {
 //                GoalCard(type: type)

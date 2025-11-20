@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StatisticsView: View {
-
+    
     @EnvironmentObject private var planSession: PlanSessionStore
 
     var body: some View {
@@ -23,7 +23,7 @@ struct StatisticsView: View {
                         .foregroundStyle(Color("white-500"))
                         .padding(.top, 8)
                     planProgressCard
-                    //                    weeklyProgressSection
+//                    weeklyProgressSection
                     weeklyMetricsRow
                     recentActivitySection
                 }
@@ -35,7 +35,7 @@ struct StatisticsView: View {
         .navigationTitle("Statistics")
         .foregroundStyle(Color.white)
     }
-
+    
     private var planProgressCard: some View {
         let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
 
@@ -84,7 +84,7 @@ struct StatisticsView: View {
         )
         .padding(.top, 20)
     }
-
+    
     private func planTitle(from runs: [ScheduledRun]) -> String {
         guard let focus = runs.first?.template.focus else {
             return "Your Plan"
@@ -101,7 +101,7 @@ struct StatisticsView: View {
             return "Your Plan"
         }
     }
-
+    
     private var weeklyMetricsRow: some View {
 
         let allRuns = planSession.allRuns
@@ -113,12 +113,18 @@ struct StatisticsView: View {
 
         // Week ranges
         let thisWeekStart = cal.dateInterval(of: .weekOfYear, for: now)!.start
-        let lastWeekStart = cal.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)!
+        let lastWeekStart = cal.date(
+            byAdding: .weekOfYear,
+            value: -1,
+            to: thisWeekStart
+        )!
         let lastWeekEnd = thisWeekStart
 
         // Filter runs by week
         let thisWeekRuns = allRuns.filter { $0.date >= thisWeekStart }
-        let lastWeekRuns = allRuns.filter { $0.date >= lastWeekStart && $0.date < lastWeekEnd }
+        let lastWeekRuns = allRuns.filter {
+            $0.date >= lastWeekStart && $0.date < lastWeekEnd
+        }
 
         // Compute average paces
         let thisWeekPaceSec = computeAveragePace(for: thisWeekRuns)
@@ -127,12 +133,22 @@ struct StatisticsView: View {
         // Format
         let thisWeekPaceText = formatPace(thisWeekPaceSec)
         let lastWeekPaceText = formatPace(lastWeekPaceSec)
-        
+
         let thisWeekZone2Seconds = totalZone2SecondsForWeek(offset: 0)
         let lastWeekZone2Seconds = totalZone2SecondsForWeek(offset: 1)
 
         let thisWeekAerobicText = formatHMS(thisWeekZone2Seconds)
         let lastWeekAerobicText = formatHMS(lastWeekZone2Seconds)
+        #if DEBUG
+            print("=== STATISTICS DEBUG ===")
+            print("This week runs: \(thisWeekRuns.count)")
+            print("Last week runs: \(lastWeekRuns.count)")
+            print("This week pace: \(thisWeekPaceText)")
+            print("Last week pace: \(lastWeekPaceText)")
+            print("This week Z2: \(thisWeekAerobicText)")
+            print("Last week Z2: \(lastWeekAerobicText)")
+            print("=========================")
+        #endif
 
         return HStack(spacing: 12) {
             MetricDetailCard(
@@ -150,9 +166,8 @@ struct StatisticsView: View {
             )
         }
     }
-
+    
     private var recentActivitySection: some View {
-
         let historyRuns = planSession.allRuns
             .filter { $0.status == .completed || $0.status == .skipped }
             .sorted { $0.date > $1.date }
@@ -169,6 +184,7 @@ struct StatisticsView: View {
                     Spacer()
 
                     NavigationLink {
+                        // TODO: Hook this up to a full history screen (e.g. Plan history)
                         RunHistoryView()
                     } label: {
                         Text("See All")
@@ -178,14 +194,10 @@ struct StatisticsView: View {
                 }
 
                 ForEach(topThree) { run in
-                    NavigationLink {
-                        RunningSummaryView(run: run)
-                    } label: {
-                        RunningHistoryCard(
-                            run: run,
-                            isSkipped: run.status == .skipped
-                        )
-                    }
+                    RunningHistoryCard(
+                        run: run,
+                        isSkipped: run.status == .skipped
+                    )
                 }
             }
         }
@@ -263,14 +275,15 @@ struct StatisticsView: View {
             return String(format: "%d:%02d", minutes, secs)
         }
     }
-    
+
     private func computeAveragePace(for runs: [ScheduledRun]) -> Double {
         let paceValues: [Double] = runs.compactMap { run in
             guard let distance = run.actual.distanceKm, distance > 0,
-                  let duration = run.actual.elapsedSec else {
+                let duration = run.actual.elapsedSec
+            else {
                 return nil
             }
-            return Double(duration) / distance   // seconds per km
+            return Double(duration) / distance  // seconds per km
         }
 
         guard !paceValues.isEmpty else { return 0 }
@@ -287,6 +300,10 @@ struct StatisticsView: View {
 
 #Preview {
     let planSession = PlanSessionStore()
+    #if DEBUG
+        planSession.loadDebugSampleDataForStatistics()
+    #endif
+
     return NavigationStack {
         StatisticsView()
             .environmentObject(planSession)

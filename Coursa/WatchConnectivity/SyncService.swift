@@ -9,12 +9,9 @@ import Combine
 import Foundation
 import WatchConnectivity
 
-#if os(iOS)
-import UIKit
-import SwiftUI
-#endif
-
 class SyncService: NSObject, WCSessionDelegate, ObservableObject {
+    
+    static let shared = SyncService()
     
     @Published var summary: RunningSummary?
     @Published var plan: RunningPlan?
@@ -25,27 +22,15 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
 #if os(iOS)
     private var pendingRunningPlan: RunningPlan?
     private weak var planSession: PlanSessionStore?
+    private var pendingStartCommand: String?
 #endif
     
 #if os(watchOS)
-    // MARK: - Watch-only activation / retry state
-    
-    /// Whether we're currently trying to activate WCSession
     @Published var isActivationInProgress: Bool = false
-    
-    /// Timer used to poll activation state in the simulator
     private var activationRetryTimer: Timer?
-    
-    /// How many times we've retried activation
     private var activationRetryCount: Int = 0
-    
-    /// Max number of retries before giving up (simulator safety)
     private let maxActivationRetries: Int = 3
-    
-    /// Delay between activation checks, in seconds
     private let activationRetryDelay: TimeInterval = 5.0
-    
-    /// Summary that couldn't be sent yet (queued until session is activated)
     private var pendingSummary: RunningSummary?
 #endif
     
@@ -290,6 +275,9 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 print(
                     "iOS: Activation state: \(session.activationState.rawValue)"
                 )
+                
+                self.sendPendingRunningPlanIfNeeded()
+                self.sendPendingStartCommandIfNeeded()
 #endif
 #if os(watchOS)
                 print("watchOS: ✅ WCSession activated successfully")
@@ -489,49 +477,16 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             self.summary = summary
             print("📱 iOS: ✅ Summary stored:", summary)
             
-    #if os(iOS)
+#if os(iOS)
             if let planSession = self.planSession {
                 print("📱 iOS: Applying summary to PlanSessionStore")
                 planSession.apply(summary: summary)
             } else {
                 print("📱 iOS: ⚠️ No PlanSessionStore attached, summary not applied")
             }
-    #endif
+#endif
         }
     }
-    
-    // ========================================== MARK: - Receive Plan (watchOS from iOS ) ==========================================
-    
-#if os(watchOS)
-    // Receive message from watchOS
-    func session(
-        _ session: WCSession,
-        didReceiveMessage message: [String: Any]
-    ) {
-        print("watchOS: Received message from iOS")
-        decodeAndStorePlan(from: message)
-    }
-    
-    // Receive message with reply handler
-    func session(
-        _ session: WCSession,
-        didReceiveMessage message: [String: Any],
-        replyHandler: @escaping ([String: Any]) -> Void
-    ) {
-        print("watchOS: Received message from watchOS (with reply handler)")
-        decodeAndStorePlan(from: message)
-        replyHandler(["status": "received"])
-    }
-    
-    // Receive application context
-    func session(
-        _ session: WCSession,
-        didReceiveApplicationContext applicationContext: [String: Any]
-    ) {
-        print("watchOS: Received application context from iOS")
-        decodeAndStorePlan(from: applicationContext)
-    }
-#endif
     
     private func decodeAndStorePlan(from dictionary: [String: Any]) {
         // Handle UUID as String (since Dictionary can't store UUID directly)
@@ -668,124 +623,237 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         print(
             "watchOS: Sending pending summary now that session is activated..."
         )
-        // Clear pending first
         pendingSummary = nil
-        // Send it
         sendSummaryData(summary: pending)
     }
 #endif
     
-    // ========================================== MARK: - Send Plan (iOS to watchOS) ==========================================
-    
+    // ========================================== MARK: - Send Plan & Start Command (iOS) ==========================================
 #if os(iOS)
     func sendPlanToWatchOS(plan: RunningPlan) {
-        // Check activation state first
-        if session.activationState == .activated {
-            // Session is activated - send immediately
+        // Queue plan regardless of activation
+        pendingRunningPlan = plan
+        trySendPendingPlanAndCommand()
+    }
+    
+    func sendStartCommandToWatchOS(plan: RunningPlan) {
+        pendingStartCommand = plan.id
+        pendingRunningPlan = plan
+        trySendPendingPlanAndCommand()
+    }
+    
+    private func trySendPendingPlanAndCommand() {
+        guard session.activationState == .activated else {
+            print("iOS: Session not activated yet. Pending plan/start command queued.")
+            return
+        }
+        
+        if let plan = pendingRunningPlan {
             sendRunningPlanData(plan: plan)
-        } else {
-            // Session not activated yet - queue it
-            print(
-                "iOS: Session not activated (State: \(session.activationState.rawValue)). Queueing summary..."
-            )
-            pendingRunningPlan = plan
-            // Don't call activate() here - it's already being called in connect()
-            // Just wait for activation to complete, then sendPendingSummaryIfNeeded() will handle it
+            pendingRunningPlan = nil
+        }
+        
+        if let planID = pendingStartCommand {
+            sendStartWorkoutCommand(planID: planID)
+            pendingStartCommand = nil
         }
     }
     
     private func sendRunningPlanData(plan: RunningPlan) {
-        // Double-check activation state before attempting to send
-        guard session.activationState == .activated else {
-            let stateDescription: String
-            switch session.activationState {
-            case .notActivated:
-                stateDescription = "notActivated"
-            case .inactive:
-                stateDescription = "inactive"
-            case .activated:
-                stateDescription = "activated"
-            @unknown default:
-                stateDescription =
-                "unknown(\(session.activationState.rawValue))"
-            }
-            print(
-                "iOS: ❌ Cannot send plan - Session is not activated. Current state: \(stateDescription)"
-            )
-            print("iOS: Queueing plan for later...")
+        if session.delegate == nil {
+            print("iOS: ⚠️ Session had no delegate. Re-assigning self.")
+            session.delegate = self
+        }
+        
+        // Ensure session is activated before we try anything
+        if session.activationState != .activated {
+            print("iOS: ⚠️ Session not activated. Reactivating...")
+            session.activate()
             pendingRunningPlan = plan
             return
         }
         
-        // ✅ Convert everything to property-list–safe types
         let data: [String: Any] = [
-            "id": plan.id,  // UUID → String
-            "date": plan.date,  // Date is allowed
-            "name": plan.name,  // String
-            "kind": plan.kind?.rawValue ?? 0,  // RunKind → Int
-            "targetDuration": plan.targetDuration ?? 0,  // RunKind → Int
-            "targetDistance": plan.targetDistance ?? 0.0,  // Double
-            "targetHRZone": plan.targetHRZone?.rawValue ?? 0,  // HRZone → Int
-            "recPace": plan.recPace ?? "",  // String
+            "id": plan.id,
+            "date": plan.date,
+            "name": plan.name,
+            "kind": plan.kind?.rawValue ?? 0,
+            "targetDuration": plan.targetDuration ?? 0,
+            "targetDistance": plan.targetDistance ?? 0.0,
+            "targetHRZone": plan.targetHRZone?.rawValue ?? 0,
+            "recPace": plan.recPace ?? "",
+            "timestamp": Date().timeIntervalSince1970
         ]
         
-        print(
-            "iOS: Attempting to send plan (activationState: activated, isReachable: \(session.isReachable))"
-        )
-        
-        // Use updateApplicationContext (works even when not reachable)
-        do {
-            try session.updateApplicationContext(data)
-            print(
-                "iOS: ✅ Successfully sent plan via updateApplicationContext"
-            )
-        } catch {
-            print(
-                "iOS: ❌ Error updating application context: \(error.localizedDescription)"
-            )
-            print("iOS: Error details: \(error)")
+        // 2. Send Strategy: Fast (Message) -> Fallback (Context)
+        if session.isReachable {
+            print("iOS: 📡 Watch is Reachable. Sending via sendMessage...")
             
-            // If updateApplicationContext fails, try sendMessage as fallback (if reachable)
-            if session.isReachable {
-                print("iOS: Trying sendMessage as fallback...")
-                session.sendMessage(
-                    data,
-                    replyHandler: { reply in
-                        print(
-                            "iOS: ✅ Message sent successfully via sendMessage. Reply: \(reply)"
-                        )
-                    },
-                    errorHandler: { error in
-                        print(
-                            "iOS: ❌ Error sending message: \(error.localizedDescription)"
-                        )
-                        print("iOS: Queueing send for retry...")
-                        self.pendingRunningPlan = plan
-                    }
-                )
-            } else {
-                print(
-                    "iOS: Session is not reachable. Queueing summary for later..."
-                )
-                pendingRunningPlan = plan
-            }
+            session.sendMessage(data, replyHandler: { reply in
+                print("iOS: ✅ Plan sent. Reply: \(reply)")
+                self.pendingRunningPlan = nil
+            }, errorHandler: { error in
+                print("iOS: ⚠️ sendMessage failed: \(error.localizedDescription). Falling back to background transfer.")
+                self.forceBackgroundTransfer(data: data, plan: plan)
+            })
+        } else {
+            print("iOS: ⚠️ Watch not reachable. Sending via ApplicationContext immediately.")
+            forceBackgroundTransfer(data: data, plan: plan)
         }
     }
     
-    private func sendPendingRunningPlanIfNeeded() {
-        guard let plan = pendingRunningPlan,
-              session.activationState == .activated
-        else {
+    // Helper for the fallback
+    private func forceBackgroundTransfer(data: [String: Any], plan: RunningPlan) {
+        // Double check delegate again just in case
+        if session.delegate == nil { session.delegate = self }
+        
+        do {
+            try session.updateApplicationContext(data)
+            print("iOS: ✅ Plan queued in ApplicationContext")
+            self.pendingRunningPlan = nil
+        } catch {
+            print("iOS: ❌ CRITICAL: Background send failed: \(error.localizedDescription)")
+            self.pendingRunningPlan = plan
+        }
+    }
+    
+    
+    func sendStartWorkoutCommand(planID: String) {
+        guard session.activationState == .activated else {
+            print("iOS: Cannot send start command - session not activated")
+            pendingStartCommand = planID
             return
         }
         
-        print(
-            "iOS: Sending pending summary now that session is activated..."
-        )
-        // Clear pending first
-        pendingRunningPlan = nil
-        // Send it
-        sendRunningPlanData(plan: plan)
+        let message: [String: Any] = [
+            "command": "startWorkout",
+            "planID": planID
+        ]
+        
+        if session.isReachable {
+            print("iOS: 📡 Sending startWorkout command to Watch")
+            session.sendMessage(message, replyHandler: nil) { error in
+                print("iOS: ❌ Failed to send start command: \(error.localizedDescription)")
+                self.pendingStartCommand = planID
+            }
+        } else {
+            print("iOS: ⚠️ Watch not reachable. Start command queued.")
+            pendingStartCommand = planID
+        }
+    }
+    
+    func sendStopWorkoutCommand() {
+        // 1. Safety Check: Ensure session is valid
+        if session.delegate == nil {
+            session.delegate = self
+        }
+        
+        guard session.activationState == .activated else {
+            print("iOS: ⚠️ Cannot send stop command - Session not activated.")
+            return
+        }
+        
+        // 2. Prepare Payload
+        // We add a timestamp to ensure every stop command looks "new" to the system
+        let message: [String: Any] = [
+            "command": "stopWorkout",
+            "timestamp": Date().timeIntervalSince1970
+        ]
+        
+        print("iOS: 🛑 Preparing to send stop command...")
+        
+        // 3. Attempt Immediate Send (Best for when user is looking at watch)
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: { reply in
+                print("iOS: ✅ Stop command received by Watch. Reply: \(reply)")
+            }, errorHandler: { error in
+                print("iOS: ⚠️ sendMessage failed (\(error.localizedDescription)). Falling back to background context.")
+                self.sendStopViaBackground(message: message)
+            })
+        } else {
+            // 4. Fallback (Watch screen is off / app in background)
+            print("iOS: ⚠️ Watch not reachable. Sending stop command via ApplicationContext.")
+            sendStopViaBackground(message: message)
+        }
+    }
+    
+    // Helper for background transfer
+    private func sendStopViaBackground(message: [String: Any]) {
+        do {
+            try session.updateApplicationContext(message)
+            print("iOS: ✅ Stop command queued in ApplicationContext (Will execute immediately upon Watch wake).")
+        } catch {
+            print("iOS: ❌ CRITICAL: Failed to send stop command: \(error.localizedDescription)")
+        }
+    }
+    
+    // Call this whenever activation completes
+    private func sendPendingRunningPlanIfNeeded() {
+        trySendPendingPlanAndCommand()
+    }
+    
+    private func sendPendingStartCommandIfNeeded() {
+        trySendPendingPlanAndCommand()
     }
 #endif
+    
+    
+    
+#if os(watchOS)
+    
+    // MARK: - Receive plain message (no reply)
+    func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any]
+    ) {
+        print("watchOS: 📩 Received message from iOS")
+        handleIncomingData(message)
+    }
+    
+    
+    // MARK: - Receive message with reply
+    func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String : Any]) -> Void
+    ) {
+        print("watchOS: 📩 Received message from iOS (with reply handler)")
+        handleIncomingData(message)
+        replyHandler(["status": "received"])
+    }
+    
+    
+    // MARK: - Receive application context
+    func session(
+        _ session: WCSession,
+        didReceiveApplicationContext applicationContext: [String : Any]
+    ) {
+        print("watchOS: 📩 Received application context")
+        handleIncomingData(applicationContext)
+    }
+    
+    
+    private func handleIncomingData(_ data: [String: Any]) {
+        
+        // 1. Check for Commands
+        if let command = data["command"] as? String {
+            
+            if command == "startWorkout", let planID = data["planID"] as? String {
+                print("watchOS: ▶️ Forwarding start command to WorkoutManager")
+                WorkoutManager.shared.receiveStartCommand(planID: planID)
+                return
+            }
+            
+            if command == "stopWorkout" {
+                print("watchOS: 🛑 Forwarding stop command to WorkoutManager")
+                WorkoutManager.shared.endWorkout()
+                
+                return
+            }
+        }
+        
+        decodeAndStorePlan(from: data)
+    }
+#endif
+    
 }
