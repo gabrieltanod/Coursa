@@ -13,7 +13,7 @@ struct RunningSummaryView: View {
     var body: some View {
         ScrollView {
             VStack (spacing: 20) {
-//                GoalCard(type: type)
+                GoalCard(run: run)
                 
                 RunningSummaryCard(run: run)
                 
@@ -24,21 +24,3 @@ struct RunningSummaryView: View {
         .background(Color("black-500"))
     }
 }
-
-//#Preview("RunningSummaryView – Sample") {
-//    let sampleRun = ScheduledRun(
-//        date: Date(),
-//        template: RunTemplate(
-//            name: "Easy Run",
-//            kind: .easy,
-//            focus: .base,
-//            targetDurationSec: 30 * 60,
-//            targetDistanceKm: 5.0,
-//            targetHRZone: .z2,
-//            notes: "Easy aerobic run"
-//        )
-//    )
-//
-//    return RunningSummaryView(run: sampleRun)
-//        .background(Color("black-500"))
-//}
