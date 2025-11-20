@@ -29,4 +29,28 @@ enum OnboardingStore {
     static func clear() {
         UserDefaults.standard.removeObject(forKey: key)
     }
+    
+    static func mock() -> OnboardingData {
+        OnboardingData(
+            goal: .improveEndurance,
+            personalInfo: PersonalInfo(
+                age: 25,
+                gender: "Male",
+                weightKg: 70.0,
+                heightCm: 175.0
+            ),
+            trainingPrefs: TrainingPrefs(
+                daysPerWeek: 3,
+                selectedDays: [6, 7, 1] // Jumat, sabtu, minggu
+            ),
+            personalBest: PersonalBest(
+                distanceKm: 5.0,
+                durationSeconds: 30 * 60 // 30 minutes
+            ),
+            recommendedPlan: .endurance,
+            selectedPlan: .endurance,
+            startDate: Date()
+        )
+    }
+
 }
