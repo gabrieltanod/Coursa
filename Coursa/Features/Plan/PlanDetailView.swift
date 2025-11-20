@@ -13,12 +13,12 @@ struct PlanDetailView: View {
     @State private var isRunning = false
     @State private var didComplete = false
     @State private var showingInfoSheet = false
-
+    
     enum CountdownStep: Hashable {
         case idle
         case number(Int)
         case start
-
+        
         var stateType: String {
             switch self {
             case .idle:
@@ -31,14 +31,20 @@ struct PlanDetailView: View {
             }
         }
     }
-
+    
     @State private var isCountingDown = false
     @State private var countdownStep: CountdownStep = .idle
-
+    
+    // Inside PlanDetailView struct
+    @State private var showDuringRunView = false // <--- ADD THIS
+    
+    @StateObject private var syncService = SyncService()
+    @State private var plan: RunningPlan?
+    
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Color("black-500").ignoresSafeArea()
-
+            
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     GeometryReader { geo in
@@ -58,19 +64,19 @@ struct PlanDetailView: View {
                                         )
                                     }
                                 )
-
+                            
                             VStack(alignment: .center) {
                                 Text(formattedDate)
                                     .font(.custom("Helvetica Neue", size: 14))
                                     .foregroundColor(.white.opacity(0.9))
                                     .padding(.bottom, 11)
-
+                                
                                 Text(run.title)
                                     .font(.custom("Helvetica Neue", size: 34))
                                     .bold()
                                     .foregroundColor(.white)
                                     .padding(.bottom, 17)
-
+                                
                                 metricsRow
                             }
                             .frame(maxWidth: .infinity)
@@ -78,7 +84,7 @@ struct PlanDetailView: View {
                         }
                     }
                     .frame(height: UIScreen.main.bounds.height * 0.5)
-
+                    
                     // Body content
                     VStack(alignment: .leading, spacing: 24) {
                         HStack(spacing: 8) {
@@ -87,12 +93,12 @@ struct PlanDetailView: View {
                                     Text("Keep conversational")
                                         .font(.custom("Helvetica Neue", size: 14))
                                         .foregroundColor(.white)
-
+                                    
                                     HStack(alignment: .center, spacing: 5) {
                                         Text("pace for")
                                             .font(.custom("Helvetica Neue", size: 14))
                                             .foregroundColor(.white)
-
+                                        
                                         Button {
                                             showingInfoSheet.toggle()
                                         } label: {
@@ -103,33 +109,33 @@ struct PlanDetailView: View {
                                     }
                                 }
                                 Spacer()
-
+                                
                                 Text(conversationalPaceMinutesText)
                                     .font(.custom("Helvetica Neue", size: 28))
                                     .foregroundColor(Color("green-500"))
                                     .bold()
                             }
-
+                            
                             SmallCard {
                                 Text("Recommended Pace")
                                     .lineLimit(2, reservesSpace: true)
                                     .font(.custom("Helvetica Neue", size: 16))
                                     .foregroundColor(.white)
-
+                                
                                 Spacer()
-
+                                
                                 Text("7:30/km")
                                     .font(.custom("Helvetica Neue", size: 28))
                                     .foregroundColor(Color("green-500"))
                                     .bold()
                             }
                         }
-
+                        
                         VStack (alignment: .leading, spacing: 8){
                             Text("Description")
                                 .font(.custom("Helvetica Neue", size: 20))
                                 .foregroundColor(.white)
-
+                            
                             Text(descriptionText)
                                 .font(.custom("Helvetica Neue", size: 15))
                                 .foregroundColor(.white)
@@ -140,10 +146,21 @@ struct PlanDetailView: View {
                 }
                 .padding(.bottom, 142)
             }
-
+            
             VStack {
                 Button {
+                    // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
+                    syncService.summary = nil
+                    
                     startCountdownSequence()
+                    
+                    if let plan = plan {
+                        print("🚀 Starting run: \(plan.name)")
+                        syncService.sendPlanToWatchOS(plan: plan)
+                        syncService.sendStartWorkoutCommand(planID: plan.id)
+                    } else {
+                        print("❌ No plan available to start.")
+                    }
                 } label: {
                     Text("Let's Go")
                         .font(.custom("Helvetica Neue", size: 17))
@@ -159,17 +176,17 @@ struct PlanDetailView: View {
                 .background(Color("black-500"))
             }
             .frame(maxWidth: .infinity)
-
+            
             if isCountingDown {
                 Color("black-500")
                     .ignoresSafeArea()
-
+                
                 Group {
                     switch countdownStep {
-
+                        
                     case .idle:
                         EmptyView()
-
+                        
                     case .number(let num):
                         VStack (spacing: 32){
                             Text("\(num)")
@@ -178,13 +195,13 @@ struct PlanDetailView: View {
                                 .foregroundColor(Color("orange-500"))
                                 .transition(.opacity.combined(with: .scale))
                                 .id(num)
-
+                            
                             Text("Be Ready!")
                                 .font(.custom("Helvetica Neue", size: 30))
                                 .bold()
                                 .foregroundColor(Color("orange-500"))
                         }
-
+                        
                     case .start:
                         Text("START!")
                             .font(.custom("Helvetica Neue", size: 64))
@@ -203,8 +220,31 @@ struct PlanDetailView: View {
             RunningNotesModalView()
                 .presentationDetents([.fraction(0.35)])
         }
+        .fullScreenCover(isPresented: $showDuringRunView) {
+            DuringRunView(syncService: syncService, plan: plan)
+        }
+        .onChange(of: syncService.summary) { oldValue, newValue in
+            if newValue != nil {
+                print("iOS: 🏁 Summary received! Closing 'During Run' screen...")
+                showDuringRunView = false
+            }
+        }
+        .onAppear {
+            syncService.connect()
+            
+            self.plan = RunningPlan(
+                id: run.id,
+                date: run.date,
+                name: run.title,
+                kind: run.template.kind,
+                targetDuration: run.template.targetDurationSec,
+                targetDistance: run.template.targetDistanceKm,
+                targetHRZone: run.template.targetHRZone,
+                recPace: nil
+            )
+        }
     }
-
+    
     // Metrics row under title
     private var metricsRow: some View {
         HStack(spacing: 20) {
@@ -219,7 +259,7 @@ struct PlanDetailView: View {
             if let z = run.template.targetHRZone {
                 Label {
                     Text("Heart Rate Zone \(z.rawValue)")
-
+                    
                 } icon: {
                     Image(systemName: "heart.fill")
                 }
@@ -230,13 +270,13 @@ struct PlanDetailView: View {
         .labelStyle(.titleAndIcon)
         .frame(maxWidth: .infinity, alignment: .center)
     }
-
+    
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "E, MMM d"
         return formatter.string(from: run.date)
     }
-
+    
     private var descriptionText: String {
         if let notes = run.template.notes, !notes.isEmpty {
             return notes
@@ -245,7 +285,7 @@ struct PlanDetailView: View {
             "This session is designed to support your endurance with controlled effort and clear structure. Run at a comfortable pace, stay relaxed, and focus on finishing strong."
         }
     }
-
+    
     // Color tint for header image based on run kind
     private var overlayColor: Color {
         switch run.template.kind {
@@ -263,12 +303,12 @@ struct PlanDetailView: View {
             return Color("easy")
         }
     }
-
+    
     private static func mmText(_ seconds: Int) -> String {
         let m = seconds / 60
         return "\(m) min"
     }
-
+    
     private var conversationalPaceMinutesText: String {
         if let dur = run.template.targetDurationSec {
             let m = dur / 60
@@ -277,7 +317,7 @@ struct PlanDetailView: View {
             return "-- min"
         }
     }
-
+    
     func startCountdownSequence() {
         // Do countdown on a Task to allow async sleeps without blocking UI
         Task {
@@ -286,32 +326,31 @@ struct PlanDetailView: View {
                 isCountingDown = true
                 countdownStep = .idle
             }
-
+            
             // 3
             await MainActor.run { withAnimation { countdownStep = .number(3) } }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-
+            
             // 2
             await MainActor.run { withAnimation { countdownStep = .number(2) } }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-
+            
             // 1
             await MainActor.run { withAnimation { countdownStep = .number(1) } }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-
+            
             // START!
             await MainActor.run { withAnimation { countdownStep = .start } }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-
+            
             // finish countdown and start run
             await MainActor.run {
                 isCountingDown = false
                 countdownStep = .idle
                 isRunning = true
             }
-
-            // Optionally: navigate to your running screen or do other actions here.
-            // e.g. present workout view, start HK workout, or navigate via NavigationPath
+            
+            showDuringRunView = true
         }
     }
 }
@@ -340,3 +379,4 @@ struct PlanDetailView: View {
             .preferredColorScheme(.dark)
     }
 }
+

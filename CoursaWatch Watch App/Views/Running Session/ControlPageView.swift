@@ -78,21 +78,19 @@ struct ControlPageView: View {
     }
     
     func endSessionAndSaveData() {
-        let summary = workoutManager.stopWorkoutAndReturnSummary()
-        
-        if let finalData = summary {
-            // Send summary to iOS
-            workoutManager.sendSummaryToiOS(finalData)
+            let summary = workoutManager.stopWorkoutAndReturnSummary()
             
-            if finalData.totalTime < 10 {
-                appState = .planning
+            if let finalData = summary {
+                
+                if finalData.totalTime < 10 {
+                    appState = .planning
+                } else {
+                    finalSummaryData = finalData
+                    appState = .summary
+                }
             } else {
-                finalSummaryData = finalData
-                appState = .summary
+                appState = .planning
             }
-        } else {
-            appState = .planning
         }
-    }
     
 }

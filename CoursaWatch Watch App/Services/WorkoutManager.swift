@@ -13,14 +13,15 @@ import SwiftUI
 import WatchKit
 
 class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    
+    static let shared = WorkoutManager()  // ✅ singleton
+    
     // Healthkit Property
     let healthStore = HKHealthStore()
     var workoutSession: HKWorkoutSession?
     var workoutBuilder: HKLiveWorkoutBuilder?
     @Published var currentRunId: String?  // scheduledRun ID
     
-    // Core Location Property [Deprecated]
-    let locationManager = CLLocationManager()
     
     // Real-time Data
     @Published var heartRate: Double = 0
@@ -39,11 +40,20 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         1: 0, 2: 0, 3: 0, 4: 0, 5: 0
     ]
     private var lastSampleDate: Date?
-    private var isWorkoutActive = false
+    //    private var isWorkoutActive = false
     
     @Published var currentZone: Int = 1
     private let userMaxHeartRate: Double = 180.0  // still static data
     private var hapticTimer: Timer?
+    
+    // MARK: - Plan tracking
+    @Published var isCountingDown = false
+    @Published var countdownValue = 3
+    @Published var isRunning = false
+    @Published var currentPlan: RunningPlan?
+    private var countdownTimer: Timer?
+    
+    @Published var showingSummary: Bool = false
     
     // SyncService - can be injected from environment or will use own instance
     @Published var syncService: SyncService?
@@ -82,15 +92,20 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 print("Izin HealthKit ditolak.")
             }
         }
-        
-        // Core Location Permission [Deprecated]
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.delegate = self
     }
     
     // MARK: Start Running Session
     func startWorkout() {
-        isWorkoutActive = true
+        
+        print("Watch: 🏃‍♂️ STARTING WORKOUT SESSION")
+        
+        if self.currentRunId == nil {
+            self.currentRunId = UUID().uuidString
+        }
+        
+        self.isRunning = true
+        //        isWorkoutActive = true
+        
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .running
         configuration.locationType = .outdoor
@@ -121,9 +136,6 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
             
-            // [Deprecated]
-            locationManager.startUpdatingLocation()
-            
             DispatchQueue.main.async {
                 self.workoutIsActive = true
             }
@@ -132,12 +144,20 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             print("Gagal memulai sesi workout: \(error.localizedDescription)")
         }
     }
-    
-    // MARK: Stop Running Session
+
     func stopWorkoutAndReturnSummary() -> RunningSummary? {
-        isWorkoutActive = false
+        
         workoutSession?.end()
-        locationManager.stopUpdatingLocation()
+        
+        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
+                self.workoutBuilder?.finishWorkout { (workout, error) in
+                    if success {
+                        print("Watch: ✅ Workout saved to HealthKit successfully.")
+                    } else {
+                        print("Watch: ❌ Failed to save workout: \(String(describing: error))")
+                    }
+                }
+            }
         
         hapticTimer?.invalidate()
         hapticTimer = nil
@@ -151,17 +171,11 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
         
         guard totalTime > 0 else {
-            self.workoutIsActive = false
+            print("[WorkoutManager] ⚠️ Total time is 0")
             return nil
         }
         
-        guard let runId = currentRunId else {
-            print(
-                "[WorkoutManager] ⚠️ currentRunId is nil when finishing workout"
-            )
-            self.workoutIsActive = false
-            return nil
-        }
+        let runId = currentRunId ?? UUID().uuidString
         
         let summary = RunningSummary(
             id: runId,  // ⭐ IMPORTANT
@@ -172,49 +186,74 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             zoneDuration: zoneDurationTracker
         )
         
+        print("Watch: 📤 Sending summary to iOS...")
         sendSummaryToiOS(summary)
         
-        self.workoutIsActive = false
-        self.heartRate = 0
-        self.distance = 0
-        self.pace = 0
-        workoutIsActive = false
+        DispatchQueue.main.async {
+            self.finalSummary = summary
+            self.showingSummary = true
+            self.isRunning = false
+            self.isCountingDown = false
+        }
         
-        // [Deprecated]
-        self.elevation = 0
+        self.resetWorkoutData()
         
         return summary
     }
     
-    func sendSummaryToiOS(_ summary: RunningSummary) {
-        let service = getSyncService()
+    func endWorkout() {
+        print("Watch: WorkoutManager stopping session...")
+        let _ = stopWorkoutAndReturnSummary()
+    }
+    
+    private func resetWorkoutData() {
         DispatchQueue.main.async {
-            service.sendSummaryToiOS(summary: summary)
+            self.heartRate = 0
+            self.distance = 0
+            self.pace = 0
+            self.currentRunId = nil
+            self.workoutStartDate = nil
         }
     }
     
-    // MARK: Delegate Core Location [DEPRECATED]
-    func locationManager(
-        _ manager: CLLocationManager,
-        didUpdateLocations locations: [CLLocation]
-    ) {
-        guard let latestLocation = locations.last else { return }
+    // MARK: - Receive start command from iOS
+    func receiveStartCommand(planID: String) {
+        print("Watch: ⌚️ Received Start Command for ID: \(planID)")
         
-        let currentAltitude = latestLocation.altitude
+        self.currentRunId = planID
         
-        if self.lastAltitude > 0 {
-            let altitudeChange = currentAltitude - self.lastAltitude
-            if altitudeChange > 0 {
-                DispatchQueue.main.async {
-                    self.elevationGain += altitudeChange
-                }
+        // Run on Main Actor to update UI
+        DispatchQueue.main.async {
+            self.startCountdown()
+        }
+    }
+    
+    func startCountdown() {
+        self.isCountingDown = true
+        self.countdownValue = 3
+        
+        countdownTimer?.invalidate()
+        
+        print("Watch: ⏳ Starting Countdown...")
+        
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            if self.countdownValue > 1 {
+                self.countdownValue -= 1
+                // You can play a haptic here if you want
+                WKInterfaceDevice.current().play(.click)
+            } else {
+                // Countdown finished
+                timer.invalidate()
+                self.isCountingDown = false
+                self.startWorkout()
+                WKInterfaceDevice.current().play(.start)
             }
         }
-        
-        self.lastAltitude = currentAltitude
-        
+    }
+    
+    func sendSummaryToiOS(_ summary: RunningSummary) {
         DispatchQueue.main.async {
-            self.elevation = latestLocation.altitude
+            SyncService.shared.sendSummaryToiOS(summary: summary)
         }
     }
     
@@ -261,7 +300,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func playHighZoneHaptic() {
-        guard isWorkoutActive else { return }
+        guard isRunning else { return }
         DispatchQueue.main.async {
             let device = WKInterfaceDevice.current()
             device.play(.notification)
@@ -269,7 +308,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func processHeartRate(_ stats: HKStatistics) {
-        guard isWorkoutActive else { return }
+        guard isRunning else { return }
         guard let quantity = stats.mostRecentQuantity() else { return }
         
         let heartRate = quantity.doubleValue(for: HKUnit(from: "count/min"))
@@ -396,3 +435,4 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
         }
     }
 }
+
