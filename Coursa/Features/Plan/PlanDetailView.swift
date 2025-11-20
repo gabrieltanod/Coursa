@@ -148,32 +148,37 @@ struct PlanDetailView: View {
             }
             
             VStack {
-                Button {
-                    // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
-                    syncService.summary = nil
-                    
-                    startCountdownSequence()
-                    
-                    if let plan = plan {
-                        print("🚀 Starting run: \(plan.name)")
-                        syncService.sendPlanToWatchOS(plan: plan)
-                        syncService.sendStartWorkoutCommand(planID: plan.id)
-                    } else {
-                        print("❌ No plan available to start.")
+                if Date() != plan?.date {
+                    EmptyView()
+                } else {
+                    Button {
+                        // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
+                        syncService.summary = nil
+                        
+                        startCountdownSequence()
+                        
+                        if let plan = plan {
+                            print("🚀 Starting run: \(plan.name)")
+                            syncService.sendPlanToWatchOS(plan: plan)
+                            syncService.sendStartWorkoutCommand(planID: plan.id)
+                        } else {
+                            print("❌ No plan available to start.")
+                        }
+                    } label: {
+                        Text("Let's Go")
+                            .font(.custom("Helvetica Neue", size: 17))
+                            .foregroundColor(Color.black)
+                            .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
                     }
-                } label: {
-                    Text("Let's Go")
-                        .font(.custom("Helvetica Neue", size: 17))
-                        .foregroundColor(Color.black)
-                        .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
+                    .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
+                    .background(Color.white)
+                    .cornerRadius(20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 40)
+                    .padding(.horizontal)
+                    .background(Color("black-500"))
                 }
-                .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
-                .background(Color.white)
-                .cornerRadius(20)
-                .padding(.top, 10)
-                .padding(.bottom, 40)
-                .padding(.horizontal)
-                .background(Color("black-500"))
+                
             }
             .frame(maxWidth: .infinity)
             
