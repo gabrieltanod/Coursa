@@ -9,8 +9,8 @@ import SwiftUI
 
 struct AppRootView: View {
     @EnvironmentObject private var router: AppRouter
+    @EnvironmentObject private var planSession: PlanSessionStore
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
-    @StateObject private var planSession = PlanSessionStore()
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     
     @State private var showSplash = true
@@ -59,7 +59,6 @@ struct AppRootView: View {
                     }
                 }
             }
-            .environmentObject(planSession)
             .onAppear {
                 // If we have onboarding data saved, skip onboarding on fresh launch
                 if !router.didOnboard, OnboardingStore.load() != nil {

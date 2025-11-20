@@ -23,9 +23,9 @@ struct ManagePlanView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showSchedulePicker = false
 
-    // Default initializer: uses shared store
-    init(store: PlanStore = UserDefaultsPlanStore.shared) {
-        _vm = StateObject(wrappedValue: ManagePlanViewModel(store: store))
+    // Default initializer: uses shared store and receives PlanSessionStore from environment
+    init(store: PlanStore = UserDefaultsPlanStore.shared, planSession: PlanSessionStore? = nil) {
+        _vm = StateObject(wrappedValue: ManagePlanViewModel(store: store, planSession: planSession))
     }
 
     var body: some View {

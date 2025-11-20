@@ -38,7 +38,7 @@ struct PlanScheduleView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink {
-                        ManagePlanView()
+                        ManagePlanView(planSession: planSession)
                             .environmentObject(planSession)
                     } label: {
                         Image(systemName: "slider.horizontal.3")

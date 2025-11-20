@@ -26,9 +26,11 @@ final class ManagePlanViewModel: ObservableObject {
     @Published var selectedDays: Set<Int>
     
     private let store: PlanStore
+    private weak var planSession: PlanSessionStore?
 
-    init(store: PlanStore) {
+    init(store: PlanStore, planSession: PlanSessionStore? = nil) {
         self.store = store
+        self.planSession = planSession
         guard let loaded = store.load() else {
             fatalError("ManagePlanViewModel: No GeneratedPlan found")
         }
@@ -57,6 +59,9 @@ final class ManagePlanViewModel: ObservableObject {
         )
 
         store.save(updated)
+        
+        // Notify PlanSessionStore to reload so HomeView updates
+        planSession?.reloadFromStore()
 
         #if DEBUG
             print("===== ENGINE DEBUG: After schedule change =====")
