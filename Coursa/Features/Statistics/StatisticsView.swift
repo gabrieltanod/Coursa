@@ -91,9 +91,7 @@ struct StatisticsView: View {
         }
 
         switch focus {
-        case .base:
-            return "Base Builder"
-        case .endurance:
+        case .base, .endurance:
             return "Endurance Plan"
         case .speed:
             return "Speed Plan"

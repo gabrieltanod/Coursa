@@ -94,7 +94,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                #if DEBUG
+//                #if DEBUG
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Debug")
                         .font(.system(size: 13, weight: .semibold))
@@ -118,25 +118,25 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                     
-                    Button {
-                        setupScenario2()
-                    } label: {
-                        HStack {
-                            Image(systemName: "play.circle.fill")
-                                .font(.system(size: 18, weight: .semibold))
-                            Text("Scenario 2")
-                                .font(.system(size: 15, weight: .medium))
-                            Spacer()
-                        }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.white.opacity(0.04))
-                        )
-                    }
-                    .buttonStyle(.plain)
+//                    Button {
+//                        setupScenario2()
+//                    } label: {
+//                        HStack {
+//                            Image(systemName: "play.circle.fill")
+//                                .font(.system(size: 18, weight: .semibold))
+//                            Text("Scenario 2")
+//                                .font(.system(size: 15, weight: .medium))
+//                            Spacer()
+//                        }
+//                        .padding(12)
+//                        .background(
+//                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+//                                .fill(Color.white.opacity(0.04))
+//                        )
+//                    }
+//                    .buttonStyle(.plain)
                 }
-                #endif
+//                #endif
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
@@ -197,7 +197,7 @@ private extension SettingsView {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         
         // 4. Generate a plan with runs for today and next 2 days, plus some history
-        planSession.loadScenario2Data()
+//        planSession.loadScenario2Data()
         
         // 5. Bootstrap the plan session to ensure everything is properly set up
         planSession.bootstrapIfNeeded(using: mockData)
