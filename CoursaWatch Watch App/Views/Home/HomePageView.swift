@@ -93,7 +93,8 @@ struct HomePageView: View {
                 if let summaryData = finalRunningSummary {
                     SummaryPageView(
                         appState: $appState,
-                        viewModel: SummaryPageViewModel(summary: summaryData), workoutManager: workoutManager
+                        viewModel: SummaryPageViewModel(summary: summaryData, currentPlan: workoutManager.currentPlan),
+                        workoutManager: workoutManager
                     )
                 } else {
                     Text("Error: No Summary Data")

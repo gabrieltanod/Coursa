@@ -43,7 +43,12 @@ class WorkoutManager: NSObject, ObservableObject{
     //    private var isWorkoutActive = false
     
     @Published var currentZone: Int = 1
-    private let userMaxHeartRate: Double = 180.0  // still static data
+    
+    private var userMaxHeartRate: Double {
+        // Use maxHR synced from iOS via RunningPlan, or fallback to 180
+        return currentPlan?.userMaxHR ?? 180.0
+    }
+    
     private var hapticTimer: Timer?
     
     // MARK: - Plan tracking
