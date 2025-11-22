@@ -33,7 +33,7 @@ struct RootView: View {
                                 }
                             }
                         ),
-                        viewModel: SummaryPageViewModel(summary: summary),
+                        viewModel: SummaryPageViewModel(summary: summary, currentPlan: workoutManager.currentPlan),
                         workoutManager: workoutManager
                     )
                 } else {

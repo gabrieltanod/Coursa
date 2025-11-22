@@ -2,6 +2,9 @@
 //  HomeView.swift
 //  Coursa
 //
+//  Created by Gabriel Tanod
+//
+// six men
 
 import SwiftUI
 
@@ -140,8 +143,55 @@ struct HomeView: View {
             .onAppear {
                 // Use the plan already loaded into PlanSessionStore
                 if let stored = planSession.generatedPlan {
-                    // Set selectedDate to the first run in the plan so calendar & sessions show immediately
-                    if let firstDate = stored.runs.sorted(by: {
+                    // Always prioritize today's date if we have runs today
+                    let today = Date()
+                    let hasRunToday = stored.runs.contains { run in
+                        calendar.isDate(run.date, inSameDayAs: today)
+                    }
+                    
+                    if hasRunToday {
+                        vm.selectedDate = today
+                        // Find which week contains today and set selectedWeekIndex accordingly
+                        let weeks = calendarWeeks
+                        for (index, week) in weeks.enumerated() {
+                            if week.contains(where: { calendar.isDate($0, inSameDayAs: today) }) {
+                                selectedWeekIndex = index
+                                break
+                            }
+                        }
+                    } else {
+                        // Set selectedDate to the first run in the plan
+                        if let firstDate = stored.runs.sorted(by: {
+                            $0.date < $1.date
+                        }).first?.date {
+                            vm.selectedDate = firstDate
+                            selectedWeekIndex = 0
+                        }
+                    }
+                }
+            }
+            .onChange(of: planSession.generatedPlan) { newPlan in
+                // React to plan changes (like from Scenario 2)
+                guard let plan = newPlan else { return }
+                
+                let today = Date()
+                let hasRunToday = plan.runs.contains { run in
+                    calendar.isDate(run.date, inSameDayAs: today)
+                }
+                
+                if hasRunToday {
+                    vm.selectedDate = today
+                    // Find which week contains today and set selectedWeekIndex accordingly
+                    let weeks = calendarWeeks
+                    for (index, week) in weeks.enumerated() {
+                        if week.contains(where: { calendar.isDate($0, inSameDayAs: today) }) {
+                            selectedWeekIndex = index
+                            break
+                        }
+                    }
+                } else {
+                    // Set selectedDate to the first run in the plan
+                    if let firstDate = plan.runs.sorted(by: {
                         $0.date < $1.date
                     }).first?.date {
                         vm.selectedDate = firstDate
@@ -482,9 +532,7 @@ struct HomeView: View {
         }
         
         switch focus {
-        case .base:
-            return "Base Builder"
-        case .endurance:
+        case .base, .endurance:
             return "Endurance Plan"
         case .speed:
             return "Speed Plan"

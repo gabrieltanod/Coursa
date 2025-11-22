@@ -46,23 +46,73 @@ struct WeeklyProgressCard: View {
     }
 }
 
+enum ComparisonTrend {
+    case better
+    case worse
+    case same
+}
+
 struct MetricDetailCard: View {
     let title: String
     let primaryValue: String  // e.g. "8:25/km"
     let secondaryValue: String  // e.g. "8:45/km"
     let footer: String  // e.g. "Average Pace Last Week and Two Week Ago"
+    let showInfoButton: Bool
+    let onInfoTapped: (() -> Void)?
+    let comparisonTrend: ComparisonTrend?
+    
+    init(
+        title: String,
+        primaryValue: String,
+        secondaryValue: String,
+        footer: String,
+        showInfoButton: Bool = false,
+        onInfoTapped: (() -> Void)? = nil,
+        comparisonTrend: ComparisonTrend? = nil
+    ) {
+        self.title = title
+        self.primaryValue = primaryValue
+        self.secondaryValue = secondaryValue
+        self.footer = footer
+        self.showInfoButton = showInfoButton
+        self.onInfoTapped = onInfoTapped
+        self.comparisonTrend = comparisonTrend
+    }
 
     var body: some View {
         MetricBlob {
             VStack(alignment: .leading, spacing: 10) {
-                Text(title)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Color("white-700"))
-                    .lineLimit(2, reservesSpace: true)
+                HStack {
+                    Text(title)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Color("white-700"))
+                        .lineLimit(2, reservesSpace: true)
+                    
+                    Spacer()
+                    
+                    if showInfoButton {
+                        Button(action: {
+                            onInfoTapped?()
+                        }) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color("white-700"))
+                        }
+                        .padding(.bottom, 22)
+                    }
+                }
 
-                Text(primaryValue)
-                    .font(.system(size: 34, weight: .medium))
-                    .foregroundStyle(Color("white-500"))
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(primaryValue)
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+                    
+                    if let trend = comparisonTrend, trend != .same {
+                        Image(systemName: trend == .better ? "arrow.up" : "arrow.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(trend == .better ? Color("green-500") : Color.red)
+                    }
+                }
             }
         }
         .frame(width: .infinity, height: 172, alignment: .topLeading)
@@ -82,16 +132,20 @@ struct MetricDetailCard: View {
             HStack(spacing: 20) {
                 MetricDetailCard(
                     title: "Average Pace",
-                    primaryValue: "8:25/km",
-                    secondaryValue: "8:45/km",
-                    footer: "Average Pace Last Week and Two Week Ago"
+                    primaryValue: "7:15/km",
+                    secondaryValue: "7:45/km",
+                    footer: "Average Pace Last Week and Two Week Ago",
+                    comparisonTrend: .better  // Improved pace (faster)
                 )
 
                 MetricDetailCard(
                     title: "Aerobic Time",
-                    primaryValue: "1:43:37",
-                    secondaryValue: "1:26:15",
-                    footer: "Your Duration in Zone 2 Last Week and Two Week Ago"
+                    primaryValue: "1:12:30",
+                    secondaryValue: "1:43:37",
+                    footer: "Your Duration in Zone 2 Last Week and Two Week Ago",
+                    showInfoButton: true,
+                    onInfoTapped: { print("Info tapped") },
+                    comparisonTrend: .worse  // Regressed aerobic time (less time)
                 )
             }
         }

@@ -117,11 +117,46 @@ enum TRIMP {
         }
     }
 
-    /// v1 convenience overload: uses a "reasonable" default maxHR and assumes male.
-    /// Later, you should remove this and always pass maxHR/gender from UserProfile.
+    // MARK: - User Profile Helpers
+    
+    /// Calculate maximum heart rate from age using the standard 220 - age formula.
+    /// - Parameter age: User's age in years
+    /// - Returns: Estimated maximum heart rate in bpm
+    static func maxHeartRate(fromAge age: Int) -> Double {
+        guard age > 0 && age < 120 else { return 200 } // fallback for invalid ages
+        return Double(220 - age)
+    }
+    
+    /// Convert gender string from PersonalInfo to TRIMPGender enum.
+    /// - Parameter genderString: Gender string (e.g., "Male", "Female")
+    /// - Returns: TRIMPGender enum value
+    static func gender(from genderString: String) -> TRIMPGender {
+        let normalized = genderString.lowercased().trimmingCharacters(in: .whitespaces)
+        if normalized.contains("female") || normalized.contains("woman") {
+            return .female
+        } else {
+            return .male  // default to male if unclear
+        }
+    }
+    
+    /// Convenience overload that loads user data from OnboardingStore.
+    /// Uses the user's actual age and gender for personalized TRIMP calculations.
+    /// Falls back to defaults (maxHR=200, male) if onboarding data is not available.
     static func totalTRIMPUsingDefaults(for runs: [ScheduledRun]) -> Double {
-        let defaultMaxHR: Double = 200  // temporary until UserProfile is wired
-        let defaultGender: TRIMPGender = .male
-        return totalTRIMP(for: runs, maxHR: defaultMaxHR, gender: defaultGender)
+        // Try to load user's onboarding data
+        if let onboardingData = OnboardingStore.load() {
+            let age = onboardingData.personalInfo.age
+            let genderString = onboardingData.personalInfo.gender
+            
+            let userMaxHR = maxHeartRate(fromAge: age)
+            let userGender = gender(from: genderString)
+            
+            return totalTRIMP(for: runs, maxHR: userMaxHR, gender: userGender)
+        } else {
+            // Fallback to defaults if no onboarding data available
+            let defaultMaxHR: Double = 200
+            let defaultGender: TRIMPGender = .male
+            return totalTRIMP(for: runs, maxHR: defaultMaxHR, gender: defaultGender)
+        }
     }
 }

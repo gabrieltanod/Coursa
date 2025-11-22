@@ -13,7 +13,9 @@ struct OverviewPageView: View {
     
     private var currentZone: Int {
         let hr = workoutManager.heartRate
-        let maxHeartRate: Double = 195.0
+        
+        // Use maxHR from synced plan if available, otherwise fallback
+        let maxHeartRate: Double = workoutManager.currentPlan?.userMaxHR ?? 195.0
         
         guard maxHeartRate.isFinite && maxHeartRate > 0,
               hr.isFinite && hr >= 0 else { return 0 }

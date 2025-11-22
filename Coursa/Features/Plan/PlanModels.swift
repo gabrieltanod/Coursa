@@ -20,7 +20,7 @@ enum Plan: String, CaseIterable, Identifiable, Codable, Hashable {
 }
 
 // Replace DayWorkout + old GeneratedPlan with this:
-struct GeneratedPlan: Codable {
+struct GeneratedPlan: Codable, Equatable, Hashable {
     let plan: Plan
     var runs: [ScheduledRun]
 }
@@ -45,7 +45,7 @@ enum HRZone: Int, Codable, CaseIterable, Identifiable {
 
 // MARK: - Run Templates & Sessions
 
-struct RunTemplate: Codable, Hashable, Identifiable {
+struct RunTemplate: Codable, Hashable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var kind: RunKind
@@ -56,11 +56,11 @@ struct RunTemplate: Codable, Hashable, Identifiable {
     var notes: String?
 }
 
-enum RunStatus: String, Codable {
+enum RunStatus: String, Codable, Equatable, Hashable {
     case planned, inProgress, completed, skipped
 }
 
-struct RunMetrics: Codable, Hashable {
+struct RunMetrics: Codable, Hashable, Equatable {
     var elapsedSec: Int?
     var distanceKm: Double?
     var avgPaceSecPerKm: Int?
@@ -68,7 +68,7 @@ struct RunMetrics: Codable, Hashable {
     var zoneDuration: [Int: Double] = [:]
 }
 
-struct ScheduledRun: Identifiable, Codable {
+struct ScheduledRun: Identifiable, Codable, Equatable, Hashable {
     var id: String = UUID().uuidString
     var date: Date
     var template: RunTemplate
@@ -102,6 +102,7 @@ struct RunningPlan: Identifiable, Codable, Hashable{
     var targetDistance: Double?
     var targetHRZone: HRZone?
     var recPace: String?
+    var userMaxHR: Double?  // Max heart rate calculated from user's age on iOS
 }
 
 extension RunningPlan {

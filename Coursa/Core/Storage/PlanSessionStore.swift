@@ -206,5 +206,149 @@ extension PlanSessionStore {
 
         generatedPlan = plan
     }
+    
+    func loadScenario2Data() {
+        let cal = Calendar.current
+        let now = Date()
+        
+        // Get the start of the current week (Monday)
+        let startOfThisWeek = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        let mondayOfThisWeek = cal.nextDate(
+            after: startOfThisWeek, 
+            matching: DateComponents(weekday: 2), 
+            matchingPolicy: .nextTimePreservingSmallerComponents
+        ) ?? startOfThisWeek
+        
+        func dayOffset(_ days: Int) -> Date {
+            cal.date(byAdding: .day, value: days, to: now) ?? now
+        }
+        
+        func weekOffset(_ weeks: Int, day: Int = 0) -> Date {
+            let weekStart = cal.date(byAdding: .weekOfYear, value: weeks, to: mondayOfThisWeek) ?? mondayOfThisWeek
+            return cal.date(byAdding: .day, value: day, to: weekStart) ?? weekStart
+        }
+        
+        func makeCompletedRun(
+            title: String,
+            date: Date,
+            distanceKm: Double,
+            elapsedSec: Int,
+            zone2Sec: Double
+        ) -> ScheduledRun {
+            var actual = RunMetrics.empty
+            actual.distanceKm = distanceKm
+            actual.elapsedSec = elapsedSec
+            actual.zoneDuration = [2: zone2Sec]
+
+            return ScheduledRun(
+                id: UUID().uuidString,
+                date: date,
+                template: RunTemplate(
+                    name: title,
+                    kind: .easy,
+                    focus: .endurance,
+                    targetDurationSec: elapsedSec,
+                    targetDistanceKm: distanceKm,
+                    targetHRZone: .z2,
+                    notes: nil
+                ),
+                status: .completed,
+                actual: actual
+            )
+        }
+        
+        func makePlannedRun(
+            title: String,
+            date: Date,
+            kind: RunKind = .easy,
+            distanceKm: Double,
+            targetSec: Int
+        ) -> ScheduledRun {
+            return ScheduledRun(
+                id: UUID().uuidString,
+                date: date,
+                template: RunTemplate(
+                    name: title,
+                    kind: kind,
+                    focus: .endurance,
+                    targetDurationSec: targetSec,
+                    targetDistanceKm: distanceKm,
+                    targetHRZone: .z2,
+                    notes: nil  // Remove custom notes to use default description
+                ),
+                status: .planned,
+                actual: RunMetrics.empty
+            )
+        }
+        
+        // Historical runs from previous weeks
+        let historyRun1 = makeCompletedRun(
+            title: "Morning Easy Run",
+            date: weekOffset(-1, day: 1), // Tuesday last week
+            distanceKm: 5.0,
+            elapsedSec: 5 * 60 * 8,   // 8:00/km
+            zone2Sec: 30 * 60         // 30 min
+        )
+        
+        let historyRun2 = makeCompletedRun(
+            title: "Weekend Long Run", 
+            date: weekOffset(-1, day: 5), // Saturday last week
+            distanceKm: 8.0,
+            elapsedSec: 8 * 60 * 9,   // 9:00/km
+            zone2Sec: 50 * 60         // 50 min
+        )
+        
+        let historyRun3 = makeCompletedRun(
+            title: "Tempo Run",
+            date: weekOffset(-2, day: 3), // Thursday two weeks ago
+            distanceKm: 4.0,
+            elapsedSec: 4 * 60 * 7,   // 7:00/km
+            zone2Sec: 20 * 60         // 20 min
+        )
+        
+        // Current week runs: Today and next 2 days
+        let todayRun = makePlannedRun(
+            title: "Today's Easy Run",
+            date: now, // Today
+            kind: .easy,
+            distanceKm: 5.0,
+            targetSec: 5 * 60 * 8    // 8:00/km target
+        )
+        
+        let tomorrowRun = makePlannedRun(
+            title: "Recovery Run",
+            date: dayOffset(1), // Tomorrow
+            kind: .easy,
+            distanceKm: 3.0,
+            targetSec: 3 * 60 * 9    // 9:00/km target
+        )
+        
+        let dayAfterRun = makePlannedRun(
+            title: "Interval Training",
+            date: dayOffset(2), // Day after tomorrow
+            kind: .intervals,
+            distanceKm: 6.0,
+            targetSec: 6 * 60 * 7    // 7:00/km target
+        )
+        
+        // Add a couple more runs in the current week to make it look more realistic
+        let thisWeekRun4 = makePlannedRun(
+            title: "Long Run",
+            date: weekOffset(0, day: 6), // Sunday this week
+            kind: .long,
+            distanceKm: 10.0,
+            targetSec: 10 * 60 * 9   // 9:00/km target
+        )
+        
+        let allRuns = [historyRun1, historyRun2, historyRun3, todayRun, tomorrowRun, dayAfterRun, thisWeekRun4]
+            .sorted { $0.date < $1.date }
+        
+        let plan = GeneratedPlan(
+            plan: .endurance,
+            runs: allRuns
+        )
+        
+        generatedPlan = plan
+    }
 }
 #endif
