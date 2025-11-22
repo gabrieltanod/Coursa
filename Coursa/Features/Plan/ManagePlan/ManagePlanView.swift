@@ -21,7 +21,6 @@ import SwiftUI
 struct ManagePlanView: View {
     @StateObject private var vm: ManagePlanViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var showSchedulePicker = false
 
     // Default initializer: uses shared store and receives PlanSessionStore from environment
     init(store: PlanStore = UserDefaultsPlanStore.shared, planSession: PlanSessionStore? = nil) {
@@ -36,12 +35,29 @@ struct ManagePlanView: View {
 //                header
 
                 VStack(spacing: 16) {
-                    ManageRow(
-                        title: "Schedule",
-                        value: vm.selectedDays.weekdayShortString()
-                    ) {
-                        showSchedulePicker = true
+                    NavigationLink {
+                        ScheduleEditView(selectedDays: $vm.selectedDays)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Schedule")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.6))
+                                Text(vm.selectedDays.weekdayShortString())
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                            }
+                            Spacer()
+                            Image(systemName: "pencil")
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.06))
+                        .cornerRadius(16)
                     }
+                    .buttonStyle(.plain)
 
                     ManageRow(
                         title: "Personal Best",
@@ -70,10 +86,6 @@ struct ManagePlanView: View {
                 .padding(.bottom, 24)
                 .disabled(!vm.hasChanges)
             }
-        }
-        .sheet(isPresented: $showSchedulePicker) {
-            SchedulePickerView(selectedDays: $vm.selectedDays)
-                .preferredColorScheme(.dark)
         }
         .navigationTitle("Manage Plan")
 
@@ -138,56 +150,106 @@ struct ManageRow: View {
     }
 }
 
-// MARK: - Schedule Picker
 
-struct SchedulePickerView: View {
+// MARK: - Schedule Editor
+
+struct ScheduleEditView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedDays: Set<Int>
+    
+    private let weekdays = Calendar.current.weekdaySymbols
+    private let weekdayIndices = Array(1...7)  // Sunday = 1, Monday = 2, etc.
+    
+    func makeColoredCaption() -> AttributedString {
+        var string = AttributedString("Choose the days that work best for you. We recommend 3-4 days of training as the most ideal.")
 
-    private let days: [(label: String, weekday: Int)] = [
-        ("Mon", 2), ("Tue", 3), ("Wed", 4),
-        ("Thu", 5), ("Fri", 6), ("Sat", 7), ("Sun", 1)
-    ]
+        if let range = string.range(of: "3-4 days") {
+            var container = AttributeContainer()
+            container.foregroundColor = Color("green-500")
+            container.font = .custom("Helvetica Neue", size: 17)
+            string[range].setAttributes(container)
+        }
 
+        return string
+    }
+    
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(days, id: \.weekday) { day in
-                    Button {
-                        toggle(day.weekday)
-                    } label: {
-                        HStack {
-                            Text(day.label)
-                            Spacer()
-                            if selectedDays.contains(day.weekday) {
-                                Image(systemName: "checkmark.circle.fill")
+        ZStack {
+            Color("black-500").ignoresSafeArea()
+            
+            VStack {
+                VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        OnboardingHeaderQuestion(
+                            question: "When do you usually run?",
+                            caption: makeColoredCaption()
+                        )
+                    }
+                    .padding(.bottom, 20)
+                    
+                    LazyVStack(spacing: 12) {
+                        ForEach(Array(weekdayIndices.enumerated()), id: \.offset) {
+                            index,
+                            weekdayIndex in
+                            Button(action: {
+                                if selectedDays.contains(weekdayIndex) {
+                                    selectedDays.remove(weekdayIndex)
+                                } else {
+                                    selectedDays.insert(weekdayIndex)
+                                }
+                            }) {
+                                HStack {
+                                    Text(weekdays[index])
+                                        .font(.body)
+                                        .font(.custom("Helvetica Neue", size: 17))
+                                        .foregroundColor(
+                                            (selectedDays.count >= 4 && !selectedDays.contains(weekdayIndex))
+                                                ? Color("black-400")
+                                                : Color("white-500")
+                                        )
+
+                                    Spacer()
+                                    ZStack {
+                                        // Fill respects the rounded shape; avoids overflow beyond border
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .fill(selectedDays.contains(weekdayIndex) ? Color("white-500") : Color.clear)
+
+                                        // Border drawn above the fill
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .stroke(selectedDays.count >= 4 ? Color("grey-70") : Color("grey-10") , lineWidth: 1)
+
+                                        if selectedDays.contains(weekdayIndex) {
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(Color("black-500"))
+                                                .fontWeight(.semibold)
+                                        }
+                                    }
+                                    .frame(width: 20, height: 20)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                                .background(Color("black-450"))
+                                .cornerRadius(20)
                             }
+                            .contentShape(Rectangle())
+                            .disabled(selectedDays.count >= 4 && !selectedDays.contains(weekdayIndex))
                         }
                     }
-                    .foregroundColor(.white)
-                    .listRowBackground(Color.black)
                 }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Color("black-500"))
-            .navigationTitle("Schedule")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
+                Spacer()
 
-    private func toggle(_ weekday: Int) {
-        if selectedDays.contains(weekday) {
-            selectedDays.remove(weekday)
-        } else {
-            selectedDays.insert(weekday)
+                Button("Done") {
+                    if selectedDays.count >= 3 {
+                        dismiss()
+                    }
+                }
+                .buttonStyle(CustomButtonStyle(isDisabled: selectedDays.count < 3))
+                .disabled(selectedDays.count < 3)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

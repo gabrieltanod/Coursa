@@ -45,7 +45,7 @@ struct PersonalInfoStepView: View {
                 OnboardingHeaderQuestion(
                     question: "Tell us about yourself",
                     caption:
-                        "Your running plan should fit your unique needs. Help us refine it by sharing a bit of your personal data."
+                        "Help us create the plan that is perfectly tailored for you. Fill out a few data and we’ll do the rest."
                 )
                 .padding(.bottom, 40)
 
