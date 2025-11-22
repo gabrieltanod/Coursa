@@ -21,9 +21,9 @@ struct RunningHistoryCard: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color("black-450"))
+                .fill(Color.clear)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20)
                         .inset(by: 0.5)
                         .stroke(
                             Color(red: 0.3, green: 0.29, blue: 0.3),
@@ -95,7 +95,7 @@ struct RunningHistoryCard: View {
 
     private var formattedDistanceText: String? {
         guard let distance = run.template.targetDistanceKm,
-              distance > 0
+            distance > 0
         else { return nil }
 
         let number = NSNumber(value: distance)
@@ -104,14 +104,17 @@ struct RunningHistoryCard: View {
         formatter.maximumFractionDigits = 2
         formatter.locale = .current
 
-        let value = formatter.string(from: number)
+        let value =
+            formatter.string(from: number)
             ?? String(format: "%.2f", distance)
 
         return "\(value) km"
     }
 
     private var formattedDurationText: String? {
-        guard let durationSec = run.template.targetDurationSec else { return nil }
+        guard let durationSec = run.template.targetDurationSec else {
+            return nil
+        }
         let minutes = Int(durationSec / 60)
         guard minutes > 0 else { return nil }
         return "\(minutes) min"
@@ -131,13 +134,13 @@ private struct RunHistoryIndicator: View {
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(
                     isSkipped
                         ? Color.white.opacity(0.7)
-                    : Color.white
+                        : Color.white
                 )
         }
         .frame(width: 44, height: 24, alignment: .trailing)
