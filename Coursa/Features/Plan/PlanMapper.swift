@@ -65,9 +65,13 @@ enum PlanMapper {
         // 2) Keep plan or swap if changed
         let plan = newPlan ?? existing.plan
         
-        // 3) Determine remaining horizon: stop at 16 weeks from first week start
+        // 3) Determine remaining horizon: preserve original plan length
         let planStart = (existing.runs.first?.date ?? todayStart).mondayFloor()
-        let endLimit  = planStart.addingWeeks(16)  // hard stop after 16 weeks
+        let planEnd = (existing.runs.last?.date ?? todayStart).mondayFloor()
+        
+        // Calculate original plan duration in weeks
+        let originalWeeks = cal.dateComponents([.weekOfYear], from: planStart, to: planEnd).weekOfYear ?? 8
+        let endLimit = planStart.addingWeeks(max(originalWeeks, 8))  // preserve original length, min 8 weeks
         
         // 4) Frequency from selected days
         let frequency = max(newSelectedDays.count, 1)
