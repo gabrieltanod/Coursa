@@ -57,20 +57,13 @@ struct WeeklyPlanOverviewCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                stops: [
-                    Gradient.Stop(
-                        color: Color(red: 0.11, green: 0.11, blue: 0.11),
-                        location: 0.00
-                    ),
-                    Gradient.Stop(color: .black, location: 1.00),
-                ],
-                startPoint: UnitPoint(x: 0.76, y: 0),
-                endPoint: UnitPoint(x: 0.24, y: 1)
-            )
-        )
+        .background(Color("black-475"))
         .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .inset(by: 0.5)
+                .stroke(Color(red: 0.25, green: 0.25, blue: 0.25), lineWidth: 1)
+        )
     }
 
     // MARK: - Helpers
