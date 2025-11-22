@@ -10,6 +10,7 @@ import SwiftUI
 struct StatisticsView: View {
 
     @EnvironmentObject private var planSession: PlanSessionStore
+    @State private var showAerobicInfo = false
 
     var body: some View {
         ZStack {
@@ -148,20 +149,56 @@ struct StatisticsView: View {
             print("=========================")
         #endif
 
+        // Calculate trends
+        // For pace: lower is better (faster)
+        let paceTrend: ComparisonTrend? = {
+            if thisWeekPaceSec <= 0 || lastWeekPaceSec <= 0 {
+                return nil
+            }
+            if thisWeekPaceSec < lastWeekPaceSec {
+                return .better
+            } else if thisWeekPaceSec > lastWeekPaceSec {
+                return .worse
+            } else {
+                return .same
+            }
+        }()
+        
+        // For aerobic time: higher is better (more time in zone 2)
+        let aerobicTrend: ComparisonTrend? = {
+            if thisWeekZone2Seconds == 0 && lastWeekZone2Seconds == 0 {
+                return nil
+            }
+            if thisWeekZone2Seconds > lastWeekZone2Seconds {
+                return .better
+            } else if thisWeekZone2Seconds < lastWeekZone2Seconds {
+                return .worse
+            } else {
+                return .same
+            }
+        }()
+
         return HStack(spacing: 12) {
             MetricDetailCard(
                 title: "Average Pace",
                 primaryValue: thisWeekPaceText,
                 secondaryValue: lastWeekPaceText,
-                footer: "Average Pace Last Week and Two Week Ago"
+                footer: "Average Pace Last Week and Two Week Ago",
+                comparisonTrend: paceTrend
             )
 
             MetricDetailCard(
                 title: "Aerobic Time",
                 primaryValue: thisWeekAerobicText,
                 secondaryValue: lastWeekAerobicText,
-                footer: "Your time in Zone 2 this week vs last week"
+                footer: "Your time in Zone 2 this week vs last week",
+                showInfoButton: true,
+                onInfoTapped: { showAerobicInfo = true },
+                comparisonTrend: aerobicTrend
             )
+        }
+        .sheet(isPresented: $showAerobicInfo) {
+            aerobicInfoSheet
         }
     }
 
@@ -290,6 +327,56 @@ struct StatisticsView: View {
 
         guard !paceValues.isEmpty else { return 0 }
         return paceValues.reduce(0, +) / Double(paceValues.count)
+    }
+    
+    private var aerobicInfoSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color("black-500")
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("About Aerobic Training")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(Color("white-500"))
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("What is Zone 2?")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(Color("white-500"))
+                            
+                            Text("This is the amount of time you spent in your aerobic zone (or Zone 2). During this time, your effort level is moderate, you can still speak in full sentences but you're working hard enough to feel a benefit.")
+                                .font(.system(size: 16))
+                                .foregroundStyle(Color("white-700"))
+                                .lineSpacing(4)
+                            
+                            Text("Benefits")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(Color("white-500"))
+                                .padding(.top, 8)
+                            
+                            Text("Training here is the single best way to increase your stamina, boost your energy efficiency, and protect against injury.")
+                                .font(.system(size: 16))
+                                .foregroundStyle(Color("white-700"))
+                                .lineSpacing(4)
+                        }
+                    }
+                    .padding(24)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        showAerobicInfo = false
+                    }
+                    .foregroundStyle(Color("green-500"))
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private func formatPace(_ secondsPerKm: Double) -> String {
