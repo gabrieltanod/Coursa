@@ -649,6 +649,9 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
+        // Decode optional userMaxHR
+        let userMaxHR = dictionary["userMaxHR"] as? Double
+        
         let decodedPlan = RunningPlan(
             id: id.uuidString,
             date: date,
@@ -657,7 +660,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             targetDuration: targetDuration,
             targetDistance: targetDistance,
             targetHRZone: targetHRZone,
-            recPace: recPace
+            recPace: recPace,
+            userMaxHR: userMaxHR
         )
         
         DispatchQueue.main.async {

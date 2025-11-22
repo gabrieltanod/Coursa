@@ -10,7 +10,15 @@ import SwiftUI
 struct GoalCard: View {
     let run: ScheduledRun
     
-    private let maxHeartRate: Double = 190.0
+    
+    private var maxHeartRate: Double {
+        // Load user's age from OnboardingStore and calculate their maxHR
+        if let onboardingData = OnboardingStore.load() {
+            return TRIMP.maxHeartRate(fromAge: onboardingData.personalInfo.age)
+        } else {
+            return 190.0  // fallback if no onboarding data
+        }
+    }
     
     private var calculatedZone: Int {
         let percentage: Double = (Double(run.actual.avgHR ?? 0) / maxHeartRate) * 100

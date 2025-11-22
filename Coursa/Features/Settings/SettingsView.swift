@@ -17,7 +17,7 @@ struct SettingsView: View {
     @AppStorage("selectedTab") private var selectedTab: Int = 2 // Default to Settings tab
     
     // Local sheets for actions
-    private enum ActiveSheet: Identifiable { case watch, privacy
+    private enum ActiveSheet: Identifiable { case privacy
         var id: String { String(self.hashValue) }
     }
     @State private var activeSheet: ActiveSheet?
@@ -63,16 +63,6 @@ struct SettingsView: View {
                     .padding(.top, 8)
 
                 VStack(spacing: 16) {
-                    SettingsCard(
-                        icon: Image(systemName: "applewatch"),
-                        iconBackground: Color.white.opacity(0.12),
-                        title: "Connect Apple Watch",
-                        subtitle: "Apple Watch can upload directly to Coursa."
-                    ) {
-                        // Activate/connect WCSession and show status sheet
-                        activeSheet = .watch
-                    }
-
                     SettingsCard(
                         icon: Image(systemName: "heart.fill"),
                         iconBackground: Color.white.opacity(0.12),
@@ -144,11 +134,6 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
-            case .watch:
-                // Simple connectivity status and tools
-                ConnectAppleWatch()
-                    .environmentObject(syncService)
-                    .environmentObject(planManager)
             case .privacy:
                 PrivacyNotesView()
                     .presentationDetents([.medium, .large])

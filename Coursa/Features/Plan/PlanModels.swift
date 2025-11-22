@@ -102,6 +102,7 @@ struct RunningPlan: Identifiable, Codable, Hashable{
     var targetDistance: Double?
     var targetHRZone: HRZone?
     var recPace: String?
+    var userMaxHR: Double?  // Max heart rate calculated from user's age on iOS
 }
 
 extension RunningPlan {
