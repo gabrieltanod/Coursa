@@ -63,16 +63,11 @@ struct HomeView: View {
                                     )
 
                                     Button(action: {
-                                        // Open review sheet instead of adjusting immediately
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                         showReviewSheet = true
                                     }) {
                                         Text("Review Now")
-                                            .font(
-                                                .system(
-                                                    size: 15,
-                                                    weight: .medium
-                                                )
-                                            )
+                                            .font(.system(size: 15, weight: .medium))
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 12)
                                             .padding(.horizontal, 16)
@@ -241,33 +236,38 @@ struct HomeView: View {
                         )
                     }
 
-                ReviewPlanSheet(
-                    onDismiss: {
-                        showReviewSheet = false
-                    },
-                    onAdjust: {
-                        // TEMP: reuse debug adapt for now
-                        if let onboarding = OnboardingStore.load() {
-                            let debugVM = PlanViewModel(data: onboarding)
-                            debugVM.debugCompleteThisWeekAndAdapt()
-                        }
+                NavigationStack {
+                    ReviewPlanSheet(
+                        onDismiss: {
+                            showReviewSheet = false
+                        },
+                        onAdjust: {
+                            // TEMP: reuse debug adapt for now
+                            if let onboarding = OnboardingStore.load() {
+                                let debugVM = PlanViewModel(data: onboarding)
+                                debugVM.debugCompleteThisWeekAndAdapt()
+                            }
 
-                        // Reload shared plan so Home/Plan stay in sync
-                        planSession.generatedPlan = UserDefaultsPlanStore.shared
-                            .load()
+                            // Reload shared plan so Home/Plan stay in sync
+                            planSession.generatedPlan = UserDefaultsPlanStore.shared
+                                .load()
 
-                        // Hide the card after confirming
-                        showAdjustCard = false
-                        showReviewSheet = false
-                    },
-                    onKeepCurrent: {
-                        // Keep existing plan, just hide the card
-                        showAdjustCard = false
-                        showReviewSheet = false
-                    },
-                    rows: reviewRows
-                )
-                .preferredColorScheme(.dark)
+                            // Hide the card after confirming
+                            showAdjustCard = false
+                            showReviewSheet = false
+                        },
+                        onKeepCurrent: {
+                            // Keep existing plan, just hide the card
+                            showAdjustCard = false
+                            showReviewSheet = false
+                        },
+                        rows: reviewRows
+                    )
+                    .navigationTitle("Review Plan")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .preferredColorScheme(.dark)
+                }
+                .presentationDragIndicator(.visible)
             }
         }
     }

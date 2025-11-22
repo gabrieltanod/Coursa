@@ -14,7 +14,7 @@ struct SettingsView: View {
     // WatchConnectivity + Plan manager from environment
     @EnvironmentObject private var syncService: SyncService
     @EnvironmentObject private var planManager: PlanManager
-    @AppStorage("selectedTab") private var selectedTab: Int = 2 // Default to Settings tab
+    @AppStorage("selectedTab") private var selectedTab: Int = 0
     
     // Local sheets for actions
     private enum ActiveSheet: Identifiable { case privacy

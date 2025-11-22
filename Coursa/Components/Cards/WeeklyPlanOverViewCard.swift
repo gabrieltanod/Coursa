@@ -51,7 +51,7 @@ struct WeeklyPlanOverviewCard: View {
                         .font(.system(size: 17, weight: .semibold))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(SecondaryButtonStyle())
+                .buttonStyle(PrimaryButtonStyle())
                 .padding(.top, 8)
             }
         }

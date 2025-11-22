@@ -39,130 +39,138 @@ struct ReviewPlanSheet: View {
     }
     
     var body: some View {
-        VStack(alignment: .center, spacing: 24) {
-            // Header row with title and X
-            VStack(spacing: 8) {
-                Text("Review Plan")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.white)
-                
-                Text("Recommended Weekly Distance")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.white)
-                
-                HStack(spacing: 8) {
-                    Text("13KM")
-                        .font(.system(size: 64, weight: .medium))
-                        .foregroundColor(.white)
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.red)
-                }
-            }
-            
-            // Highlight block
-            VStack(alignment: .leading, spacing: 6) {
-                Text(makeHighlightCaption())
-                    .font(.system(size: 14))
-                    .foregroundColor(.white)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.08))
-            .cornerRadius(18)
-            
-            // This Week Performance
-            VStack(alignment: .leading, spacing: 12) {
-                Text("This Week Performance")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white)
-                
-                HStack(alignment: .top) {
-                    // Sessions column
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Sessions")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("white-200"))
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .center, spacing: 24) {
+                    // Header row with title and X
+                    VStack(spacing: 8) {
+                        Text("Recommended Weekly Distance")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white)
                         
-                        ForEach(rows) { row in
-                            Text(row.session)
-                                .font(.system(size: 16))
+                        HStack(spacing: 8) {
+                            Text("13KM")
+                                .font(.system(size: 64, weight: .medium))
                                 .foregroundColor(.white)
+                            Image(systemName: "arrow.down")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.red)
+                        }
+                    }
+                    
+                    // Highlight block
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(makeHighlightCaption())
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(18)
+                    
+                    // This Week Performance
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("This Week Performance")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.white)
+                        
+                        // Header row
+                        HStack(spacing: 0) {
+                            Text("Sessions")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color("black-200"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .fixedSize(horizontal: false, vertical: true)
+                            
+                            Text("Distance (km)")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color("black-200"))
+                                .frame(width: 90, alignment: .center)
+                            
+                            Text("Heart Rate (bpm)")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color("black-200"))
+                                .frame(width: 100, alignment: .center)
+                            
+                            Text("Status")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color("black-200"))
+                                .frame(width: 50, alignment: .center)
                         }
-                    }
-                    
-                    // Distance column
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Distance (km)")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("white-200"))
                         
+                        // Data rows
                         ForEach(rows) { row in
-                            Text(row.distanceText)
-                                .font(.system(size: 16))
-                                .foregroundColor(.white)
-                                .frame(width: 60, alignment: .leading)
-                        }
-                    }
-                    
-                    // Heart rate column
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Heart Rate (bpm)")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("white-200"))
-                        
-                        ForEach(rows) { row in
-                            Text(row.heartRateText)
-                                .font(.system(size: 16))
-                                .foregroundColor(.white)
-                                .frame(width: 80, alignment: .leading)
-                        }
-                    }
-                    
-                    // Status column
-                    VStack(alignment: .trailing, spacing: 12) {
-                        Text("Status")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("white-200"))
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                        
-                        ForEach(rows) { row in
-                            Image(systemName: row.isDone ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(row.isDone ? Color("green-500") : .red)
-                                .frame(width: 24, height: 24, alignment: .trailing)
+                            HStack(spacing: 0) {
+                                Text(row.session)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .lineLimit(1)
+                                
+                                Text(row.distanceText)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                    .frame(width: 90, alignment: .center)
+                                
+                                Text(row.heartRateText)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                    .frame(width: 100, alignment: .center)
+                                
+                                Image(systemName: row.isDone ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(row.isDone ? Color("green-500") : .red)
+                                    .frame(width: 50, alignment: .center)
+                            }
+                            .frame(height: 24)
                         }
                     }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 24)
             }
             
-            // Buttons
+            // Buttons fixed at bottom
             VStack(spacing: 10) {
                 Button(action: onAdjust) {
                     Text("Adjust Plan")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(22)
                 }
+                .buttonStyle(PrimaryButtonStyle())
                 
                 Button(action: onKeepCurrent) {
                     Text("Keep current plan")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.08))
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
-                        .cornerRadius(22)
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(Color.clear)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .inset(by: 0.5)
+                                .stroke(.white, lineWidth: 1)
+
+                        )
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 34)
+            .background(Color("black-500"))
+        }
+        .navigationTitle("Review Plan")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .padding(8)
+                        .foregroundColor(.white)
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
-        .padding(.bottom, 24)
         //        .background(Color("black-500")) // sheet background
     }
     
