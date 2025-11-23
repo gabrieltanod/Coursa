@@ -115,7 +115,7 @@ struct MetricDetailCard: View {
                 }
             }
         }
-        .frame(width: .infinity, height: 172, alignment: .topLeading)
+        .frame(width: .infinity, alignment: .topLeading)
     }
 }
 
