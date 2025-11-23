@@ -270,11 +270,21 @@ struct PlanDetailView: View {
     // Metrics row under title
     private var metricsRow: some View {
         HStack(spacing: 20) {
-            if let distance = run.template.targetDistanceKm {
-                Label {
-                    Text("\(Int(distance)) km")
-                } icon: {
-                    Image("distance-icon")
+            if plan?.kind == .maf {
+                if let duration = run.template.targetDurationSec {
+                    Label {
+                        Text("\(duration/60) min")
+                    } icon: {
+                        Image(systemName: "clock.fill")
+                    }
+                }
+            } else {
+                if let distance = run.template.targetDistanceKm {
+                    Label {
+                        Text("\(Int(distance)) km")
+                    } icon: {
+                        Image("distance-icon")
+                    }
                 }
             }
             Text("|")
@@ -380,7 +390,7 @@ struct PlanDetailView: View {
 #Preview("Plan Detail") {
     let sampleTemplate = RunTemplate(
         name: "Easy Run",
-        kind: .easy,
+        kind: .maf,
         focus: .base,
         targetDurationSec: 1800,
         targetDistanceKm: 3.0,
