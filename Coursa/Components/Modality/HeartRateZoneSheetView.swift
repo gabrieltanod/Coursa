@@ -3,39 +3,63 @@ import SwiftUI
 struct HeartRateZoneSheetView: View {
     @Environment(\.dismiss) var dismiss
     
+    private var maxHeartRate: Double {
+        // Load user's age from OnboardingStore and calculate their maxHR
+        if let onboardingData = OnboardingStore.load() {
+            return TRIMP.maxHeartRate(fromAge: onboardingData.personalInfo.age)
+        } else {
+            return 190.0  // fallback if no onboarding data
+        }
+    }
+    
+    private var formattedMaxHeartRate: String {
+        String(format: "%.0f", maxHeartRate)
+    }
+    
     // Data model for the zones
-    let zones: [ZoneInfo] = [
-        ZoneInfo(
-            id: 1,
-            title: "Zone 1: Warm Up",
-            description: "Used for warming up, cooling down, and easing your body into or out of training with low, steady effort.",
-            bpm: "120 bpm"
-        ),
-        ZoneInfo(
-            id: 2,
-            title: "Zone 2: Endurance",
-            description: "Builds aerobic fitness and burns fat efficiently while keeping fatigue low, letting you sustain longer sessions.",
-            bpm: "130 bpm"
-        ),
-        ZoneInfo(
-            id: 3,
-            title: "Zone 3: Moderate",
-            description: "Improves overall cardiovascular strength and muscle performance through a steady, manageable intensity.",
-            bpm: "150 bpm"
-        ),
-        ZoneInfo(
-            id: 4,
-            title: "Zone 4: Intense",
-            description: "Boosts speed endurance and helps your body adapt to higher lactic acid levels during harder efforts.",
-            bpm: "170 bpm"
-        ),
-        ZoneInfo(
-            id: 5,
-            title: "Zone 5: Performance",
-            description: "Maximal effort where your heart and lungs work at full capacity. Great for short, powerful bursts to increase peak performance. Don't stay in this zone for too long.",
-            bpm: "190 bpm"
-        )
-    ]
+    var zones: [ZoneInfo] {
+        let max = Double(maxHeartRate)
+        
+        let limit1 = Int(max * 0.60)
+        let limit2 = Int(max * 0.70)
+        let limit3 = Int(max * 0.80)
+        let limit4 = Int(max * 0.90)
+        let limit5 = Int(max)
+        
+        return [
+            ZoneInfo(
+                id: 1,
+                title: "Zone 1: Warm Up",
+                description: "Used for warming up, cooling down, and easing your body into or out of training with low, steady effort.",
+                bpm: "\(limit1)"
+            ),
+            ZoneInfo(
+                id: 2,
+                title: "Zone 2: Endurance",
+                description: "Builds aerobic fitness and burns fat efficiently while keeping fatigue low, letting you sustain longer sessions.",
+                bpm: "\(limit2)"
+            ),
+            ZoneInfo(
+                id: 3,
+                title: "Zone 3: Moderate",
+                description: "Improves overall cardiovascular strength and muscle performance through a steady, manageable intensity.",
+                bpm: "\(limit3)"
+            ),
+            ZoneInfo(
+                id: 4,
+                title: "Zone 4: Intense",
+                description: "Boosts speed endurance and helps your body adapt to higher lactic acid levels during harder efforts.",
+                bpm: "\(limit4)"
+            ),
+            ZoneInfo(
+                id: 5,
+                title: "Zone 5: Performance",
+                description: "Maximal effort where your heart and lungs work at full capacity. Great for short, powerful bursts to increase peak performance. Don't stay in this zone for too long.",
+                bpm: "\(limit5)"
+            )
+        ]
+        
+    }
     
     var body: some View {
         ZStack {
@@ -76,12 +100,9 @@ struct HeartRateZoneSheetView: View {
                             Text("Heart rate zones below are calculated based on your maximum HR ")
                                 .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("black-100")) +
-                            Text("199 bpm")
+                            Text("\(formattedMaxHeartRate) bpm")
                                 .font(.custom("Helvetica Neue", size: 17))
                                 .underline()
-                                .foregroundColor(Color("black-100")) +
-                            Text(" and resting HR 78 bpm.")
-                                .font(.custom("Helvetica Neue", size: 17))
                                 .foregroundColor(Color("black-100"))
                         }
                         .padding(.top, 8)
@@ -124,10 +145,13 @@ struct HeartRateZoneCard: View {
                 
                 // BPM
                 Text(zone.bpm)
-                    .font(.custom("Helvetica Neue", size: 15))
-                    .fontWeight(.bold)
+                    .font(.custom("Helvetica Neue", size: 22))
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
-                    .layoutPriority(1)
+                Text("bpm")
+                    .font(.custom("Helvetica Neue", size: 15))
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
             }
         }
         .padding(16)
