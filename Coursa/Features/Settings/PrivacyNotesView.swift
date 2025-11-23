@@ -54,8 +54,7 @@ struct PrivacyNotesView: View {
                 8. Contact Us\n
                 If you have any questions about this Privacy Policy, please contact us:\n
                 Entity: Coursa\n
-                Support Email: [Insert Your Support Email]\n
-                Support URL: [Insert Your Support URL, if any]
+                Support Email: gabriel.tanod@gmail.com\n
                 """)
                     .foregroundStyle(.secondary)
             }

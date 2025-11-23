@@ -11,6 +11,8 @@ struct HeartRateCard: View {
     
     let run : ScheduledRun
     
+    @State private var showingInfoHrZone = false
+    
     var body: some View {
         
         VStack (alignment: .leading){
@@ -22,7 +24,7 @@ struct HeartRateCard: View {
                         .foregroundStyle(Color("white-500"))
                     
                     Button {
-//                        showingInfoSheet.toggle()
+                        showingInfoHrZone.toggle()
                     } label: {
                         Image(systemName: "info.circle")
                             .font(.custom("Helvetica Neue", size: 16))
@@ -38,6 +40,10 @@ struct HeartRateCard: View {
                 ZoneBarsView(run: run)
             }
             
+        }
+        .sheet(isPresented: $showingInfoHrZone) {
+            HeartRateZoneSheetView()
+                .presentationDetents([.fraction(1.0)])
         }
         
     }

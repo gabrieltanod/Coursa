@@ -9,6 +9,132 @@ import Combine
 import Foundation
 import WatchConnectivity
 
+/**
+ * A comprehensive synchronization service that manages communication between iOS and watchOS
+ * platforms using WatchConnectivity framework for a running/fitness application.
+ *
+ * `SyncService` acts as a bidirectional bridge, handling:
+ * - Sending running plans and workout commands from iOS to watchOS
+ * - Receiving workout summaries from watchOS to iOS
+ * - Managing WatchConnectivity session lifecycle and reliability
+ * - Providing retry mechanisms for simulator environments
+ *
+ * ## Architecture
+ *
+ * The service follows a singleton pattern with platform-specific initialization:
+ * - **iOS**: Manages workout plans, sends commands to watch, receives summaries
+ * - **watchOS**: Receives plans/commands, sends workout summaries back to iOS
+ *
+ * ## Key Responsibilities
+ *
+ * ### iOS Platform
+ * - Send `RunningPlan` objects to paired Apple Watch
+ * - Send start/stop workout commands to trigger watch-based workouts
+ * - Receive and process `RunningSummary` data from completed watch workouts
+ * - Apply received summaries to `PlanSessionStore` for persistence
+ *
+ * ### watchOS Platform
+ * - Receive workout plans and commands from iOS companion app
+ * - Forward workout commands to `WorkoutManager` for execution
+ * - Send completed workout summaries back to iOS
+ * - Handle activation retry logic for simulator reliability
+ *
+ * ## Message Types
+ *
+ * ### Data Transfer Objects
+ * - **RunningPlan**: Contains workout plan details (duration, distance, HR zone, pace)
+ * - **RunningSummary**: Contains completed workout metrics and heart rate zone data
+ * - **Commands**: Start/stop workout instructions with plan identifiers
+ *
+ * ### Communication Methods
+ * - `sendMessage(_:replyHandler:errorHandler:)`: Real-time messaging when watch is reachable
+ * - `updateApplicationContext(_:)`: Background transfer for offline/background scenarios
+ * - Automatic fallback between methods based on connectivity
+ *
+ * ## Reliability Features
+ *
+ * ### Pending Data Queue
+ * - iOS: Queues unsent plans and commands during session inactivity
+ * - watchOS: Queues summaries until session becomes available
+ * - Automatic retry when session activation completes
+ *
+ * ### Simulator Support
+ * - Enhanced logging for troubleshooting connectivity issues
+ * - Retry mechanisms for session activation (watchOS only)
+ * - Comprehensive error reporting and recovery suggestions
+ *
+ * ## Session Management
+ *
+ * ### Activation States
+ * - Monitors `WCSessionActivationState` changes
+ * - Handles session reactivation on iOS (required by WatchConnectivity)
+ * - Provides activation retry logic for unreliable simulator environments
+ *
+ * ### Delegate Methods
+ * - `activationDidCompleteWith`: Handles session activation completion
+ * - `didReceiveMessage`: Processes incoming real-time messages
+ * - `didReceiveApplicationContext`: Handles background data transfers
+ * - Platform-specific session lifecycle management
+ *
+ * ## Usage Examples
+ *
+ * ### iOS: Send Plan to Watch
+ * ```swift
+ * let plan = RunningPlan(name: "5K Run", targetDistance: 5.0, ...)
+ * SyncService.shared.sendPlanToWatchOS(plan: plan)
+ * ```
+ *
+ * ### iOS: Start Workout on Watch
+ * ```swift
+ * SyncService.shared.sendStartCommandToWatchOS(plan: plan)
+ * ```
+ *
+ * ### watchOS: Send Summary to iOS
+ * ```swift
+ * let summary = RunningSummary(totalTime: 1800, totalDistance: 5.0, ...)
+ * SyncService.shared.sendSummaryToiOS(summary: summary)
+ * ```
+ *
+ * ## Error Handling
+ *
+ * ### Common Scenarios
+ * - Session not activated: Data queued for later transmission
+ * - Watch not reachable: Automatic fallback to background context
+ * - Send failures: Retry mechanisms with exponential backoff
+ * - Simulator limitations: Enhanced debugging and manual retry options
+ *
+ * ### Logging
+ * - Comprehensive console logging for debugging
+ * - Platform-specific log prefixes (iOS:/watchOS:)
+ * - Detailed error messages with troubleshooting guidance
+ *
+ * ## Thread Safety
+ *
+ * - Main queue dispatch for UI-related property updates
+ * - Background queue tolerance for WatchConnectivity operations
+ * - Published properties for SwiftUI integration
+ *
+ * ## Dependencies
+ *
+ * ### iOS
+ * - `PlanSessionStore`: For applying received workout summaries
+ * - `RunningPlan`, `RunningSummary`: Data models for workout information
+ *
+ * ### watchOS
+ * - `WorkoutManager`: For executing received workout commands
+ * - Timer-based retry mechanisms for session reliability
+ *
+ * ## Simulator Considerations
+ *
+ * WatchConnectivity has known limitations in Simulator environments:
+ * - Session activation may fail silently or take extended time
+ * - Companion app installation detection is unreliable
+ * - Message delivery is not guaranteed
+ *
+ * The service includes extensive simulator-specific logging and retry logic
+ * to improve development experience, but physical device testing is recommended
+ * for production validation.
+ */
 class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     
     static let shared = SyncService()
@@ -523,6 +649,9 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
+        // Decode optional userMaxHR
+        let userMaxHR = dictionary["userMaxHR"] as? Double
+        
         let decodedPlan = RunningPlan(
             id: id.uuidString,
             date: date,
@@ -531,7 +660,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             targetDuration: targetDuration,
             targetDistance: targetDistance,
             targetHRZone: targetHRZone,
-            recPace: recPace
+            recPace: recPace,
+            userMaxHR: userMaxHR
         )
         
         DispatchQueue.main.async {

@@ -34,8 +34,8 @@ struct CalendarView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
         }
         .preferredColorScheme(.dark)
         .navigationBarBackButtonHidden(true)

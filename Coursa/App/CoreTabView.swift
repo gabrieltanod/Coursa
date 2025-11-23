@@ -9,32 +9,33 @@ import SwiftUI
 
 struct CoreTabView: View {
     let onboardingData: OnboardingData
-    @StateObject private var planSession = PlanSessionStore()
-
+    @AppStorage("selectedTab") private var selectedTab: Int = 0
+    
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 HomeView()
-                    .environmentObject(planSession)
             }
             .tabItem {
                 Label("Plan", systemImage: "chart.bar.fill")
             }
+            .tag(0)
 
             NavigationStack {
                 StatisticsView()
-                    .environmentObject(planSession)
             }
             .tabItem {
                 Label("Statistics", systemImage: "square.grid.2x2.fill")
             }
-
+            .tag(1)
+            
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
                 Label("Settings", systemImage: "gearshape.fill")
             }
+            .tag(2)
         }
         .tint(Color("green-500"))
     }

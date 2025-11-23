@@ -12,9 +12,11 @@ import Combine
 class SummaryPageViewModel: ObservableObject {
     
     private let summary: RunningSummary
+    var currentPlan: RunningPlan?  // Optional plan with synced userMaxHR
     
-    init(summary: RunningSummary) {
+    init(summary: RunningSummary, currentPlan: RunningPlan? = nil) {
         self.summary = summary
+        self.currentPlan = currentPlan
     }
     var formattedTotalTime: String {
         let totalSeconds = Int(summary.totalTime)

@@ -86,7 +86,7 @@ struct RunHistoryView: View {
                 .padding(.horizontal, 24)
             }
             .background(Color("black-500"))
-            .navigationTitle(Text("Run History"))
+            .navigationTitle(Text("Recent Activity"))
 
         }
     }

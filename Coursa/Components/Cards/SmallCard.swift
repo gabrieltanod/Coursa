@@ -15,8 +15,13 @@ struct SmallCard<Content: View>: View {
             content()
         }
         .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color("black-700"))
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(Color("black-475"))
         .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .inset(by: 0.5)
+                .stroke(Color(red: 0.25, green: 0.25, blue: 0.25), lineWidth: 1)
+        )
     }
 }

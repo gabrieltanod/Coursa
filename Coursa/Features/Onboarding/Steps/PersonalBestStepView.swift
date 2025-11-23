@@ -24,7 +24,7 @@ struct PersonalBestStepView: View {
             VStack(alignment: .leading) {
                 OnboardingHeaderQuestion(
                     question: "What is your best run?",
-                    caption: "Pick your furthest distance you ran in the last 1–3 months, fill in the best duration you got. If you haven’t reached a (3K/5K/10K) record yet, now is a good time to take your first 3K."
+                    caption: "Fill the furthest distance you ran in the last 1–3 months and your best time. If you don't have a record yet, try your first 3K!"
                 )
             }
             
