@@ -14,9 +14,13 @@ struct CustomButtonStyle: ButtonStyle {
         configuration.label
             .padding(24)
             .frame(width: 362, height: 54)
-            .background(isDisabled ? Color("white-700") : (configuration.isPressed ? Color("white-500") : Color("white-500")))
-            .foregroundColor(isDisabled ? Color("black-400") : Color("black-500"))
+            .background(isDisabled ? Color("black-500") : (configuration.isPressed ? Color("white-50") : Color("white-50")))
+            .foregroundColor(isDisabled ? Color("black-200") : Color("black-900"))
             .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isDisabled ? Color("black-200") : Color("white-50"), lineWidth: 1)
+            )
             .scaleEffect(configuration.isPressed && !isDisabled ? 0.96 : 1)
             .disabled(isDisabled)
     }

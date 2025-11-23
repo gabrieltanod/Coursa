@@ -151,10 +151,10 @@ struct PersonalBestStepView: View {
             }
             .buttonStyle(
                 CustomButtonStyle(
-                    isDisabled: !isValid && !distanceKm.isEmpty
-                    && !durationText.isEmpty
+                    isDisabled: !isValid
                 )
             )
+            .disabled(!isValid)
         }
         .sheet(
             isPresented: $showDurationWheel,

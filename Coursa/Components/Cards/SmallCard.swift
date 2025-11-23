@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SmallCard<Content: View>: View {
+    var backgroundColor = Color("black-475")
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -16,7 +17,7 @@ struct SmallCard<Content: View>: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(Color("black-475"))
+        .background(backgroundColor)
         .cornerRadius(20)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
