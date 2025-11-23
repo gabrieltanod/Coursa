@@ -74,7 +74,7 @@ struct OnboardingFlowView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                if vm.canGoBack {
+                if vm.canGoBack && !showGenerating {
                     Button(action: vm.back) {
                         Image(systemName: "chevron.backward")
                     }
@@ -84,9 +84,11 @@ struct OnboardingFlowView: View {
                 }
             }
             ToolbarItem(placement: .principal) {
-                if vm.step.usesProgress {
+                if vm.step.usesProgress && !showGenerating {
                     CarouselIndicator(currentIndex: vm.index)
                         .frame(maxWidth: .infinity)
+                } else {
+                    EmptyView()
                 }
             }
         }
