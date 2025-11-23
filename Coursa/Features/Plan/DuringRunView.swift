@@ -16,15 +16,15 @@ struct DuringRunView: View {
     var body: some View {
         VStack {
             Text(plan?.name ?? "Run Session")
-                .font(.custom("Helvetica Neue", size: 24))
+                .font(.custom("Helvetica Neue", size: 20))
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-                .padding(.top, 40)
+                .padding(.top, 21)
             
             Spacer()
                 
                 Text("Check your watch for real-time\ntracking during your run.")
-                    .font(.custom("Helvetica Neue", size: 20))
+                    .font(.custom("Helvetica Neue", size: 17))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
             
@@ -33,20 +33,21 @@ struct DuringRunView: View {
             Button {
                 endRun()
             } label: {
-                Text("End run")
-                    .font(.headline)
-                    .fontWeight(.bold)
+                Text("End Run")
+                    .font(.custom("Helvetica Neue", size: 17))
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .background(Color.red)
-                    .cornerRadius(16)
+                    .cornerRadius(20)
             }
-            .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
-        .background(Color("black-500").edgesIgnoringSafeArea(.all))
+        .padding(.horizontal, 24)
+        .background(Color("black-500"))
+        .ignoresSafeArea(edges: .bottom)
     }
     
     private func endRun() {
