@@ -10,7 +10,6 @@ import SwiftUI
 struct GoalCard: View {
     let run: ScheduledRun
     
-    
     private var maxHeartRate: Double {
         // Load user's age from OnboardingStore and calculate their maxHR
         if let onboardingData = OnboardingStore.load() {

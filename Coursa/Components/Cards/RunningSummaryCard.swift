@@ -43,7 +43,7 @@ struct RunningSummaryCard: View {
     }
     
     private var avgPaceSecPerKm: Int {
-        if let p = run.actual.avgPaceSecPerKm { return p }
+//        if let p = run.actual.avgPaceSecPerKm { return p }
         guard distanceKm > 0 else { return 0 }
         return Int(Double(durationSec) / distanceKm)
     }
