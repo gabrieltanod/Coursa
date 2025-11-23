@@ -18,16 +18,18 @@ struct ZoneBar: View {
     let seconds: Double
     let width: CGFloat
     let isHighest: Bool
+    
+    // MARK: - Gradients
     var gradientHighest: LinearGradient {
-        let _: [Color] = [
-            Color("green-gradient-low"), Color("green-gradient-high"),
-        ]
+        let color1 = Color(red: 218/255, green: 255/255, blue: 2/255)
+        let color2 = Color(red: 131/255, green: 153/255, blue: 1/255)
+        
         let stops: [Gradient.Stop] = [
-            .init(color: Color("green-gradient-low"), location: 0.1312),
-            .init(color: Color("green-gradient-high"), location: 2.9781),
+            .init(color: color1, location: -0.0296),
+            .init(color: color2, location: 1.1807),
         ]
-        let startPoint: UnitPoint = .init(x: 0.3, y: 0.35)
-        let endPoint: UnitPoint = .init(x: 0.75, y: 1.7)
+        let startPoint: UnitPoint = .init(x: 1.0, y: 0.1)
+        let endPoint: UnitPoint = .init(x: 0.0, y: 0.9)
         
         return LinearGradient(
             stops: stops,
@@ -35,6 +37,7 @@ struct ZoneBar: View {
             endPoint: endPoint
         )
     }
+    
     var gradient: LinearGradient {
         let _: [Color] = [Color("black-400"), Color("gray-gradient")]
         let stops: [Gradient.Stop] = [
@@ -55,7 +58,7 @@ struct ZoneBar: View {
         HStack {
             Text(label)
                 .font(.custom("Helvetica Neue", size: 16))
-                .foregroundColor(isHighest ? Color("black-500") : .white)
+                .foregroundColor(seconds > 0 ? (isHighest ? Color("black-500") : .white)  : Color("black-300"))
             
             Spacer()
             
@@ -68,10 +71,15 @@ struct ZoneBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(maxWidth: width)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(isHighest ? gradientHighest : gradient)
-        )
+        .background {
+            if seconds > 0 {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isHighest ? gradientHighest : gradient)
+            } else {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color("black-gradient2"))
+            }
+        }
         .animation(.easeInOut(duration: 0.3), value: width)
         .animation(.easeInOut(duration: 0.3), value: isHighest)
     }
@@ -80,7 +88,7 @@ struct ZoneBar: View {
         if sec <= 0 { return "0:00" }
         let m = Int(sec) / 60
         let s = Int(sec) % 60
-        return String(format: "%d:%02d", m, s)
+        return String(format: "%d:%02d min", m, s)
     }
 }
 
@@ -98,17 +106,27 @@ struct ZoneBarsView: View {
             return ZoneData(label: "Zone \(zone)", seconds: sec)
         }
     }
-
     
     private var maxSeconds: Double {
         zones.map { $0.seconds }.max() ?? 0
     }
     
+    private var totalSeconds: Double {
+        zones.map { $0.seconds }.reduce(0, +)
+    }
+    
     private func getWidth(seconds: Double, maxWidth: CGFloat) -> CGFloat {
-        guard maxSeconds > 0 else { return maxWidth * 0.3 }
-        // Map to 40-100% range
-        let percentage = 0.4 + (seconds / maxSeconds) * 0.5
-        return maxWidth * CGFloat(percentage)
+        if seconds <= 0 {
+            return 90
+        }
+        
+        guard maxSeconds > 0 else { return 170 }
+        let percentage = 0.4 + (seconds / maxSeconds) * 0.6
+        let calculatedWidth = maxWidth * CGFloat(percentage)
+        
+        let minContentWidth: CGFloat = 170
+        
+        return max(calculatedWidth, minContentWidth)
     }
     
     private func isHighest(_ zone: ZoneData) -> Bool {
@@ -116,23 +134,33 @@ struct ZoneBarsView: View {
         return zone.seconds == maxSeconds
     }
     
+    private func percentageString(for seconds: Double) -> String {
+        guard totalSeconds > 0 else { return "0%" }
+        let val = Int((seconds / totalSeconds) * 100)
+        return "\(val)%"
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(zones) { zone in
-                    ZoneBar(
-                        label: zone.label,
-                        seconds: zone.seconds,
-                        width: getWidth(seconds: zone.seconds, maxWidth: geometry.size.width),
-                        isHighest: isHighest(zone)
-                    )
+                    HStack(spacing: 12) {
+                        ZoneBar(
+                            label: zone.label,
+                            seconds: zone.seconds,
+                            width: getWidth(seconds: zone.seconds, maxWidth: geometry.size.width - 45),
+                            isHighest: isHighest(zone)
+                        )
+                        
+                        Text(percentageString(for: zone.seconds))
+                            .font(.custom("Helvetica Neue", size: 16))
+                            .fontWeight(.medium)
+                            .foregroundStyle(zone.seconds > 0 ? .white : Color("black-300"))
+                            .frame(width: 45, alignment: .leading)
+                    }
                 }
             }
         }
         .frame(height: CGFloat(zones.count) * 37 + CGFloat(zones.count - 1) * 12)
     }
 }
-
-//#Preview {
-//    ZoneBarsView()
-//}
