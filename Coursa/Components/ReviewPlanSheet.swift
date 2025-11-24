@@ -12,8 +12,12 @@ struct ReviewPlanSheet: View {
     let onAdjust: () -> Void
     let onKeepCurrent: () -> Void
     
+    /// Real TRIMP-based metrics
+    let recommendedDistanceKm: Double
+    let currentDistanceKm: Double
+    let performanceTrend: PlanAdaptationHelper.PerformanceTrend
+    
     /// Rows driving the "This Week Performance" table.
-    /// Later you can pass real data derived from your plan / summaries.
     let rows: [ReviewSessionRow]
     
     struct ReviewSessionRow: Identifiable {
@@ -24,17 +28,33 @@ struct ReviewPlanSheet: View {
         let isDone: Bool
     }
     func makeHighlightCaption() -> AttributedString {
-        var string = AttributedString(
-            "Your distance goal this week is 15km. We can adjust the plan to better align with your current performance. This helps you stay on track and build momentum."
-        )
-
-        if let range = string.range(of: "align with your current performance") {
+        let baseText: String
+        let highlightPhrase: String
+        
+        switch performanceTrend {
+        case .goodProgress:
+            baseText = "Great job! Your training is progressing well. We recommend increasing your volume slightly to continue building fitness while staying safe."
+            highlightPhrase = "progressing well"
+        case .undertrained:
+            baseText = "You've trained less than planned this week. We recommend maintaining your current volume to build consistency before increasing load."
+            highlightPhrase = "maintaining your current volume"
+        case .overreached:
+            baseText = "You've pushed harder than planned. We recommend easing back slightly to allow proper recovery and avoid overtraining."
+            highlightPhrase = "easing back slightly"
+        case .maintain:
+            baseText = "Your training is on track. We recommend keeping your current volume to maintain consistency and build your aerobic base."
+            highlightPhrase = "keeping your current volume"
+        }
+        
+        var string = AttributedString(baseText)
+        
+        if let range = string.range(of: highlightPhrase) {
             var container = AttributeContainer()
             container.foregroundColor = Color("green-500")
             container.font = .custom("Helvetica Neue", size: 14)
             string[range].setAttributes(container)
         }
-
+        
         return string
     }
     
@@ -49,12 +69,23 @@ struct ReviewPlanSheet: View {
                             .foregroundColor(.white)
                         
                         HStack(spacing: 8) {
-                            Text("13KM")
+                            Text(String(format: "%.0fKM", recommendedDistanceKm))
                                 .font(.system(size: 64, weight: .medium))
                                 .foregroundColor(.white)
-                            Image(systemName: "arrow.down")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.red)
+                            
+                            if performanceTrend.arrowDirection == .up {
+                                Image(systemName: "arrow.up")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(Color("green-500"))
+                            } else if performanceTrend.arrowDirection == .down {
+                                Image(systemName: "arrow.down")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(.red)
+                            } else {
+                                Image(systemName: "arrow.left.arrow.right")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(.orange)
+                            }
                         }
                     }
                     
@@ -181,6 +212,9 @@ struct ReviewPlanSheet: View {
         onDismiss: { print("Dismiss tapped") },
         onAdjust:  { print("Adjust tapped") },
         onKeepCurrent: { print("Keep current tapped") },
+        recommendedDistanceKm: 27,
+        currentDistanceKm: 25,
+        performanceTrend: .goodProgress,
         rows: [
             .init(session: "MAF Training", distanceText: "-", heartRateText: "131", isDone: true),
             .init(session: "Easy Run", distanceText: "4", heartRateText: "140", isDone: true),
