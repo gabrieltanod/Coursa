@@ -10,7 +10,6 @@ import SwiftUI
 struct GoalCard: View {
     let run: ScheduledRun
     
-    
     private var maxHeartRate: Double {
         // Load user's age from OnboardingStore and calculate their maxHR
         if let onboardingData = OnboardingStore.load() {
@@ -65,17 +64,11 @@ struct GoalCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(stops: [
-                            .init(color: Color("grey-gradient"), location: 0.1566),
-                            .init(color: .black,           location: 0.8434)
-                        ]),
-                        startPoint: .init(x: cos(242 * .pi/180), y: sin(242 * .pi/180)),
-                        endPoint:   .init(x: -cos(242 * .pi/180), y: -sin(242 * .pi/180))
-                    )
+                .fill(Color("black-475"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color("black-400"), lineWidth: 1)
                 )
         )
     }
 }
-

@@ -117,6 +117,8 @@ struct ChooseStartDateStepView: View {
                 
                 Button("Generate Plan") {
                     onFinish(selectedDate ?? Date())
+                    
+                    UserDefaults.standard.set(true, forKey: "showPlanGeneratedSheet")
                 }
                 .buttonStyle(CustomButtonStyle(isDisabled: selectedDate == nil))
                 .controlSize(.large)

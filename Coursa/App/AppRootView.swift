@@ -13,6 +13,8 @@ struct AppRootView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     
+    @AppStorage("showPlanGeneratedSheet") var showPlanGeneratedSheet = false
+    
     @State private var showSplash = true
     
     var body: some View {
@@ -22,6 +24,9 @@ struct AppRootView: View {
                     if router.didOnboard {
                         if let existing = OnboardingStore.load() {
                             CoreTabView(onboardingData: existing)
+                                .sheet(isPresented: $showPlanGeneratedSheet) {
+                                    PlanGeneratedSheetView()
+                                }
                                 .onAppear {
                                     planSession.bootstrapIfNeeded(using: existing)
                                 }
