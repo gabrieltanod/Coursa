@@ -81,11 +81,23 @@ struct PlanDetailView: View {
                                     .bold()
                                     .foregroundColor(.white)
                                     .padding(.bottom, 17)
-
                                 metricsRow
+                                    .padding(.bottom, 24)
+                                SmallCard(backgroundColor: Color("black-300")) {
+                                    HStack {
+                                        Spacer()
+                                        Text("You cannot begin this plan until its scheduled date.")
+                                            .font(.custom("Helvetica Neue", size: 16))
+                                            .fontWeight(.regular)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
+                                        Spacer()
+                                    }
+                                }
+                                .padding(.horizontal, 24)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.bottom, 32)
+                            .padding(.bottom, 24)
                         }
                     }
                     .frame(height: UIScreen.main.bounds.height * 0.5)
@@ -164,41 +176,29 @@ struct PlanDetailView: View {
                 .padding(.bottom, 142)
             }
 
-            VStack {
+            if plan?.date == Date() {
+                VStack {
+                    Button("Let's go!") {
+                        // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
+                        syncService.summary = nil
 
-                Button {
-                    // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
-                    syncService.summary = nil
+                        startCountdownSequence()
 
-                    startCountdownSequence()
-
-                    if let plan = plan {
-                        print("🚀 Starting run: \(plan.name)")
-                        syncService.sendPlanToWatchOS(plan: plan)
-                        syncService.sendStartWorkoutCommand(planID: plan.id)
-                    } else {
-                        print("❌ No plan available to start.")
+                        if let plan = plan {
+                            print("🚀 Starting run: \(plan.name)")
+                            syncService.sendPlanToWatchOS(plan: plan)
+                            syncService.sendStartWorkoutCommand(planID: plan.id)
+                        } else {
+                            print("❌ No plan available to start.")
+                        }
                     }
-                } label: {
-                    Text("Let's Go")
-                        .font(.custom("Helvetica Neue", size: 17))
-                        .foregroundColor(Color.black)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: 54,
-                            alignment: .center
-                        )
+                    .buttonStyle(CustomButtonStyle(isDisabled: plan?.date != Date()))
+                    .padding(.bottom, 40)
                 }
-                .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
-                .background(Color.white)
-                .cornerRadius(20)
-                .padding(.top, 10)
-                .padding(.bottom, 40)
-                .padding(.horizontal)
-                .background(Color("black-500"))
-            }
-            .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity)
 
+            }
+            
             if isCountingDown {
                 Color("black-500")
                     .ignoresSafeArea()
@@ -270,11 +270,21 @@ struct PlanDetailView: View {
     // Metrics row under title
     private var metricsRow: some View {
         HStack(spacing: 20) {
-            if let dur = run.template.targetDurationSec {
-                Label {
-                    Text(Self.mmText(dur))
-                } icon: {
-                    Image(systemName: "clock.fill")
+            if plan?.kind == .maf {
+                if let duration = run.template.targetDurationSec {
+                    Label {
+                        Text("\(duration/60) min")
+                    } icon: {
+                        Image(systemName: "clock.fill")
+                    }
+                }
+            } else {
+                if let distance = run.template.targetDistanceKm {
+                    Label {
+                        Text("\(Int(distance)) km")
+                    } icon: {
+                        Image("distance-icon")
+                    }
                 }
             }
             Text("|")
@@ -380,7 +390,7 @@ struct PlanDetailView: View {
 #Preview("Plan Detail") {
     let sampleTemplate = RunTemplate(
         name: "Easy Run",
-        kind: .easy,
+        kind: .maf,
         focus: .base,
         targetDurationSec: 1800,
         targetDistanceKm: 3.0,

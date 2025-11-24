@@ -46,6 +46,9 @@ final class AppRouter: ObservableObject {
             session.generatedPlan = nil
         }
 
+        // --- CLEAR SELECTED TAB ---
+        UserDefaults.standard.removeObject(forKey: "selectedTab")
+        
         // --- CLEAR ANY OTHER FLAGS YOU MAY ADD LATER ---
         UserDefaults.standard.removeObject(forKey: "coursa.autoSkipApplied")
     }
