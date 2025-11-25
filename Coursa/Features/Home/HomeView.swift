@@ -195,79 +195,105 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showReviewSheet) {
-                // Build review rows from this week's runs so the sheet is ready for real data
-                let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
-                let thisWeekRuns = allRuns.filter { run in
-                    calendar.isDate(
-                        run.date,
-                        equalTo: Date(),
-                        toGranularity: .weekOfYear
-                    )
-                }
-
-                let reviewRows: [ReviewPlanSheet.ReviewSessionRow] =
-                    thisWeekRuns.map { run in
-                        // Session name
-                        let sessionName = run.title
-
-                        // Distance text (prefer actual distance, fallback to template target)
-                        let distanceKm: String
-                        if let actual = run.actual.distanceKm {
-                            distanceKm = String(format: "%.1f", actual)
-                        } else if let target = run.template.targetDistanceKm {
-                            distanceKm = String(format: "%.1f", target)
-                        } else {
-                            distanceKm = "-"
-                        }
-
-                        // Average HR text
-                        let heartRateText: String
-                        if let hr = run.actual.avgHR {
-                            heartRateText = String(Int(hr))
-                        } else {
-                            heartRateText = "-"
-                        }
-
-                        return ReviewPlanSheet.ReviewSessionRow(
-                            session: sessionName,
-                            distanceText: distanceKm,
-                            heartRateText: heartRateText,
-                            isDone: run.status == .completed
+                Group {
+                    if let plan = planSession.generatedPlan {
+                        // Calculate real TRIMP-based performance metrics
+                        let performance = PlanAdaptationHelper.calculatePerformanceMetrics(
+                            for: Date(),
+                            plan: plan,
+                            onboarding: OnboardingStore.load()
                         )
-                    }
+                        
+                        // Build review rows from this week's runs
+                        let cal = Calendar.current
+                        let thisWeekStart = Date().mondayFloor()
+                        let thisWeekRuns = plan.runs.filter { run in
+                            run.date >= thisWeekStart && run.date < thisWeekStart.addingDays(7)
+                        }.sorted { $0.date < $1.date }
 
-                NavigationStack {
-                    ReviewPlanSheet(
-                        onDismiss: {
-                            showReviewSheet = false
-                        },
-                        onAdjust: {
-                            // TEMP: reuse debug adapt for now
-                            if let onboarding = OnboardingStore.load() {
-                                let debugVM = PlanViewModel(data: onboarding)
-                                debugVM.debugCompleteThisWeekAndAdapt()
+                        let reviewRows: [ReviewPlanSheet.ReviewSessionRow] =
+                            thisWeekRuns.map { run in
+                                // Session name
+                                let sessionName = run.title
+
+                                // Distance text (prefer actual distance, fallback to template target)
+                                let distanceKm: String
+                                if let actual = run.actual.distanceKm {
+                                    distanceKm = String(format: "%.1f", actual)
+                                } else if let target = run.template.targetDistanceKm {
+                                    distanceKm = String(format: "%.1f", target)
+                                } else {
+                                    distanceKm = "-"
+                                }
+
+                                // Average HR text
+                                let heartRateText: String
+                                if let hr = run.actual.avgHR {
+                                    heartRateText = String(Int(hr))
+                                } else {
+                                    heartRateText = "-"
+                                }
+
+                                return ReviewPlanSheet.ReviewSessionRow(
+                                    session: sessionName,
+                                    distanceText: distanceKm,
+                                    heartRateText: heartRateText,
+                                    isDone: run.status == .completed
+                                )
                             }
 
-                            // Reload shared plan so Home/Plan stay in sync
-                            planSession.generatedPlan = UserDefaultsPlanStore.shared
-                                .load()
+                        NavigationStack {
+                            ReviewPlanSheet(
+                                onDismiss: {
+                                    showReviewSheet = false
+                                },
+                                onAdjust: {
+                                    // Apply real TRIMP-based adaptation
+                                    guard let onboarding = OnboardingStore.load(),
+                                          let currentPlan = planSession.generatedPlan else {
+                                        showReviewSheet = false
+                                        return
+                                    }
+                                    
+                                    // Apply weekly adaptation using the real TRIMP algorithm
+                                    let adaptedPlan = PlanMapper.applyWeeklyAdaptationIfDue(
+                                        existing: currentPlan,
+                                        selectedDays: onboarding.trainingPrefs.selectedDays,
+                                        now: Date(),
+                                        onboarding: onboarding
+                                    )
+                                    
+                                    // Save the adapted plan
+                                    UserDefaultsPlanStore.shared.save(adaptedPlan)
+                                    
+                                    // Reload in the session store
+                                    planSession.generatedPlan = adaptedPlan
 
-                            // Hide the card after confirming
-                            showAdjustCard = false
-                            showReviewSheet = false
-                        },
-                        onKeepCurrent: {
-                            // Keep existing plan, just hide the card
-                            showAdjustCard = false
-                            showReviewSheet = false
-                        },
-                        rows: reviewRows
-                    )
-                    .navigationTitle("Review Plan")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .preferredColorScheme(.dark)
+                                    // Hide the card after confirming
+                                    showAdjustCard = false
+                                    showReviewSheet = false
+                                },
+                                onKeepCurrent: {
+                                    // Keep existing plan, just hide the card
+                                    showAdjustCard = false
+                                    showReviewSheet = false
+                                },
+                                recommendedDistanceKm: performance.recommendedDistanceKm,
+                                currentDistanceKm: performance.thisWeekDistanceKm,
+                                performanceTrend: performance.trend,
+                                rows: reviewRows
+                            )
+                            .navigationTitle("Review Plan")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .preferredColorScheme(.dark)
+                        }
+                        .presentationDragIndicator(.visible)
+                    } else {
+                        // Fallback view when no plan is available
+                        Text("No plan available")
+                            .foregroundColor(.white)
+                    }
                 }
-                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -591,6 +617,23 @@ struct HomeView: View {
         let plan = RunningPlan(from: run)
         print("[HomeView] Sending plan to watch for run id: \(run.id)")
         syncService.sendPlanToWatchOS(plan: plan)
+    }
+}
+
+// MARK: - Date Extensions
+
+private extension Date {
+    func mondayFloor() -> Date {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2 // Monday
+        let weekday = cal.component(.weekday, from: self)
+        let delta = (weekday == 1) ? -6 : (2 - weekday)
+        let start = cal.date(byAdding: .day, value: delta, to: self)!
+        return cal.startOfDay(for: start)
+    }
+    
+    func addingDays(_ n: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: n, to: self)!
     }
 }
 
