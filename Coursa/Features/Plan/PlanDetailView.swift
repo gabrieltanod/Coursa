@@ -40,6 +40,7 @@ struct PlanDetailView: View {
 
     @ObservedObject var syncService = SyncService.shared
     @State private var plan: RunningPlan?
+    @EnvironmentObject private var planSession: PlanSessionStore
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -156,7 +157,7 @@ struct PlanDetailView: View {
 
                                 Spacer()
 
-                                Text("7:30/km")
+                                Text(recommendedPaceText)
                                     .font(.custom("Helvetica Neue", size: 28))
                                     .foregroundColor(Color("green-500"))
                                     .bold()
@@ -351,6 +352,18 @@ struct PlanDetailView: View {
         } else {
             return "-- min"
         }
+    }
+    
+    private var recommendedPaceText: String {
+        guard let plan = planSession.generatedPlan else {
+            return "7:30/km"  // Fallback when no plan available
+        }
+        
+        return PaceRecommendationHelper.calculateRecommendedPace(
+            for: Date(),
+            plan: plan,
+            onboarding: OnboardingStore.load()
+        )
     }
 
     func startCountdownSequence() {
