@@ -91,6 +91,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
+                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                         router.reset(hard: true, planSession: planSession)
                     } label: {
                         HStack {
@@ -103,8 +104,9 @@ struct SettingsView: View {
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.white.opacity(0.04))
+                                .fill(Color.red.opacity(0.15))
                         )
+                        .foregroundColor(.red)
                     }
                     .buttonStyle(.plain)
                     

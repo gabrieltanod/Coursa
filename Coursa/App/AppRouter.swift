@@ -37,6 +37,7 @@ final class AppRouter: ObservableObject {
         // --- CLEAR ONBOARDING DATA ---
         OnboardingStore.clear()
         UserDefaults.standard.removeObject(forKey: "hasSeenWelcome")
+        UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
 
         // --- CLEAR GENERATED PLAN (persisted) ---
         UserDefaults.standard.removeObject(forKey: "coursa.generatedPlan")
@@ -49,7 +50,12 @@ final class AppRouter: ObservableObject {
         // --- CLEAR SELECTED TAB ---
         UserDefaults.standard.removeObject(forKey: "selectedTab")
         
-        // --- CLEAR ANY OTHER FLAGS YOU MAY ADD LATER ---
+        // --- CLEAR PLAN GENERATED SHEET FLAG ---
+        UserDefaults.standard.removeObject(forKey: "showPlanGeneratedSheet")
+        
+        // --- CLEAR ANY OTHER FLAGS ---
         UserDefaults.standard.removeObject(forKey: "coursa.autoSkipApplied")
+        
+        print("✅ [DEBUG] App reset complete - all data cleared")
     }
 }

@@ -91,12 +91,6 @@ struct AppRootView: View {
                 }
             }
         }
-        .sheet(isPresented: Binding(
-            get: { !showSplash && !hasCompletedOnboarding },
-            set: { _ in } // We don't set false here; OnboardingView updates the AppStorage
-        )) {
-            HealthPermissionView()
-        }
         
     }
 }
