@@ -83,18 +83,21 @@ struct PlanDetailView: View {
                                     .padding(.bottom, 17)
                                 metricsRow
                                     .padding(.bottom, 24)
-                                SmallCard(backgroundColor: Color("black-300")) {
-                                    HStack {
-                                        Spacer()
-                                        Text("You cannot begin this plan until its scheduled date.")
-                                            .font(.custom("Helvetica Neue", size: 16))
-                                            .fontWeight(.regular)
-                                            .lineLimit(1)
-                                            .minimumScaleFactor(0.8)
-                                        Spacer()
+                                
+                                if !Calendar.current.isDate(plan?.date ?? Date.distantPast, inSameDayAs: Date()) {
+                                    SmallCard(backgroundColor: Color("black-300")) {
+                                        HStack {
+                                            Spacer()
+                                            Text("You cannot begin this plan until its scheduled date.")
+                                                .font(.custom("Helvetica Neue", size: 16))
+                                                .fontWeight(.regular)
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.8)
+                                            Spacer()
+                                        }
                                     }
+                                    .padding(.horizontal, 24)
                                 }
-                                .padding(.horizontal, 24)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.bottom, 24)
@@ -176,7 +179,7 @@ struct PlanDetailView: View {
                 .padding(.bottom, 142)
             }
 
-            if plan?.date == Date() {
+            if Calendar.current.isDate(plan?.date ?? Date.distantPast, inSameDayAs: Date()) {
                 VStack {
                     Button("Let's go!") {
                         // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
@@ -192,7 +195,7 @@ struct PlanDetailView: View {
                             print("❌ No plan available to start.")
                         }
                     }
-                    .buttonStyle(CustomButtonStyle(isDisabled: plan?.date != Date()))
+                    .buttonStyle(CustomButtonStyle(isDisabled: !Calendar.current.isDate(plan?.date ?? Date.distantPast, inSameDayAs: Date())))
                     .padding(.bottom, 40)
                 }
                 .frame(maxWidth: .infinity)
