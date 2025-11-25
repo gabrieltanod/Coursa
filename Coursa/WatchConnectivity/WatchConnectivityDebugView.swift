@@ -18,7 +18,7 @@ struct WatchConnectivityDebugView: View {
         kind: .maf,
         targetDistance: 3.0,
         targetHRZone: .z2,
-        recPace: "7:30/KM"
+        recPace: 450
     )
 
     var body: some View {
@@ -53,7 +53,7 @@ struct WatchConnectivityDebugView: View {
                         Text("Name: \(dummyPlan.name)")
                         Text("Distance: \(dummyPlan.targetDistance ?? 0, specifier: "%.1f") km")
                         Text("Zone: \(dummyPlan.targetHRZone?.rawValue ?? 0)")
-                        Text("Recommended Pace: \(dummyPlan.recPace ?? "-")")
+                        Text("Recommended Pace: \(dummyPlan.recPace ?? 0)")
                         Text("Date: \(dummyPlan.date.formatted(date: .abbreviated, time: .shortened))")
                     }
                     .font(.subheadline)

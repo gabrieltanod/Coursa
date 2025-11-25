@@ -575,20 +575,20 @@ struct HomeView: View {
 
     private func sendRunToWatch(_ run: ScheduledRun) {
         // Derive a simple recommended pace from the template if possible
-        let recPace: String
-        if let duration = run.template.targetDurationSec,
-            let distance = run.template.targetDistanceKm,
-            distance > 0
-        {
-            let secPerKm = Double(duration) / distance
-            let minutes = Int(secPerKm) / 60
-            let seconds = Int(secPerKm) % 60
-            recPace = String(format: "%d:%02d /km", minutes, seconds)
-        } else {
-            recPace = "Easy"
-        }
+//        let recPace: String
+//        if let duration = run.template.targetDurationSec,
+//            let distance = run.template.targetDistanceKm,
+//            distance > 0
+//        {
+//            let secPerKm = Double(duration) / distance
+//            let minutes = Int(secPerKm) / 60
+//            let seconds = Int(secPerKm) % 60
+//            recPace = String(format: "%d:%02d /km", minutes, seconds)
+//        } else {
+//            recPace = "Easy"
+//        }
 
-        let plan = RunningPlan(from: run, recPace: recPace)
+        let plan = RunningPlan(from: run)
         print("[HomeView] Sending plan to watch for run id: \(run.id)")
         syncService.sendPlanToWatchOS(plan: plan)
     }

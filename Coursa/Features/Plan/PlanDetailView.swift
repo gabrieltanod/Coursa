@@ -153,10 +153,19 @@ struct PlanDetailView: View {
 
                                 Spacer()
 
-                                Text("7:30/km")
-                                    .font(.custom("Helvetica Neue", size: 28))
-                                    .foregroundColor(Color("green-500"))
-                                    .bold()
+                                if let seconds = run.template.recPace {
+                                    let minutes = Int(seconds) / 60
+                                    let remainder = Int(seconds) % 60
+                                    Text(String(format: "%d:%02d /km", minutes, remainder))
+                                        .font(.custom("Helvetica Neue", size: 28))
+                                        .foregroundColor(Color("green-500"))
+                                        .bold()
+                                } else {
+                                    Text("--:--")
+                                        .font(.custom("Helvetica Neue", size: 28))
+                                        .foregroundColor(Color("green-500"))
+                                        .bold()
+                                }
                             }
                         }
 
