@@ -14,7 +14,7 @@ struct HomeView: View {
     @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
     @State private var showAdjustCard = true
-    @State private var showDynamicPlanCard = true
+    @State private var showDynamicPlanCard: Bool = !UserDefaults.standard.bool(forKey: "dynamicPlanCardDismissed")
     @State private var showPlanSchedule = false
     @State private var showReviewSheet = false
     private var calendar: Calendar {
@@ -357,6 +357,7 @@ struct HomeView: View {
 
                     Button(action: {
                         showDynamicPlanCard = false
+                        UserDefaults.standard.set(true, forKey: "dynamicPlanCardDismissed")
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
