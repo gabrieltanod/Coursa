@@ -253,6 +253,8 @@ struct PlanDetailView: View {
             if newValue != nil {
                 print("iOS: 🏁 Summary received! Closing 'During Run' screen...")
                 showDuringRunView = false
+                // Dismiss PlanDetailView to return to the main view
+                dismiss()
             }
         }
         .onAppear {
