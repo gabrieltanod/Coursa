@@ -239,8 +239,11 @@ struct StatisticsView: View {
             if !topThree.isEmpty {
                 HStack {
                     Text("Recent Activity")
-                        .font(.system(size: 17, weight: .medium))
+                        .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                        .fontWeight(.medium)
                         .foregroundStyle(Color("white-500"))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                     
                     Spacer()
                     
@@ -249,8 +252,11 @@ struct StatisticsView: View {
                         RunHistoryView()
                     } label: {
                         Text("See All")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.custom("Helvetica Neue", size: 15, relativeTo: .callout))
+                            .fontWeight(.light)
                             .foregroundStyle(Color("white-500"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.4)
                     }
                 }
                 

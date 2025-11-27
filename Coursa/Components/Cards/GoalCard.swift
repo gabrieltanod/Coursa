@@ -11,11 +11,10 @@ struct GoalCard: View {
     let run: ScheduledRun
     
     private var maxHeartRate: Double {
-        // Load user's age from OnboardingStore and calculate their maxHR
         if let onboardingData = OnboardingStore.load() {
             return TRIMP.maxHeartRate(fromAge: onboardingData.personalInfo.age)
         } else {
-            return 190.0  // fallback if no onboarding data
+            return 190.0
         }
     }
     
@@ -51,12 +50,14 @@ struct GoalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12){
             Text("\(zoneInfo.title)")
-                .font(.custom("Helvetica Neue", size: 34))
-                .bold()
+                .font(.custom("Helvetica Neue", size: 34, relativeTo: .largeTitle))
+                .fontWeight(.bold)
                 .foregroundColor(Color("green-500"))
+                .lineLimit(2)
+                .minimumScaleFactor(0.4)
             
             Text("\(zoneInfo.caption)")
-                .font(.custom("Helvetica Neue", size: 17))
+                .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
                 .foregroundColor(Color("white-500"))
             
         }
@@ -72,3 +73,4 @@ struct GoalCard: View {
         )
     }
 }
+
