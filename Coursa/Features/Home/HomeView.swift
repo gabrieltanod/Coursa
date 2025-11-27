@@ -585,9 +585,17 @@ struct HomeView: View {
             } else {
                 ForEach(sessions) { run in
                     NavigationLink {
-                        PlanDetailView(run: run)
+                        if run.status == .completed {
+                            RunningSummaryView(run: run)
+                        } else {
+                            PlanDetailView(run: run)
+                        }
                     } label: {
-                        RunningSessionCard(run: run)
+                        if run.status == .completed {
+                            RunningHistoryCard(run: run)
+                        } else {
+                            RunningSessionCard(run: run)
+                        }
                     }
                     .simultaneousGesture(
                         TapGesture().onEnded {

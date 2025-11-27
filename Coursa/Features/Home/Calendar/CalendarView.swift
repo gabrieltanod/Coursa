@@ -9,8 +9,13 @@ import SwiftUI
 
 struct CalendarView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var planSession: PlanSessionStore
     @StateObject private var vm = CalendarViewModel()
     private let calendar = Calendar.current
+    
+    private var runs: [ScheduledRun] {
+        planSession.allRuns
+    }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
@@ -152,7 +157,7 @@ struct CalendarView: View {
 
     private func dayCell(for date: Date) -> some View {
         let isSelected = calendar.isDate(date, inSameDayAs: vm.selectedDate)
-        let hasRun = vm.hasRun(on: date)
+        let hasRun = runs.contains { calendar.isDate($0.date, inSameDayAs: date) }
 
         return VStack(spacing: 4) {
             Text("\(calendar.component(.day, from: date))")
@@ -172,7 +177,7 @@ struct CalendarView: View {
                 )
 
             // Dot if there is a session (color based on run kind)
-            if let run = vm.runs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            if let run = runs.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
                 let kind = run.template.kind
                 let colorName: String = {
                     switch kind {
@@ -206,7 +211,7 @@ struct CalendarView: View {
     // MARK: - Sessions
 
     private var sessionList: some View {
-        let sessions = vm.sessions(on: vm.selectedDate)
+        let sessions = runs.filter { calendar.isDate($0.date, inSameDayAs: vm.selectedDate) }
 
         return Group {
             if sessions.isEmpty {
@@ -214,9 +219,17 @@ struct CalendarView: View {
             } else {
                 ForEach(sessions) { run in
                     NavigationLink {
-                        PlanDetailView(run: run)
+                        if run.status == .completed {
+                            RunningSummaryView(run: run)
+                        } else {
+                            PlanDetailView(run: run)
+                        }
                     } label: {
-                        RunningSessionCard(run: run)
+                        if run.status == .completed {
+                            RunningHistoryCard(run: run)
+                        } else {
+                            RunningSessionCard(run: run)
+                        }
                     }
                 }
             }
