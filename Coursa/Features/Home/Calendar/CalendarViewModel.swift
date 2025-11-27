@@ -10,7 +10,6 @@ import Combine
 
 @MainActor
 final class CalendarViewModel: ObservableObject {
-    @Published var runs: [ScheduledRun] = []
     @Published var selectedDate: Date
     @Published var currentMonth: Date
     
@@ -20,59 +19,6 @@ final class CalendarViewModel: ObservableObject {
         let today = calendar.startOfDay(for: Date())
         self.selectedDate = today
         self.currentMonth = Self.monthStart(for: today, calendar: calendar)
-        load()
-    }
-    
-    //    func load() {
-    //        guard let data = OnboardingStore.load() else {
-    //            runs = []
-    //            return
-    //        }
-    //
-    //        let planVM = PlanViewModel(data: data)
-    //        if planVM.recommendedPlan == nil {
-    //            planVM.computeRecommendation()
-    //        }
-    //        if planVM.generatedPlan == nil {
-    //            planVM.generatePlan()
-    //        }
-    //
-    //        if let generated = planVM.generatedPlan {
-    //            runs = generated.runs.sorted { $0.date < $1.date }
-    //        } else {
-    //            runs = []
-    //        }
-    //
-    //        // Initial selection:
-    //        if let first = runs.first {
-    //            if runs.contains(where: { calendar.isDateInToday($0.date) }) {
-    //                selectedDate = calendar.startOfDay(for: Date())
-    //            } else {
-    //                selectedDate = calendar.startOfDay(for: first.date)
-    //            }
-    //            currentMonth = Self.monthStart(for: selectedDate, calendar: calendar)
-    //        }
-    //    }
-    
-    func load() {
-        // Load the same persisted plan used by PlanSessionStore / the rest of the app
-        let storedPlan = UserDefaultsPlanStore.shared.load()
-        
-        if let generated = storedPlan {
-            runs = generated.runs.sorted { $0.date < $1.date }
-        } else {
-            runs = []
-        }
-        
-        // Initial selection:
-        if let first = runs.first {
-            if runs.contains(where: { calendar.isDateInToday($0.date) }) {
-                selectedDate = calendar.startOfDay(for: Date())
-            } else {
-                selectedDate = calendar.startOfDay(for: first.date)
-            }
-            currentMonth = Self.monthStart(for: selectedDate, calendar: calendar)
-        }
     }
     
     // MARK: - Month helpers
@@ -91,23 +37,6 @@ final class CalendarViewModel: ObservableObject {
     func changeMonth(by value: Int) {
         guard let new = calendar.date(byAdding: .month, value: value, to: currentMonth) else { return }
         currentMonth = new
-        
-        // If selectedDate is not in this month, move selection to nearest run in this month
-        if !calendar.isDate(selectedDate, equalTo: new, toGranularity: .month) {
-            if let firstInMonth = runs.first(where: { calendar.isDate($0.date, equalTo: new, toGranularity: .month) }) {
-                selectedDate = calendar.startOfDay(for: firstInMonth.date)
-            }
-        }
-    }
-    
-    // MARK: - Runs
-    
-    func sessions(on date: Date) -> [ScheduledRun] {
-        runs.filter { calendar.isDate($0.date, inSameDayAs: date) }
-    }
-    
-    func hasRun(on date: Date) -> Bool {
-        runs.contains { calendar.isDate($0.date, inSameDayAs: date) }
     }
     
     // MARK: - Grid data
