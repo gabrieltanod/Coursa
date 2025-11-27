@@ -30,6 +30,14 @@ struct AppRootView: View {
                                 }
                                 .onAppear {
                                     planSession.bootstrapIfNeeded(using: existing)
+                                    
+                                    if UserDefaults.standard.bool(forKey: "showPlanGeneratedSheet") {
+                                        
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                            showPlanGeneratedSheet = true
+                                        }
+                                    }
+                                    
                                 }
                         } else {
                             let emptyData = OnboardingData()
