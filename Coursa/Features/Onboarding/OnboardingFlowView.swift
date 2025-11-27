@@ -6,7 +6,6 @@ struct OnboardingFlowView: View {
     @State private var showPlanReady = false
     @State private var showGenerating = false
     @State private var generatingProgress: Double = 0
-    @State private var showHealthPermission = false
 
     @ViewBuilder
     private var stepContent: some View {
@@ -41,9 +40,19 @@ struct OnboardingFlowView: View {
             ChooseStartDateStepView(onFinish: { date in
                 vm.setStartDate(date)
                 OnboardingStore.save(vm.data)
+                // Show generating overlay for ~2 seconds
+                generatingProgress = 0
+                showGenerating = true
                 
-                // Show HealthKit permission sheet
-                showHealthPermission = true
+                DispatchQueue.main.async {
+                    withAnimation(.linear(duration: 2.0)) {
+                        generatingProgress = 1
+                    }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    showGenerating = false
+                    onFinished(vm.data)
+                }
             })
             .padding(.horizontal, 24)
             .background(Color("black-500"))
@@ -81,23 +90,6 @@ struct OnboardingFlowView: View {
                     EmptyView()
                 }
             }
-        }
-        .sheet(isPresented: $showHealthPermission, onDismiss: {
-            // After health permission sheet dismissed, show generating overlay
-            generatingProgress = 0
-            showGenerating = true
-            
-            DispatchQueue.main.async {
-                withAnimation(.linear(duration: 2.0)) {
-                    generatingProgress = 1
-                }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                showGenerating = false
-                onFinished(vm.data)
-            }
-        }) {
-            HealthPermissionView()
         }
     }
 }
