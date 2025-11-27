@@ -108,13 +108,13 @@ struct StatCell: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
-                .fontWeight(.semibold)
+                .fontWeight(.regular)
                 .foregroundStyle(Color("white-500"))
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
             
             Text(value)
-                .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                .font(.custom("Helvetica Neue", size: 28, relativeTo: .title))
                 .fontWeight(.medium)
                 .foregroundStyle(Color("green-400"))
                 .lineLimit(1)
