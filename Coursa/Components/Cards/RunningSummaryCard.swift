@@ -10,7 +10,6 @@ import SwiftUI
 struct RunningSummaryCard: View {
     
     let run : ScheduledRun
-    
     private var title: String { run.template.name }
     
     private var dateText: String {
@@ -62,73 +61,65 @@ struct RunningSummaryCard: View {
         return String(format: "%d:%02d /km", minutes, seconds)
     }
     
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    
+    var columns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize {
+            return [GridItem(.flexible())]
+        } else {
+            return [GridItem(.flexible()), GridItem(.flexible())]
+        }
+    }
+    
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.custom("Helvetica Neue", size: 34, relativeTo: .largeTitle))
+                    .font(.custom("Helvetica Neue", size: 34))
                     .fontWeight(.medium)
-                    .foregroundStyle(Color("white-500"))
+                    .foregroundColor(Color("white-500"))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.4)
+                
                 Text(dateText)
-                    .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                    .font(.custom("Helvetica Neue", size: 17))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("black-100"))
             }
             .padding(.bottom, 10)
             
-            LazyVGrid(columns:
-                        [GridItem(.flexible(), alignment: .leading),
-                         GridItem(.flexible(), alignment: .leading)
-                        ], spacing: 16) {
+            LazyVGrid(columns: columns, spacing: 24) {
+                StatCell(title: "Duration", value: formattedDuration)
+                StatCell(title: "Distance", value: formattedDistance)
+                StatCell(title: "Average Pace", value: formattedPace)
+                StatCell(title: "Average HR", value: formattedAvgHR)
                 
-                // Durasi
-                VStack(alignment: .leading) {
-                    Text("Duration")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("white-500"))
-                    Text(formattedDuration)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color("green-400"))
-                }
-                
-                // Jarak
-                VStack(alignment: .leading) {
-                    Text("Distance")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("white-500"))
-                    Text(formattedDistance)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color("green-400"))
-                }
-                
-                // Average Pace
-                VStack(alignment: .leading) {
-                    Text("Average Pace")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("white-500"))
-                    Text(formattedPace)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color("green-400"))
-                }
-                
-                // Average HR
-                VStack(alignment: .leading) {
-                    Text("Average HR")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("white-500"))
-                    Text(formattedAvgHR)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color("green-400"))
-                }
             }
         }
+    }
+}
+
+struct StatCell: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                .fontWeight(.semibold)
+                .foregroundStyle(Color("white-500"))
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+            
+            Text(value)
+                .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                .fontWeight(.medium)
+                .foregroundStyle(Color("green-400"))
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

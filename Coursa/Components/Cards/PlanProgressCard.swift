@@ -14,7 +14,7 @@ struct PlanProgressCard: View {
     //    let weekTotal: Int
     let completedKm: Double
     let targetKm: Double
-
+    
     private var progressMessage: String {
         if progress == 0 {
             return "Kick Off Your Run"
@@ -24,11 +24,11 @@ struct PlanProgressCard: View {
             return "Almost There"
         }
     }
-
+    
     var percentText: String {
         "\(Int((progress * 100).rounded()))% of your goal"
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 20) {
@@ -58,17 +58,17 @@ struct PlanProgressCard: View {
                 // Right: text stack
                 VStack(alignment: .leading, spacing: 4) {
                     Text(progressMessage)
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color("green-500"))
+                        .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))                        .foregroundStyle(Color("green-500"))
                     
                     Text(title)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
+                        .fontWeight(.medium)
                         .foregroundStyle(Color("white-500"))
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
                     
                     Text(percentText)
-                        .font(.system(size: 13))
+                        .font(.custom("Helvetica Neue", size: 13, relativeTo: .footnote))
                         .foregroundStyle(Color("white-500").opacity(0.7))
                 }
             }
@@ -83,7 +83,7 @@ struct PlanProgressCard: View {
 extension Double {
     fileprivate var clean: String {
         truncatingRemainder(dividingBy: 1) == 0
-            ? String(format: "%.0f", self) : String(format: "%.1f", self)
+        ? String(format: "%.0f", self) : String(format: "%.1f", self)
     }
 }
 

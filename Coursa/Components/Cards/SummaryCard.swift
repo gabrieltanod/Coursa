@@ -9,17 +9,19 @@ import SwiftUI
 
 struct SummaryCard: View {
     let message: String
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8){
             Text("Summary")
-                .font(.custom("Helvetica Neue", size: 17))
+                .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
                 .fontWeight(.medium)
                 .foregroundColor(Color("white-500"))
+                .lineLimit(1)
             
             Text(message)
-                .font(.custom("Helvetica Neue", size: 15))
+                .font(.custom("Helvetica Neue", size: 15, relativeTo: .body))
                 .foregroundColor(Color("white-500"))
-                .fixedSize(horizontal: false, vertical: true) // Ensures text wraps
+                .fixedSize(horizontal: false, vertical: true)
             
         }
         .padding(16)
