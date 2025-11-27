@@ -236,16 +236,15 @@ struct StatisticsView: View {
         let topThree = Array(historyRuns.prefix(3))
         
         return VStack(alignment: .leading, spacing: 12) {
-            if !topThree.isEmpty {
-                HStack {
-                    Text("Recent Activity")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color("white-500"))
-                    
-                    Spacer()
-                    
+            HStack {
+                Text("Recent Activity")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(Color("white-500"))
+                
+                Spacer()
+                
+                if !topThree.isEmpty {
                     NavigationLink {
-                        // TODO: Hook this up to a full history screen (e.g. Plan history)
                         RunHistoryView()
                     } label: {
                         Text("See All")
@@ -253,7 +252,28 @@ struct StatisticsView: View {
                             .foregroundStyle(Color("white-500"))
                     }
                 }
-                
+            }
+            
+            if topThree.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 64, weight: .regular))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.9), Color.gray.opacity(0.7),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    Text("No Recent Activity")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+                }
+                .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 379)
+//                .padding(.vertical, 40)
+            } else {
                 ForEach(topThree) { run in
                     NavigationLink {
                         RunningSummaryView(run: run)
@@ -328,7 +348,7 @@ struct StatisticsView: View {
     
     /// Format seconds like "1:43:37" or "43:05"
     private func formatHMS(_ seconds: Int) -> String {
-        guard seconds > 0 else { return "0:00:00" }
+        guard seconds > 0 else { return "- -" }
         
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
@@ -406,7 +426,7 @@ struct StatisticsView: View {
     }
     
     private func formatPace(_ secondsPerKm: Double) -> String {
-        if secondsPerKm <= 0 { return "0:00/km" }
+        if secondsPerKm <= 0 { return "- -" }
         let minutes = Int(secondsPerKm) / 60
         let seconds = Int(secondsPerKm) % 60
         return String(format: "%d:%02d/km", minutes, seconds)

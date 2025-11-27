@@ -17,7 +17,11 @@ struct HomeView: View {
     @State private var showDynamicPlanCard = true
     @State private var showPlanSchedule = false
     @State private var showReviewSheet = false
-    private let calendar = Calendar.current
+    private var calendar: Calendar {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday
+        return cal
+    }
 
     var body: some View {
         ZStack {
