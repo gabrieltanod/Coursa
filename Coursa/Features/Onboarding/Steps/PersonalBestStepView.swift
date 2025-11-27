@@ -159,79 +159,68 @@ struct PersonalBestStepView: View {
         .sheet(
             isPresented: $showDurationWheel,
             content: {
-                NavigationStack {
-                    VStack {
-                        HStack(spacing: 4) {
-                            Picker("Hour", selection: $selectedHour) {
-                                ForEach(hours, id: \.self) { hour in
-                                    Text("\(hour)h")
-                                }
-                            }
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(width: 60)
-                            .onChange(of: selectedHour) { _ in
-                                durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
-                            }
-                            .onAppear {
-                                if selectedHour < 0 {
-                                    selectedHour = 1
-                                }
-                            }
-                            
-                            Text(":")
-                            
-                            Picker("Minute", selection: $selectedMinute) {
-                                ForEach(minutes, id: \.self) { min in
-                                    Text(String(format: "%02dm", min))
-                                }
-                            }
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(width: 100)
-                            .onChange(of: selectedMinute) { _ in
-                                durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
-                            }
-                            .onAppear {
-                                if selectedMinute < 0 {
-                                    selectedMinute = 1
-                                }
-                            }
-                            
-                            Text(":")
-                            
-                            Picker("Second", selection: $selectedSecond) {
-                                ForEach(seconds, id: \.self) { sec in
-                                    Text(String(format: "%02ds", sec))
-                                }
-                            }
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(width: 60)
-                            .onChange(of: selectedSecond) { _ in
-                                durationText =
-                                "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
-                            }
-                            .onAppear {
-                                if selectedSecond < 0 {
-                                    selectedSecond = 1
-                                }
+                VStack {
+                    HStack(spacing: 4) {
+                        Picker("Hour", selection: $selectedHour) {
+                            ForEach(hours, id: \.self) { hour in
+                                Text("\(hour)h")
                             }
                         }
-                        .labelsHidden()
-                    }
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                                showDurationWheel = false
-                            } label: {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(Color("white-500"))
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 60)
+                        .onChange(of: selectedHour) { _ in
+                            durationText =
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedHour < 0 {
+                                selectedHour = 1
+                            }
+                        }
+                        
+                        Text(":")
+                        
+                        Picker("Minute", selection: $selectedMinute) {
+                            ForEach(minutes, id: \.self) { min in
+                                Text(String(format: "%02dm", min))
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 100)
+                        .onChange(of: selectedMinute) { _ in
+                            durationText =
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedMinute < 0 {
+                                selectedMinute = 1
+                            }
+                        }
+                        
+                        Text(":")
+                        
+                        Picker("Second", selection: $selectedSecond) {
+                            ForEach(seconds, id: \.self) { sec in
+                                Text(String(format: "%02ds", sec))
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(width: 60)
+                        .onChange(of: selectedSecond) { _ in
+                            durationText =
+                            "\(selectedHour):\(String(format: "%02d", selectedMinute)):\(String(format: "%02d", selectedSecond))"
+                        }
+                        .onAppear {
+                            if selectedSecond < 0 {
+                                selectedSecond = 1
                             }
                         }
                     }
-                    .presentationDetents([.medium])
-                    .padding(24)
+                    .labelsHidden()
+                    
                 }
+                .presentationDetents([.medium])
+                .padding(24)
             }
         )
     }

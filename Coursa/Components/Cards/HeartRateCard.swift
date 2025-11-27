@@ -19,7 +19,7 @@ struct HeartRateCard: View {
             VStack (alignment: .leading, spacing: 12) {
                 HStack(alignment: .center, spacing: 5) {
                     Text("Heart rate zone")
-                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
+                        .font(.custom("Helvetica Neue", size: 20))
                         .fontWeight(.regular)
                         .foregroundStyle(Color("white-500"))
                     
@@ -27,13 +27,13 @@ struct HeartRateCard: View {
                         showingInfoHrZone.toggle()
                     } label: {
                         Image(systemName: "info.circle")
-                            .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                            .font(.custom("Helvetica Neue", size: 16))
                             .foregroundColor(.white)
                     }
                 }
                 
                 Text("See how much time you spent in each heart rate zone during your run.")
-                    .font(Font.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
+                    .font(Font.custom("Helvetica Neue", size: 15))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("black-200"))
                 

@@ -54,6 +54,7 @@ struct RunTemplate: Codable, Hashable, Identifiable, Equatable {
     var targetDistanceKm: Double?
     var targetHRZone: HRZone?
     var notes: String?
+    var recPace: Double?
 }
 
 enum RunStatus: String, Codable, Equatable, Hashable {
@@ -101,12 +102,12 @@ struct RunningPlan: Identifiable, Codable, Hashable{
     var targetDuration: Int?
     var targetDistance: Double?
     var targetHRZone: HRZone?
-    var recPace: String?
+    var recPace: Double?
     var userMaxHR: Double?  // Max heart rate calculated from user's age on iOS
 }
 
 extension RunningPlan {
-    init(from scheduledRun: ScheduledRun, recPace: String) {
+    init(from scheduledRun: ScheduledRun) {
         self.id = scheduledRun.id
         self.date = scheduledRun.date
         self.name = scheduledRun.template.name
@@ -114,7 +115,7 @@ extension RunningPlan {
         self.targetDuration = scheduledRun.template.targetDurationSec
         self.targetDistance = scheduledRun.template.targetDistanceKm
         self.targetHRZone = scheduledRun.template.targetHRZone
-        self.recPace = recPace
+        self.recPace = scheduledRun.template.recPace
     }
 }
 

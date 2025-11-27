@@ -20,7 +20,7 @@ struct PlanConnectDisplay: View {
     
     // Dummy Data
     let myPlan = RunningPlan(
-        date: Date(), name: "Easy Run", kind: .maf, targetDistance: 3.0 , targetHRZone: .z2, recPace: "7:30/KM"
+        date: Date(), name: "Easy Run", kind: .maf, targetDistance: 3.0 , targetHRZone: .z2, recPace: 450
     )
     
     var body: some View {

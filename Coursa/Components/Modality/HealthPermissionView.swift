@@ -117,12 +117,8 @@ struct HealthPermissionView: View {
         isRequesting = true
         HealthKitManager.shared.requestAuthorization()
         
-        // Delay to allow HealthKit dialog to show, then dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isRequesting = false
-            hasCompletedOnboarding = true
-            dismiss()
-        }
+        isRequesting = false
+        dismiss()
     }
 }
 

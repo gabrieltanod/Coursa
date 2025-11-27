@@ -51,12 +51,12 @@ struct GoalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12){
             Text("\(zoneInfo.title)")
-                .font(.custom("Helvetica Neue", size: 34, relativeTo: .largeTitle))
+                .font(.custom("Helvetica Neue", size: 34))
                 .bold()
                 .foregroundColor(Color("green-500"))
             
             Text("\(zoneInfo.caption)")
-                .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                .font(.custom("Helvetica Neue", size: 17))
                 .foregroundColor(Color("white-500"))
             
         }

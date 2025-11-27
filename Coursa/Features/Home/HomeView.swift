@@ -14,14 +14,10 @@ struct HomeView: View {
     @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
     @State private var showAdjustCard = true
-    @State private var showDynamicPlanCard: Bool = !UserDefaults.standard.bool(forKey: "dynamicPlanCardDismissed")
+    @State private var showDynamicPlanCard = true
     @State private var showPlanSchedule = false
     @State private var showReviewSheet = false
-    private var calendar: Calendar {
-        var cal = Calendar.current
-        cal.firstWeekday = 2 // Monday
-        return cal
-    }
+    private let calendar = Calendar.current
 
     var body: some View {
         ZStack {
@@ -357,7 +353,6 @@ struct HomeView: View {
 
                     Button(action: {
                         showDynamicPlanCard = false
-                        UserDefaults.standard.set(true, forKey: "dynamicPlanCardDismissed")
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
@@ -590,17 +585,9 @@ struct HomeView: View {
             } else {
                 ForEach(sessions) { run in
                     NavigationLink {
-                        if run.status == .completed {
-                            RunningSummaryView(run: run)
-                        } else {
-                            PlanDetailView(run: run)
-                        }
+                        PlanDetailView(run: run)
                     } label: {
-                        if run.status == .completed {
-                            RunningHistoryCard(run: run)
-                        } else {
-                            RunningSessionCard(run: run)
-                        }
+                        RunningSessionCard(run: run)
                     }
                     .simultaneousGesture(
                         TapGesture().onEnded {
@@ -614,20 +601,20 @@ struct HomeView: View {
 
     private func sendRunToWatch(_ run: ScheduledRun) {
         // Derive a simple recommended pace from the template if possible
-        let recPace: String
-        if let duration = run.template.targetDurationSec,
-            let distance = run.template.targetDistanceKm,
-            distance > 0
-        {
-            let secPerKm = Double(duration) / distance
-            let minutes = Int(secPerKm) / 60
-            let seconds = Int(secPerKm) % 60
-            recPace = String(format: "%d:%02d /km", minutes, seconds)
-        } else {
-            recPace = "Easy"
-        }
+//        let recPace: String
+//        if let duration = run.template.targetDurationSec,
+//            let distance = run.template.targetDistanceKm,
+//            distance > 0
+//        {
+//            let secPerKm = Double(duration) / distance
+//            let minutes = Int(secPerKm) / 60
+//            let seconds = Int(secPerKm) % 60
+//            recPace = String(format: "%d:%02d /km", minutes, seconds)
+//        } else {
+//            recPace = "Easy"
+//        }
 
-        let plan = RunningPlan(from: run, recPace: recPace)
+        let plan = RunningPlan(from: run)
         print("[HomeView] Sending plan to watch for run id: \(run.id)")
         syncService.sendPlanToWatchOS(plan: plan)
     }

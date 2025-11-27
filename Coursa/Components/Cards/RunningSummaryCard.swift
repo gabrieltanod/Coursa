@@ -66,11 +66,11 @@ struct RunningSummaryCard: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.custom("Helvetica Neue", size: 34, relativeTo: .largeTitle))
+                    .font(.custom("Helvetica Neue", size: 34))
                     .fontWeight(.medium)
                     .foregroundStyle(Color("white-500"))
                 Text(dateText)
-                    .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                    .font(.custom("Helvetica Neue", size: 17))
                     .fontWeight(.regular)
                     .foregroundStyle(Color("black-100"))
             }
@@ -84,11 +84,11 @@ struct RunningSummaryCard: View {
                 // Durasi
                 VStack(alignment: .leading) {
                     Text("Duration")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
+                        .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
                     Text(formattedDuration)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
+                        .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }
@@ -96,11 +96,11 @@ struct RunningSummaryCard: View {
                 // Jarak
                 VStack(alignment: .leading) {
                     Text("Distance")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
+                        .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
                     Text(formattedDistance)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
+                        .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }
@@ -108,11 +108,11 @@ struct RunningSummaryCard: View {
                 // Average Pace
                 VStack(alignment: .leading) {
                     Text("Average Pace")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
+                        .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
                     Text(formattedPace)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
+                        .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }
@@ -120,11 +120,11 @@ struct RunningSummaryCard: View {
                 // Average HR
                 VStack(alignment: .leading) {
                     Text("Average HR")
-                        .font(.custom("Helvetica Neue", size: 15, relativeTo: .subheadline))
+                        .font(.custom("Helvetica Neue", size: 15))
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
                     Text(formattedAvgHR)
-                        .font(.custom("Helvetica Neue", size: 28, relativeTo: .title2))
+                        .font(.custom("Helvetica Neue", size: 28))
                         .fontWeight(.medium)
                         .foregroundStyle(Color("green-400"))
                 }

@@ -16,7 +16,6 @@ struct AppRootView: View {
     @AppStorage("showPlanGeneratedSheet") var showPlanGeneratedSheet = false
     
     @State private var showSplash = true
-    @State private var showHealthPermission = false
     
     var body: some View {
         ZStack {
@@ -47,8 +46,6 @@ struct AppRootView: View {
                         } else {
                             WelcomeView {
                                 hasSeenWelcome = true
-                                // Show HealthKit permission after Welcome
-                                showHealthPermission = true
                             }
                         }
                     }
@@ -94,7 +91,10 @@ struct AppRootView: View {
                 }
             }
         }
-        .sheet(isPresented: $showHealthPermission) {
+        .sheet(isPresented: Binding(
+            get: { !showSplash && !hasCompletedOnboarding },
+            set: { _ in } // We don't set false here; OnboardingView updates the AppStorage
+        )) {
             HealthPermissionView()
         }
         

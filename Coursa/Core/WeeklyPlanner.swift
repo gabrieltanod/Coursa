@@ -33,7 +33,8 @@ enum WeeklyPlanner {
         weekStart: Date,
         selectedDays: Set<Int>,     // Calendar weekday ints, Mon=2 ... Sun=1
         frequency: Int,
-        totalZ2Minutes: Int
+        totalZ2Minutes: Int,
+        paceTargets: WeeklyPaceTargets
     ) -> [ScheduledRun] {
         let days = selectedDays.sorted()
         guard !days.isEmpty else { return [] }
@@ -57,7 +58,7 @@ enum WeeklyPlanner {
         for (idx, weekday) in days.enumerated() {
             let minutes = max(10, scaledMinutes[idx]) // clip to min duration
             let date = weekStart.dateForWeekday(weekday)
-            let tmpl = template(for: pattern[idx].kind, minutes: minutes)
+            let tmpl = template(for: pattern[idx].kind, minutes: minutes, paceTargets: paceTargets)
             result.append(ScheduledRun(date: date, template: tmpl))
         }
 
@@ -114,7 +115,7 @@ enum WeeklyPlanner {
         }
     }
 
-    private static func template(for kind: WeekSessionKind, minutes: Int) -> RunTemplate {
+    private static func template(for kind: WeekSessionKind, minutes: Int, paceTargets: WeeklyPaceTargets) -> RunTemplate {
         let sec = minutes * 60
 
         switch kind {
@@ -126,7 +127,8 @@ enum WeeklyPlanner {
                 targetDurationSec: sec,
                 targetDistanceKm: nil,
                 targetHRZone: .z2,
-                notes: "Relaxed Zone 2 effort. Focus on smooth form and controlled breathing."
+                notes: "Relaxed Zone 2 effort. Focus on smooth form and controlled breathing.",
+                recPace: paceTargets.easyPaceSeconds
             )
 
         case .long:
@@ -137,7 +139,8 @@ enum WeeklyPlanner {
                 targetDurationSec: sec,
                 targetDistanceKm: nil,
                 targetHRZone: .z2,
-                notes: "Extended Zone 2 session to build aerobic endurance and mental stamina."
+                notes: "Extended Zone 2 session to build aerobic endurance and mental stamina.",
+                recPace: paceTargets.longPaceSeconds
             )
 
         case .maf:
@@ -148,7 +151,8 @@ enum WeeklyPlanner {
                 targetDurationSec: sec,
                 targetDistanceKm: nil,
                 targetHRZone: .z2,
-                notes: "Steady Zone 2 run near aerobic threshold. Stay controlled and efficient."
+                notes: "Steady Zone 2 run near aerobic threshold. Stay controlled and efficient.",
+                recPace: paceTargets.mafPaceSeconds
             )
         }
     }

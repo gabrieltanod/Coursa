@@ -39,14 +39,30 @@ enum PlanMapper {
         let durationWeeks = selectedPlan == .halfMarathonPrep ? 10 : 8
         let totalSessions = frequency * durationWeeks
         let weekTemplate  = weekTemplate(for: selectedPlan, frequency: frequency)
+        let startDate     = data.startDate.mondayFloor()
         
-        let runs = makeSchedule(
+        let rawRuns = makeSchedule(
             template: weekTemplate,
-            startDate: data.startDate.mondayFloor(),               // monday-based
+            startDate: startDate,
             selectedDays: data.trainingPrefs.selectedDays,
             totalSessions: totalSessions
         )
-        return GeneratedPlan(plan: selectedPlan, runs: runs)
+        
+        let pacedRuns = rawRuns.map { run -> ScheduledRun in
+            var updatedRun = run
+            
+            let weekOffset = Calendar.current.dateComponents([.weekOfYear], from: startDate, to: run.date).weekOfYear ?? 0
+            let currentWeek = weekOffset + 1
+            
+            let targets = PaceRecommender.calculateTargets(currentWeek: currentWeek)
+            
+            let kind = run.template.kind
+            updatedRun.template.recPace = targets.pace(for: kind)
+            
+            return updatedRun
+        }
+        
+        return GeneratedPlan(plan: selectedPlan, runs: pacedRuns)
     }
     
     // === Manage Plan / schedule change (preserve past) ===
@@ -82,12 +98,21 @@ enum PlanMapper {
         
         // If we’re mid-week, still plan sessions >= today (preserve exact future boundary)
         while cursor < endLimit {
+            
+            let weekOffset = cal.dateComponents([.weekOfYear], from: planStart, to: cursor).weekOfYear ?? 0
+            let currentWeekNumber = weekOffset + 1
+            
+            // B. Get the paces specifically for THIS week (e.g. Week 5 is faster than Week 1)
+            let weeklyTargets = PaceRecommender.calculateTargets(currentWeek: currentWeekNumber)
+            
+            
             let nextWeekSessions = WeeklyPlanner.zone2Week(
                 weekStart: cursor,
                 selectedDays: newSelectedDays,
                 frequency: frequency,
                 // Seed: keep simple—use your previous typical total (~150min) for v1
-                totalZ2Minutes: WeeklyPlanner.defaultZ2MinutesSeed
+                totalZ2Minutes: WeeklyPlanner.defaultZ2MinutesSeed,
+                paceTargets: weeklyTargets
             )
             future += nextWeekSessions.filter { $0.date >= todayStart }
             cursor = cursor.addingWeeks(1)
@@ -106,6 +131,8 @@ enum PlanMapper {
         now: Date = Date(),
         onboarding: OnboardingData? = nil
     ) -> GeneratedPlan {
+        let cal = Calendar.current
+        
         // If already beyond 16 weeks, bail
         guard let first = existing.runs.first else { return existing }
         let planStart = first.date.mondayFloor()
@@ -165,17 +192,17 @@ enum PlanMapper {
         // - Undertrained or overreached -> overloadFactor = 1.0 (repeat week)
         // - Good progression (TRIMP within [1.0, 1.1] * lastWeekTRIMP) -> overloadFactor = 1.05
         // - Always respect +10% cap.
-        #if DEBUG
-            print("[ADAPT] Derived user params — age=\(age), gender=\(derivedGender), maxHR=\(Int(derivedMaxHR))")
-            let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
-            print("[ADAPT] Week \(fmt.string(from: closingWeekStart)) TRIMP=\(String(format: "%.2f", thisWeekTRIMP))")
-            if !lastWeekRuns.isEmpty {
-                print("[ADAPT] Prev Week \(fmt.string(from: lastWeekStart)) TRIMP=\(String(format: "%.2f", lastWeekTRIMP))")
-            } else {
-                print("[ADAPT] No previous week; baseline TRIMP=")
-            }
-        #endif
-
+#if DEBUG
+        print("[ADAPT] Derived user params — age=\(age), gender=\(derivedGender), maxHR=\(Int(derivedMaxHR))")
+        let fmt = DateFormatter(); fmt.dateFormat = "yyyy-MM-dd"
+        print("[ADAPT] Week \(fmt.string(from: closingWeekStart)) TRIMP=\(String(format: "%.2f", thisWeekTRIMP))")
+        if !lastWeekRuns.isEmpty {
+            print("[ADAPT] Prev Week \(fmt.string(from: lastWeekStart)) TRIMP=\(String(format: "%.2f", lastWeekTRIMP))")
+        } else {
+            print("[ADAPT] No previous week; baseline TRIMP=")
+        }
+#endif
+        
         let nextTarget = AdaptationEngine.nextWeekMinutes(
             lastWeekTRIMP: lastWeekTRIMP,
             thisWeekTRIMP: thisWeekTRIMP,
@@ -185,11 +212,18 @@ enum PlanMapper {
         
         // Write the NEXT week (the current Monday window)
         let nextWeekStart = closingWeekStart.addingWeeks(1)
+        
+        let weekOffset = cal.dateComponents([.weekOfYear], from: planStart, to: nextWeekStart).weekOfYear ?? 0
+        let planningWeek = weekOffset + 1
+        
+        let targetsForNextWeek = PaceRecommender.calculateTargets(currentWeek: planningWeek)
+        
         let nextWeek = WeeklyPlanner.zone2Week(
             weekStart: nextWeekStart,
             selectedDays: selectedDays,
             frequency: max(selectedDays.count, 1),
-            totalZ2Minutes: nextTarget
+            totalZ2Minutes: nextTarget,
+            paceTargets: targetsForNextWeek
         )
         
         // Merge: lock < nextWeekStart, replace future of that week only
@@ -215,7 +249,7 @@ private extension PlanMapper {
         
         let reliableNotesEasyRun: String = """
         The main purpose of the easy run is not speed, but volume and consistency. By running slowly, you stimulate key physiological adaptations:
-
+        
         • Capillarization: You grow more capillaries (tiny blood vessels) around your muscle fibers, improving oxygen and nutrient delivery, and waste removal.
         • Connective Tissue Strength: You safely strengthen your muscles, tendons, and ligaments to handle higher training loads later.
         """
@@ -323,3 +357,4 @@ private extension Date {
         Calendar.current.date(byAdding: .day, value: 7*n, to: self)!
     }
 }
+
