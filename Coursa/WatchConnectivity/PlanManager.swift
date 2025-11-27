@@ -139,7 +139,7 @@ class PlanManager: NSObject, ObservableObject {
     @Published var kind: RunKind?
     @Published var targetDistance: Double = 0.0
     @Published var targetHRZone: HRZone?
-    @Published var recPace: String = ""
+    @Published var recPace: Double = 0.0
     @Published var finalPlan: RunningPlan?
     var syncService: SyncService?
     var planSession: PlanSessionStore?

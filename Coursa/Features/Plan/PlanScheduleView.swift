@@ -60,15 +60,7 @@ private struct NoPlanPlaceholder: View {
         VStack(spacing: 12) {
             Image(systemName: "figure.run")
                 .font(.system(size: 56, weight: .regular))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.9), Color.gray.opacity(0.7),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.gray.opacity(0.8))
                 .padding(.bottom, 6)
 
             Text("No Plan")
@@ -102,8 +94,7 @@ private struct WeekGroup: Identifiable {
 }
 
 private func groupByWeek(_ runs: [ScheduledRun]) -> [WeekGroup] {
-    var cal = Calendar.current
-    cal.firstWeekday = 2 // Monday
+    let cal = Calendar.current
     let groups = Dictionary(grouping: runs) { run -> WeekKey in
         WeekKey(
             year: cal.component(.yearForWeekOfYear, from: run.date),

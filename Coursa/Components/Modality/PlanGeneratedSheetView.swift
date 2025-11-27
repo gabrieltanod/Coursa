@@ -68,6 +68,8 @@ struct PlanGeneratedSheetView: View {
                 Spacer()
                 
                 Button {
+                    UserDefaults.standard.set(false, forKey: "showPlanGeneratedSheet")
+                    
                     dismiss()
                 } label: {
                     Text("Continue")
@@ -79,9 +81,6 @@ struct PlanGeneratedSheetView: View {
                 .background(Color.white)
                 .cornerRadius(20)
                 .padding(.bottom, 40)
-                .offset(y: isAnimated ? 0 : 50)
-                .opacity(isAnimated ? 1 : 0)
-                .animation(.easeOut(duration: 0.6).delay(0.4), value: isAnimated)
                 
             }
             .frame(maxWidth: .infinity, alignment: .leading)

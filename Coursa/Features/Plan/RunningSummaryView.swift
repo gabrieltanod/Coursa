@@ -24,3 +24,26 @@ struct RunningSummaryView: View {
         .background(Color("black-500"))
     }
 }
+
+#Preview {
+    let mockTemplate = RunTemplate(
+        name: "Easy Run",
+        kind: .easy,
+        focus: .base,
+        targetDurationSec: 1800,
+        targetDistanceKm: nil,
+        targetHRZone: .z2,
+        notes: "Keep your heart rate steady and enjoy the view.", recPace: 450.0
+    )
+
+    let sampleRun = ScheduledRun(
+        id: UUID().uuidString,
+        date: Date(),
+        template: mockTemplate
+    )
+
+    NavigationView {
+        RunningSummaryView(run: sampleRun)
+            .environment(\.dynamicTypeSize, .accessibility5)
+    }
+}

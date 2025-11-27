@@ -634,7 +634,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
               let targetDistance = dictionary["targetDistance"] as? Double,
               let hrZoneRaw = dictionary["targetHRZone"] as? Int,
               let targetHRZone = HRZone(rawValue: hrZoneRaw),
-              let recPace = dictionary["recPace"] as? String
+              let recPace = dictionary["recPace"] as? Double
         else {
 #if os(watchOS)
             print(
@@ -811,7 +811,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             "targetDuration": plan.targetDuration ?? 0,
             "targetDistance": plan.targetDistance ?? 0.0,
             "targetHRZone": plan.targetHRZone?.rawValue ?? 0,
-            "recPace": plan.recPace ?? "",
+            "recPace": plan.recPace ?? 0.0,
             "timestamp": Date().timeIntervalSince1970
         ]
         

@@ -40,10 +40,11 @@ struct OnboardingFlowView: View {
             ChooseStartDateStepView(onFinish: { date in
                 vm.setStartDate(date)
                 OnboardingStore.save(vm.data)
-                // Show generating overlay for ~2 seconds
+                // Gimmick: show a generating overlay for ~2 seconds
                 generatingProgress = 0
                 showGenerating = true
                 
+                // Start progress animation on next runloop so the overlay is already visible
                 DispatchQueue.main.async {
                     withAnimation(.linear(duration: 2.0)) {
                         generatingProgress = 1

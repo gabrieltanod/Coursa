@@ -35,47 +35,52 @@ struct RunningHistoryCard: View {
                 // Left icon
                 Image(systemName: "figure.run")
                     .font(.system(size: 36, weight: .semibold))
-//                    .foregroundStyle(.white.opacity(isSkipped ? 0.5 : 0.9))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.9), Color.gray.opacity(0.7),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(.white.opacity(isSkipped ? 0.5 : 0.9))
 
                 // Main content
                 VStack(alignment: .leading, spacing: 6) {
                     Text(formattedDate)
-                        .font(.system(size: 13, weight: .light))
+                        .font(.custom("Helvetica Neue", size: 13, relativeTo: .footnote))
+                        .fontWeight(.medium)
                         .foregroundStyle(.white.opacity(0.72))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
 
                     Text(run.title)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
+                        .fontWeight(.medium)
                         .foregroundStyle(.white.opacity(isSkipped ? 0.7 : 1))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
 
                     HStack(spacing: 6) {
                         if let primaryMetricText {
                             Text(primaryMetricText)
+                                .font(.custom("Helvetica Neue", size: 14, relativeTo: .footnote))
+                                .fontWeight(.medium)
                         }
-                        Text("•")
+                        
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 3))
+                            .foregroundStyle(.white.opacity(0.5))
+
                         Text(averageHRText)
+                            .font(.custom("Helvetica Neue", size: 14, relativeTo: .footnote))
+                            .fontWeight(.medium)
                     }
-                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(.white.opacity(isSkipped ? 0.6 : 0.85))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.2)
                 }
 
                 Spacer()
 
-                // Right status indicator (line + chevron as in Figma)
                 RunHistoryIndicator(isSkipped: isSkipped)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
         }
-        .frame(maxWidth: .infinity, minHeight: 90, maxHeight: 96)
+        .frame(maxWidth: .infinity, minHeight: 90)
         .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
         .opacity(isSkipped ? 0.7 : 1)
     }

@@ -91,7 +91,6 @@ struct SettingsView: View {
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
-                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                         router.reset(hard: true, planSession: planSession)
                     } label: {
                         HStack {
@@ -104,106 +103,10 @@ struct SettingsView: View {
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.red.opacity(0.15))
+                                .fill(Color.white.opacity(0.04))
                         )
-                        .foregroundColor(.red)
                     }
                     .buttonStyle(.plain)
-                    
-                    Button {
-                        loadPaceRecommendationDebug()
-                    } label: {
-                        HStack {
-                            Image(systemName: "gauge.with.dots.needle.67percent")
-                                .font(.system(size: 18, weight: .semibold))
-                            Text("Test Pace Recommendation")
-                                .font(.system(size: 15, weight: .medium))
-                            Spacer()
-                        }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.green.opacity(0.15))
-                        )
-                        .foregroundColor(.green)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Simulation buttons for testing pace updates
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Test Pace Updates")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color("white-500").opacity(0.5))
-                        
-                        HStack(spacing: 8) {
-                            // Fast run
-                            Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 420, zone2Percentage: 0.80)
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "hare.fill")
-                                        .font(.system(size: 16))
-                                    Text("Fast Run")
-                                        .font(.system(size: 11, weight: .medium))
-                                    Text("7:00/km")
-                                        .font(.system(size: 10))
-                                        .opacity(0.7)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.blue.opacity(0.15))
-                                )
-                                .foregroundColor(.blue)
-                            }
-                            
-                            // Slow run
-                            Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 540, zone2Percentage: 0.75)
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "tortoise.fill")
-                                        .font(.system(size: 16))
-                                    Text("Slow Run")
-                                        .font(.system(size: 11, weight: .medium))
-                                    Text("9:00/km")
-                                        .font(.system(size: 10))
-                                        .opacity(0.7)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.orange.opacity(0.15))
-                                )
-                                .foregroundColor(.orange)
-                            }
-                            
-                            // Poor Z2
-                            Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 450, zone2Percentage: 0.40)
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .font(.system(size: 16))
-                                    Text("Poor Z2")
-                                        .font(.system(size: 11, weight: .medium))
-                                    Text("40%")
-                                        .font(.system(size: 10))
-                                        .opacity(0.7)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.red.opacity(0.15))
-                                )
-                                .foregroundColor(.red)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
                     
 //                    Button {
 //                        setupScenario2()
@@ -288,20 +191,5 @@ private extension SettingsView {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             selectedTab = 0  // Plan tab
         }
-    }
-    
-    func loadPaceRecommendationDebug() {
-        print("🏃 Loading Pace Recommendation Debug Data...")
-        
-        // Load the debug data
-        planSession.loadPaceRecommendationDebugData()
-        
-        // Switch to the Plan tab to see the runs
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            selectedTab = 0  // Plan tab (HomeView)
-        }
-        
-        print("✅ Navigate to 'Today's Easy Run' detail page to see the recommended pace!")
-        print("📊 Expected: ~8:10/km (based on historical 8:00/km average + 10 sec buffer)")
     }
 }

@@ -57,14 +57,14 @@ struct ZoneBar: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                .font(.custom("Helvetica Neue", size: 16))
                 .foregroundColor(seconds > 0 ? (isHighest ? Color("black-500") : .white)  : Color("black-300"))
             
             Spacer()
             
             if seconds > 0 {
                 Text(formatSeconds(seconds))
-                    .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                    .font(.custom("Helvetica Neue", size: 16))
                     .foregroundColor(isHighest ? Color("black-500") : .white)
             }
         }
@@ -153,7 +153,7 @@ struct ZoneBarsView: View {
                         )
                         
                         Text(percentageString(for: zone.seconds))
-                            .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                            .font(.custom("Helvetica Neue", size: 16))
                             .fontWeight(.medium)
                             .foregroundStyle(zone.seconds > 0 ? .white : Color("black-300"))
                             .frame(width: 45, alignment: .leading)
