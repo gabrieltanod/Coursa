@@ -11,28 +11,26 @@ struct GoalCard: View {
     let run: ScheduledRun
     
     private var maxHeartRate: Double {
-        // Load user's age from OnboardingStore and calculate their maxHR
         if let onboardingData = OnboardingStore.load() {
             return TRIMP.maxHeartRate(fromAge: onboardingData.personalInfo.age)
         } else {
-            return 190.0  // fallback if no onboarding data
+            return 190.0
         }
     }
     
-    private var calculatedZone: Int {
-        let percentage: Double = (Double(run.actual.avgHR ?? 0) / maxHeartRate) * 100
+    private var longestZone: Int {
+        let zones = run.actual.zoneDuration
+        guard !zones.isEmpty else { return 1 }
         
-        switch percentage {
-        case ..<60.0: return 1
-        case 60.0..<70.0: return 2
-        case 70.0..<80.0: return 3
-        case 80.0..<90.0: return 4
-        default: return 5
+        if let maxZone = zones.max(by: { $0.value < $1.value })?.key {
+            return maxZone
         }
+        
+        return 1
     }
     
     private var zoneInfo: (title: String, caption: AttributedString) {
-        switch calculatedZone {
+        switch longestZone {
         case 1:
             return ("Goal Achieved!", "Awesome job! You spent most of your run in Zone 1, keeping your effort light and easy. A great base, ease into Zone 2 when you’re ready.")
         case 2:
@@ -51,12 +49,14 @@ struct GoalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12){
             Text("\(zoneInfo.title)")
-                .font(.custom("Helvetica Neue", size: 34))
-                .bold()
+                .font(.custom("Helvetica Neue", size: 34, relativeTo: .largeTitle))
+                .fontWeight(.bold)
                 .foregroundColor(Color("green-500"))
+                .lineLimit(2)
+                .minimumScaleFactor(0.4)
             
             Text("\(zoneInfo.caption)")
-                .font(.custom("Helvetica Neue", size: 17))
+                .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
                 .foregroundColor(Color("white-500"))
             
         }
@@ -72,3 +72,4 @@ struct GoalCard: View {
         )
     }
 }
+

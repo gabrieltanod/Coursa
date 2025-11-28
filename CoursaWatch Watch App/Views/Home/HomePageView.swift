@@ -25,7 +25,7 @@ struct HomePageView: View {
     @State private var finalRunningSummary: RunningSummary?
     
     @EnvironmentObject var syncService: SyncService
-
+    
     var body: some View {
         Group {
             switch appState {
@@ -34,7 +34,6 @@ struct HomePageView: View {
                 NavigationStack(path: $navPath) {
                     ScrollView {
                         VStack(alignment: .leading) {
-                            
                             // Debug indicator for session state
                             Text("Coursa")
                                 .foregroundColor(syncService.isSessionActivated ? .green : .orange)
@@ -42,7 +41,7 @@ struct HomePageView: View {
                                 .padding(.bottom, 8)
                             
                             Text("TODAY PLAN")
-                                .font(.helveticaNeue(size: 13, weight: .regular))
+                                .font(.custom("Helvetica Neue", size: 13))
                                 .padding(.bottom, 4)
                             
                             if let plan = syncService.plan {
@@ -58,7 +57,7 @@ struct HomePageView: View {
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("UPCOMING PLAN")
-                                    .font(.helveticaNeue(size: 13, weight: .regular))
+                                    .font(.custom("Helvetica Neue", size: 13))
                                     .padding(.bottom, 4)
                             }
                             .padding(.bottom, 40)
@@ -91,9 +90,12 @@ struct HomePageView: View {
                 
             case .summary:
                 if let summaryData = finalRunningSummary {
+                    
+                    let bestPlan = syncService.plan ?? workoutManager.currentPlan
+                    
                     SummaryPageView(
                         appState: $appState,
-                        viewModel: SummaryPageViewModel(summary: summaryData, currentPlan: workoutManager.currentPlan),
+                        viewModel: SummaryPageViewModel(summary: summaryData, currentPlan: bestPlan),
                         workoutManager: workoutManager
                     )
                 } else {
@@ -106,6 +108,17 @@ struct HomePageView: View {
         .onAppear {
             workoutManager.requestAuthorization()
             workoutManager.syncService = syncService
+        }
+        .onReceive(syncService.$plan) { newPlan in
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("OpenPlanDetails"))) { notification in
+            if let planId = notification.userInfo?["planId"] as? String,
+               let plan = syncService.plan,
+               plan.id == planId {
+                print("watchOS: Received OpenPlanDetails command for plan: \(plan.name)")
+                // Navigate to plan details
+                navPath.append(NavigationRoute.workoutDetail(plan))
+            }
         }
     }
 }

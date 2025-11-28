@@ -13,11 +13,61 @@ struct HomeView: View {
     @EnvironmentObject private var planSession: PlanSessionStore
     @EnvironmentObject private var syncService: SyncService
     @State private var selectedWeekIndex: Int = 0
-    @State private var showAdjustCard = true
-    @State private var showDynamicPlanCard = true
+    // Removed constant showAdjustCard - now computed based on week completion + 2h buffer
+    @State private var showDynamicPlanCard: Bool = !UserDefaults.standard.bool(forKey: "dynamicPlanCardDismissed")
     @State private var showPlanSchedule = false
     @State private var showReviewSheet = false
-    private let calendar = Calendar.current
+    private var calendar: Calendar {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday
+        return cal
+    }
+    
+    /// Key for tracking if user dismissed the adjust card for the current week
+    private var currentWeekKey: String {
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-ww" // Year and week number
+        return formatter.string(from: now)
+    }
+    
+    /// Show adjust card only if:
+    /// 1. Last run of previous week was completed
+    /// 2. More than 2 hours have passed since that completion
+    /// 3. User hasn't dismissed it for this week
+    private var shouldShowAdjustCard: Bool {
+        // Check if user already dismissed for this week
+        if UserDefaults.standard.bool(forKey: "adjustCardDismissed_\(currentWeekKey)") {
+            return false
+        }
+        
+        let now = Date()
+        guard let thisWeekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start else {
+            return false
+        }
+        
+        // Get last week's start
+        guard let lastWeekStart = calendar.date(byAdding: .day, value: -7, to: thisWeekStart) else {
+            return false
+        }
+        
+        // Get runs from last week
+        let lastWeekRuns = planSession.allRuns.filter { run in
+            run.date >= lastWeekStart && run.date < thisWeekStart
+        }.sorted { $0.date < $1.date }
+        
+        // Find the last (latest-dated) run of last week
+        guard let lastRun = lastWeekRuns.last,
+              lastRun.status == .completed else {
+            return false // Last run of week not completed yet
+        }
+        
+        // Check if 2 hours have passed since completion
+        let twoHoursInSeconds: TimeInterval = 2 * 60 * 60
+        let timeSinceCompletion = now.timeIntervalSince(lastRun.date)
+        
+        return timeSinceCompletion >= twoHoursInSeconds
+    }
 
     var body: some View {
         ZStack {
@@ -44,20 +94,19 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
-                        if showAdjustCard {
+                        if shouldShowAdjustCard {
                             SmallCard {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Improve your plan")
-                                        .font(
-                                            .system(size: 20, weight: .medium)
-                                        )
+                                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
+                                        .fontWeight(.medium)
                                         .foregroundColor(Color("white-500"))
 
                                     Text(
                                         "We adapt your plan to better fit your performance. These changes will assist you for next week’s plan. Take a quick moment to review and confirm."
                                     )
-                                    .lineLimit(4)
-                                    .font(.system(size: 15))
+                                    .font(.custom("Helvetica Neue", size: 15, relativeTo: .body))
+                                    .fontWeight(.medium)
                                     .foregroundColor(
                                         Color("white-700")
                                     )
@@ -67,7 +116,8 @@ struct HomeView: View {
                                         showReviewSheet = true
                                     }) {
                                         Text("Review Now")
-                                            .font(.system(size: 15, weight: .medium))
+                                            .font(.custom("Helvetica Neue", size: 15, relativeTo: .body))
+                                            .fontWeight(.medium)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 12)
                                             .padding(.horizontal, 16)
@@ -270,12 +320,14 @@ struct HomeView: View {
                                     planSession.generatedPlan = adaptedPlan
 
                                     // Hide the card after confirming
-                                    showAdjustCard = false
+                                    // Card dismissed after adjustment - persist dismissal
+                                    UserDefaults.standard.set(true, forKey: "adjustCardDismissed_\(currentWeekKey)")
                                     showReviewSheet = false
                                 },
                                 onKeepCurrent: {
                                     // Keep existing plan, just hide the card
-                                    showAdjustCard = false
+                                    // Card dismissed when keeping current plan - persist dismissal
+                                    UserDefaults.standard.set(true, forKey: "adjustCardDismissed_\(currentWeekKey)")
                                     showReviewSheet = false
                                 },
                                 recommendedDistanceKm: performance.recommendedDistanceKm,
@@ -346,16 +398,19 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     Text("Dynamic Plan")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
+                        .fontWeight(.semibold)
                         .foregroundStyle(Color("white-500"))
 
                     Spacer()
 
                     Button(action: {
                         showDynamicPlanCard = false
+                        UserDefaults.standard.set(true, forKey: "dynamicPlanCardDismissed")
                     }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+                            .fontWeight(.semibold)
                             .foregroundColor(Color("white-500"))
                             .padding(4)
                     }
@@ -365,7 +420,8 @@ struct HomeView: View {
                 Text(
                     "We will adjust your plan according to your weekly performance. This feature will equip you with the best fitted plan for your next run!"
                 )
-                .font(.system(size: 15, weight: .regular))
+                .font(.custom("Helvetica Neue", size: 15, relativeTo: .body))
+                .fontWeight(.regular)
                 .foregroundColor(Color("white-700"))
                 .fixedSize(horizontal: false, vertical: true)
             }
@@ -498,19 +554,9 @@ struct HomeView: View {
             return []
         }
 
-        // Shift both to Monday
-        let startOfFirstWeek =
-            calendar.nextDate(
-                after: rawStart,
-                matching: DateComponents(weekday: 2),
-                matchingPolicy: .nextTimePreservingSmallerComponents
-            ) ?? rawStart
-        let startOfLastWeek =
-            calendar.nextDate(
-                after: rawEnd,
-                matching: DateComponents(weekday: 2),
-                matchingPolicy: .nextTimePreservingSmallerComponents
-            ) ?? rawEnd
+        // Since calendar.firstWeekday = 2 (Monday), dateInterval already gives us Monday
+        let startOfFirstWeek = rawStart
+        let startOfLastWeek = rawEnd
 
         var weeks: [[Date]] = []
         var currentWeekStart = startOfFirstWeek
@@ -585,9 +631,17 @@ struct HomeView: View {
             } else {
                 ForEach(sessions) { run in
                     NavigationLink {
-                        PlanDetailView(run: run)
+                        if run.status == .completed {
+                            RunningSummaryView(run: run)
+                        } else {
+                            PlanDetailView(run: run)
+                        }
                     } label: {
-                        RunningSessionCard(run: run)
+                        if run.status == .completed {
+                            RunningHistoryCard(run: run)
+                        } else {
+                            RunningSessionCard(run: run)
+                        }
                     }
                     .simultaneousGesture(
                         TapGesture().onEnded {

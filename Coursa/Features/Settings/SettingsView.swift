@@ -84,13 +84,14 @@ struct SettingsView: View {
 
                 Spacer()
 
-//                #if DEBUG
+                #if DEBUG
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Debug")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
+                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                         router.reset(hard: true, planSession: planSession)
                     } label: {
                         HStack {
@@ -103,8 +104,9 @@ struct SettingsView: View {
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.white.opacity(0.04))
+                                .fill(Color.red.opacity(0.15))
                         )
+                        .foregroundColor(.red)
                     }
                     .buttonStyle(.plain)
                     
@@ -202,26 +204,8 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    
-//                    Button {
-//                        setupScenario2()
-//                    } label: {
-//                        HStack {
-//                            Image(systemName: "play.circle.fill")
-//                                .font(.system(size: 18, weight: .semibold))
-//                            Text("Scenario 2")
-//                                .font(.system(size: 15, weight: .medium))
-//                            Spacer()
-//                        }
-//                        .padding(12)
-//                        .background(
-//                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-//                                .fill(Color.white.opacity(0.04))
-//                        )
-//                    }
-//                    .buttonStyle(.plain)
                 }
-//                #endif
+                #endif
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)

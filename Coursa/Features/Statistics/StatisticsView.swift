@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct StatisticsView: View {
-    
+
     @EnvironmentObject private var planSession: PlanSessionStore
     @State private var showAerobicInfo = false
-    
+
     var body: some View {
         ZStack {
             Color("black-500")
                 .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Statistics")
@@ -36,29 +36,29 @@ struct StatisticsView: View {
         .navigationTitle("Statistics")
         .foregroundStyle(Color.white)
     }
-    
+
     private var planProgressCard: some View {
         let allRuns = planSession.allRuns.sorted { $0.date < $1.date }
-        
+
         let totalSessions = allRuns.count
         let completedOrSkippedSessions = allRuns.filter {
             $0.status == .completed || $0.status == .skipped
         }.count
-        
+
         let progress =
-        totalSessions == 0
-        ? 0
-        : Double(completedOrSkippedSessions) / Double(totalSessions)
-#if DEBUG
-        let statusCounts = Dictionary(grouping: allRuns, by: { $0.status })
-            .mapValues { $0.count }
-        print(
-            "[HomeView] planProgressCard – totalSessions: \(totalSessions), completedOrSkippedSessions: \(completedOrSkippedSessions), progress: \(progress), statusCounts: \(statusCounts)"
-        )
-#endif
-        
+            totalSessions == 0
+            ? 0
+            : Double(completedOrSkippedSessions) / Double(totalSessions)
+        #if DEBUG
+            let statusCounts = Dictionary(grouping: allRuns, by: { $0.status })
+                .mapValues { $0.count }
+            print(
+                "[HomeView] planProgressCard – totalSessions: \(totalSessions), completedOrSkippedSessions: \(completedOrSkippedSessions), progress: \(progress), statusCounts: \(statusCounts)"
+            )
+        #endif
+
         let completedKm =
-        allRuns
+            allRuns
             .filter { $0.status == .completed }
             .reduce(0.0) { sum, run in
                 if let d = run.actual.distanceKm {
@@ -69,14 +69,14 @@ struct StatisticsView: View {
                 }
                 return sum
             }
-        
+
         let targetKm =
-        allRuns
+            allRuns
             .compactMap { $0.template.targetDistanceKm }
             .reduce(0, +)
-        
+
         let title = planTitle(from: allRuns)
-        
+
         return PlanProgressCard(
             title: title,
             progress: progress,
@@ -85,12 +85,12 @@ struct StatisticsView: View {
         )
         .padding(.top, 20)
     }
-    
+
     private func planTitle(from runs: [ScheduledRun]) -> String {
         guard let focus = runs.first?.template.focus else {
             return "Your Plan"
         }
-        
+
         switch focus {
         case .base, .endurance:
             return "Endurance Plan"
@@ -100,16 +100,16 @@ struct StatisticsView: View {
             return "Your Plan"
         }
     }
-    
+
     private var weeklyMetricsRow: some View {
-        
+
         let allRuns = planSession.allRuns
             .filter { $0.status == .completed }
             .sorted { $0.date > $1.date }
-        
+
         let cal = Calendar.current
         let now = Date()
-        
+
         // Week ranges
         let thisWeekStart = cal.dateInterval(of: .weekOfYear, for: now)!.start
         let lastWeekStart = cal.date(
@@ -118,37 +118,37 @@ struct StatisticsView: View {
             to: thisWeekStart
         )!
         let lastWeekEnd = thisWeekStart
-        
+
         // Filter runs by week
         let thisWeekRuns = allRuns.filter { $0.date >= thisWeekStart }
         let lastWeekRuns = allRuns.filter {
             $0.date >= lastWeekStart && $0.date < lastWeekEnd
         }
-        
+
         // Compute average paces
         let thisWeekPaceSec = computeAveragePace(for: thisWeekRuns)
         let lastWeekPaceSec = computeAveragePace(for: lastWeekRuns)
-        
+
         // Format
         let thisWeekPaceText = formatPace(thisWeekPaceSec)
         let lastWeekPaceText = formatPace(lastWeekPaceSec)
-        
+
         let thisWeekZone2Seconds = totalZone2SecondsForWeek(offset: 0)
         let lastWeekZone2Seconds = totalZone2SecondsForWeek(offset: 1)
-        
+
         let thisWeekAerobicText = formatHMS(thisWeekZone2Seconds)
         let lastWeekAerobicText = formatHMS(lastWeekZone2Seconds)
-#if DEBUG
-        print("=== STATISTICS DEBUG ===")
-        print("This week runs: \(thisWeekRuns.count)")
-        print("Last week runs: \(lastWeekRuns.count)")
-        print("This week pace: \(thisWeekPaceText)")
-        print("Last week pace: \(lastWeekPaceText)")
-        print("This week Z2: \(thisWeekAerobicText)")
-        print("Last week Z2: \(lastWeekAerobicText)")
-        print("=========================")
-#endif
-        
+        #if DEBUG
+            print("=== STATISTICS DEBUG ===")
+            print("This week runs: \(thisWeekRuns.count)")
+            print("Last week runs: \(lastWeekRuns.count)")
+            print("This week pace: \(thisWeekPaceText)")
+            print("Last week pace: \(lastWeekPaceText)")
+            print("This week Z2: \(thisWeekAerobicText)")
+            print("Last week Z2: \(lastWeekAerobicText)")
+            print("=========================")
+        #endif
+
         // Calculate trends
         // For pace: lower is better (faster)
         let paceTrend: ComparisonTrend? = {
@@ -163,7 +163,7 @@ struct StatisticsView: View {
                 return .same
             }
         }()
-        
+
         // For aerobic time: higher is better (more time in zone 2)
         let aerobicTrend: ComparisonTrend? = {
             if thisWeekZone2Seconds == 0 && lastWeekZone2Seconds == 0 {
@@ -177,27 +177,31 @@ struct StatisticsView: View {
                 return .same
             }
         }()
-        
+
         var summaryMessage: String {
             switch (paceTrend, aerobicTrend) {
-                
+
             case (.better, .better):
-                return "Amazing job! You’ve managed to keep up both your aerobic and pace. Keep it this way and you’ll reach your goal in no time!"
-                
+                return
+                    "Amazing job! You’ve managed to keep up both your aerobic and pace. Keep it this way and you’ll reach your goal in no time!"
+
             case (.better, _):
-                return "You’ve increased your pace, but your aerobic time can be better. The first priority is to build your endurance first. Keep up the good work. "
-                
+                return
+                    "You’ve increased your pace, but your aerobic time can be better. The first priority is to build your endurance first. Keep up the good work. "
+
             case (_, .better):
-                return "Great job at increasing aerobic time, although you can put more effort in your pace. The first priority is to build your endurance first. Keep up the good work. "
-                
+                return
+                    "Great job at increasing aerobic time, although you can put more effort in your pace. The first priority is to build your endurance first. Keep up the good work. "
+
             case (.worse, .worse):
-                return "That week was fantastic for logging consistent work, even if your pace and aerobic time didn't show big jumps. Remember, sticking to the schedule is a huge win for building long-term fitness!"
-                
+                return
+                    "That week was fantastic for logging consistent work, even if your pace and aerobic time didn't show big jumps. Remember, sticking to the schedule is a huge win for building long-term fitness!"
+
             default:
                 return ""
             }
         }
-        
+
         return VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
                 MetricDetailCard(
@@ -207,7 +211,7 @@ struct StatisticsView: View {
                     footer: "Vs Last Week",
                     comparisonTrend: paceTrend
                 )
-                
+
                 MetricDetailCard(
                     title: "Aerobic Time",
                     primaryValue: thisWeekAerobicText,
@@ -218,7 +222,7 @@ struct StatisticsView: View {
                     comparisonTrend: aerobicTrend
                 )
             }
-            
+
             if !summaryMessage.isEmpty {
                 SummaryCard(message: summaryMessage)
             }
@@ -227,7 +231,7 @@ struct StatisticsView: View {
             aerobicInfoSheet
         }
     }
-    
+
     private var recentActivitySection: some View {
         let historyRuns = planSession.allRuns
             .filter { $0.status == .completed || $0.status == .skipped }
@@ -236,24 +240,50 @@ struct StatisticsView: View {
         let topThree = Array(historyRuns.prefix(3))
         
         return VStack(alignment: .leading, spacing: 12) {
-            if !topThree.isEmpty {
-                HStack {
-                    Text("Recent Activity")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color("white-500"))
-                    
-                    Spacer()
-                    
+            HStack {
+                Text("Recent Activity")
+                    .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color("white-500"))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                
+                Spacer()
+                
+                if !topThree.isEmpty {
                     NavigationLink {
-                        // TODO: Hook this up to a full history screen (e.g. Plan history)
                         RunHistoryView()
                     } label: {
                         Text("See All")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.custom("Helvetica Neue", size: 15, relativeTo: .callout))
+                            .fontWeight(.light)
                             .foregroundStyle(Color("white-500"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.4)
                     }
                 }
-                
+            }
+            
+            if topThree.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 64, weight: .regular))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.9),
+                                    Color.gray.opacity(0.7),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    Text("No Recent Activity")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+                }
+                .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 379)
+            } else {
                 ForEach(topThree) { run in
                     NavigationLink {
                         RunningSummaryView(run: run)
@@ -267,11 +297,11 @@ struct StatisticsView: View {
             }
         }
     }
-    
+
     private func totalZone2SecondsForWeek(offset: Int) -> Int {
         let calendar = Calendar.current
         let now = Date()
-        
+
         guard
             let thisWeekInterval = calendar.dateInterval(
                 of: .weekOfYear,
@@ -280,7 +310,7 @@ struct StatisticsView: View {
         else {
             return 0
         }
-        
+
         // Figure out which week we’re targeting
         let targetStart: Date
         if offset == 0 {
@@ -301,7 +331,7 @@ struct StatisticsView: View {
             }
             targetStart = interval.start
         }
-        
+
         guard
             let targetEnd = calendar.date(
                 byAdding: .day,
@@ -311,81 +341,85 @@ struct StatisticsView: View {
         else {
             return 0
         }
-        
+
         let interval = DateInterval(start: targetStart, end: targetEnd)
-        
+
         // Runs inside that week
         let weekRuns = planSession.allRuns.filter { interval.contains($0.date) }
-        
+
         // 🔑 Sum Zone 2 seconds from your friend’s zoneDuration dictionary
         let totalSecondsDouble = weekRuns.reduce(0.0) { partial, run in
             let z2 = run.actual.zoneDuration[2] ?? 0  // Zone 2 = key 2
             return partial + z2
         }
-        
+
         return Int(totalSecondsDouble)
     }
-    
+
     /// Format seconds like "1:43:37" or "43:05"
     private func formatHMS(_ seconds: Int) -> String {
         guard seconds > 0 else { return "0:00:00" }
-        
+
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         let secs = seconds % 60
-        
+
         if hours > 0 {
             return String(format: "%d:%02d:%02d", hours, minutes, secs)
         } else {
             return String(format: "%d:%02d", minutes, secs)
         }
     }
-    
+
     private func computeAveragePace(for runs: [ScheduledRun]) -> Double {
         let paceValues: [Double] = runs.compactMap { run in
             guard let distance = run.actual.distanceKm, distance > 0,
-                  let duration = run.actual.elapsedSec
+                let duration = run.actual.elapsedSec
             else {
                 return nil
             }
             return Double(duration) / distance  // seconds per km
         }
-        
+
         guard !paceValues.isEmpty else { return 0 }
         return paceValues.reduce(0, +) / Double(paceValues.count)
     }
-    
+
     private var aerobicInfoSheet: some View {
         NavigationStack {
             ZStack {
                 Color("black-500")
                     .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         Text("About Aerobic Training")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(Color("white-500"))
-                        
+
                         VStack(alignment: .leading, spacing: 12) {
                             Text("What is Zone 2?")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundStyle(Color("white-500"))
-                            
-                            Text("This is the amount of time you spent in your aerobic zone (or Zone 2). During this time, your effort level is moderate, you can still speak in full sentences but you're working hard enough to feel a benefit.")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color("white-700"))
-                                .lineSpacing(4)
-                            
+
+                            Text(
+                                "This is the amount of time you spent in your aerobic zone (or Zone 2). During this time, your effort level is moderate, you can still speak in full sentences but you're working hard enough to feel a benefit."
+                            )
+                            .font(.system(size: 16))
+                            .foregroundStyle(Color("white-700"))
+                            .lineSpacing(4)
+
                             Text("Benefits")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundStyle(Color("white-500"))
                                 .padding(.top, 8)
-                            
-                            Text("Training here is the single best way to increase your stamina, boost your energy efficiency, and protect against injury.")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color("white-700"))
-                                .lineSpacing(4)
+
+                            Text(
+                                "Training here is the single best way to increase your stamina, boost your energy efficiency, and protect against injury."
+                            )
+                            .font(.system(size: 16))
+                            .foregroundStyle(Color("white-700"))
+                            .lineSpacing(4)
                         }
                     }
                     .padding(24)
@@ -404,7 +438,7 @@ struct StatisticsView: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }
-    
+
     private func formatPace(_ secondsPerKm: Double) -> String {
         if secondsPerKm <= 0 { return "0:00/km" }
         let minutes = Int(secondsPerKm) / 60
@@ -415,10 +449,10 @@ struct StatisticsView: View {
 
 #Preview {
     let planSession = PlanSessionStore()
-#if DEBUG
-    planSession.loadDebugSampleDataForStatistics()
-#endif
-    
+    #if DEBUG
+        planSession.loadDebugSampleDataForStatistics()
+    #endif
+
     return NavigationStack {
         StatisticsView()
             .environmentObject(planSession)

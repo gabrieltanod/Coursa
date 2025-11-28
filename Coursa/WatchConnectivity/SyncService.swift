@@ -149,6 +149,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
     private var pendingRunningPlan: RunningPlan?
     private weak var planSession: PlanSessionStore?
     private var pendingStartCommand: String?
+    private var pendingOpenPlanDetailsCommand: RunningPlan?
 #endif
     
 #if os(watchOS)
@@ -650,7 +651,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         }
         
         // Decode optional userMaxHR
-        let userMaxHR = dictionary["userMaxHR"] as? Double
+        let userMaxHR = dictionary["userMaxHR"] as? Double ?? 190.0
         
         let decodedPlan = RunningPlan(
             id: id.uuidString,
@@ -787,6 +788,30 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             sendStartWorkoutCommand(planID: planID)
             pendingStartCommand = nil
         }
+        
+        if let plan = pendingOpenPlanDetailsCommand {
+            sendOpenPlanDetailsCommand(plan: plan)
+            pendingOpenPlanDetailsCommand = nil
+        }
+    }
+    
+    func sendOpenPlanDetailsCommand(plan: RunningPlan) {
+        // Queue command if not activated
+        guard session.activationState == .activated else {
+            print("iOS: Session not activated. Queueing open plan details command.")
+            pendingOpenPlanDetailsCommand = plan
+            return
+        }
+        
+        let data: [String: Any] = [
+            "command": "openPlanDetails",
+            "planId": plan.id
+        ]
+        
+        print("iOS: Sending open plan details command for plan: \(plan.name)")
+        session.sendMessage(data, replyHandler: nil) { error in
+            print("iOS: Error sending open plan details command: \(error.localizedDescription)")
+        }
     }
     
     private func sendRunningPlanData(plan: RunningPlan) {
@@ -803,6 +828,14 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
+        var finalMaxHR: Double = 190.0
+            if let storedHR = plan.userMaxHR {
+                finalMaxHR = storedHR
+            } else if let onboarding = OnboardingStore.load() {
+                // Recalculate if missing from the plan object
+                finalMaxHR = TRIMP.maxHeartRate(fromAge: onboarding.personalInfo.age)
+            }
+        
         let data: [String: Any] = [
             "id": plan.id,
             "date": plan.date,
@@ -812,7 +845,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             "targetDistance": plan.targetDistance ?? 0.0,
             "targetHRZone": plan.targetHRZone?.rawValue ?? 0,
             "recPace": plan.recPace ?? "",
-            "timestamp": Date().timeIntervalSince1970
+            "timestamp": Date().timeIntervalSince1970,
+            "userMaxHR": finalMaxHR
         ]
         
         // 2. Send Strategy: Fast (Message) -> Fallback (Context)
@@ -979,6 +1013,17 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
                 WorkoutManager.shared.endWorkout()
                 
                 return
+            }
+            
+            if command == "openPlanDetails", let planId = data["planId"] as? String {
+                print("watchOS: Handling openPlanDetails command for \(planId)")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("OpenPlanDetails"),
+                        object: nil,
+                        userInfo: ["planId": planId]
+                    )
+                }
             }
         }
         

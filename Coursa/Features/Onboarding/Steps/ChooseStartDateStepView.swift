@@ -127,21 +127,33 @@ struct ChooseStartDateStepView: View {
             }
         }
         .sheet(isPresented: $activeSheet) {
-            DatePicker(
-                "Start Date",
-                selection: selectedDateBinding,
-                in: Date()...,
-                displayedComponents: [.date]
-            )
-            .onAppear {
-                if selectedDate == nil {
-                    selectedDateBinding.wrappedValue = Date()
+            NavigationStack {
+                DatePicker(
+                    "Start Date",
+                    selection: selectedDateBinding,
+                    in: Date()...,
+                    displayedComponents: [.date]
+                )
+                .onAppear {
+                    if selectedDate == nil {
+                        selectedDateBinding.wrappedValue = Date()
+                    }
                 }
+                .datePickerStyle(.graphical)
+                .padding()
+                .cornerRadius(12)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            activeSheet = false
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color("white-500"))
+                        }
+                    }
+                }
+                .presentationDetents([.medium, .large])
             }
-            .datePickerStyle(.graphical)
-            .padding()
-            .cornerRadius(12)
-            .presentationDetents([.medium, .large])
         }
     }
 }

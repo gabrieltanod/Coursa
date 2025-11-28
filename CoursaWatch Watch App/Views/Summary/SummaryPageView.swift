@@ -37,10 +37,6 @@ struct SummaryPageView: View {
                 // Halaman 2: Heart Rate
                 SummaryHRPaceView(viewModel: viewModel)
                     .tag(1)
-                
-                // Halaman 2: Heart Rate
-                WorkoutSummaryView(workoutManager: workoutManager)
-                    .tag(2)
             }
             .tabViewStyle(.verticalPage)
             
