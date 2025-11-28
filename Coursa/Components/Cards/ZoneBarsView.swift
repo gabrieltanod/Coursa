@@ -18,24 +18,106 @@ struct ZoneBar: View {
     let seconds: Double
     let width: CGFloat
     let isHighest: Bool
+    let zoneIndex: Int
     
     // MARK: - Gradients
     var gradientHighest: LinearGradient {
-        let color1 = Color(red: 218/255, green: 255/255, blue: 2/255)
-        let color2 = Color(red: 131/255, green: 153/255, blue: 1/255)
-        
-        let stops: [Gradient.Stop] = [
-            .init(color: color1, location: -0.0296),
-            .init(color: color2, location: 1.1807),
-        ]
-        let startPoint: UnitPoint = .init(x: 1.0, y: 0.1)
-        let endPoint: UnitPoint = .init(x: 0.0, y: 0.9)
-        
-        return LinearGradient(
-            stops: stops,
-            startPoint: startPoint,
-            endPoint: endPoint
-        )
+        switch zoneIndex {
+        case 1:
+            // Zone 1: Blue gradient
+            // var(--Primary-Color-Gradient-Blue, linear-gradient(179deg, rgba(91, 147, 199, 0.70) 37.67%, rgba(51, 82, 111, 0.70) 177.63%))
+            let color1 = Color(red: 91/255, green: 147/255, blue: 199/255).opacity(0.70)
+            let color2 = Color(red: 51/255, green: 82/255, blue: 111/255).opacity(0.70)
+            
+            let stops: [Gradient.Stop] = [
+                .init(color: color1, location: 0.3767),
+                .init(color: color2, location: 1.7763),
+            ]
+            // 179deg is roughly top to bottom
+            let startPoint: UnitPoint = .top
+            let endPoint: UnitPoint = .bottom
+            
+            return LinearGradient(
+                stops: stops,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+            
+        case 2:
+            // Zone 2: Green gradient (Existing)
+            // var(--Primary-Color-Gradient-Green, linear-gradient(263deg, #DAFF02 -2.96%, #839901 118.07%))
+            let color1 = Color(red: 218/255, green: 255/255, blue: 2/255)
+            let color2 = Color(red: 131/255, green: 153/255, blue: 1/255)
+            
+            let stops: [Gradient.Stop] = [
+                .init(color: color1, location: -0.0296),
+                .init(color: color2, location: 1.1807),
+            ]
+            let startPoint: UnitPoint = .init(x: 1.0, y: 0.1)
+            let endPoint: UnitPoint = .init(x: 0.0, y: 0.9)
+            
+            return LinearGradient(
+                stops: stops,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+            
+        case 3:
+            // Zone 3: Orange gradient
+            // linear-gradient(90deg, #BF4321 0%, #FE582A 100%)
+            let color1 = Color(hex: "BF4321")
+            let color2 = Color(hex: "FE582A")
+            
+            let stops: [Gradient.Stop] = [
+                .init(color: color1, location: 0.0),
+                .init(color: color2, location: 1.0),
+            ]
+            let startPoint: UnitPoint = .leading
+            let endPoint: UnitPoint = .trailing
+            
+            return LinearGradient(
+                stops: stops,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+            
+        case 4, 5:
+            // Zone 4 & 5: Red gradient
+            // linear-gradient(90deg, #952426 0%, #FB3C3F 100%)
+            let color1 = Color(hex: "952426")
+            let color2 = Color(hex: "FB3C3F")
+            
+            let stops: [Gradient.Stop] = [
+                .init(color: color1, location: 0.0),
+                .init(color: color2, location: 1.0),
+            ]
+            let startPoint: UnitPoint = .leading
+            let endPoint: UnitPoint = .trailing
+            
+            return LinearGradient(
+                stops: stops,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+            
+        default:
+            // Fallback to green
+            let color1 = Color(red: 218/255, green: 255/255, blue: 2/255)
+            let color2 = Color(red: 131/255, green: 153/255, blue: 1/255)
+            
+            let stops: [Gradient.Stop] = [
+                .init(color: color1, location: -0.0296),
+                .init(color: color2, location: 1.1807),
+            ]
+            let startPoint: UnitPoint = .init(x: 1.0, y: 0.1)
+            let endPoint: UnitPoint = .init(x: 0.0, y: 0.9)
+            
+            return LinearGradient(
+                stops: stops,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+        }
     }
     
     var gradient: LinearGradient {
@@ -149,7 +231,8 @@ struct ZoneBarsView: View {
                             label: zone.label,
                             seconds: zone.seconds,
                             width: getWidth(seconds: zone.seconds, maxWidth: geometry.size.width - 45),
-                            isHighest: isHighest(zone)
+                            isHighest: isHighest(zone),
+                            zoneIndex: Int(zone.label.replacingOccurrences(of: "Zone ", with: "")) ?? 1
                         )
                         
                         Text(percentageString(for: zone.seconds))
@@ -162,5 +245,32 @@ struct ZoneBarsView: View {
             }
         }
         .frame(height: CGFloat(zones.count) * 37 + CGFloat(zones.count - 1) * 12)
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
