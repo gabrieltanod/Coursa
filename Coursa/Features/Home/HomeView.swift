@@ -506,19 +506,9 @@ struct HomeView: View {
             return []
         }
 
-        // Shift both to Monday
-        let startOfFirstWeek =
-            calendar.nextDate(
-                after: rawStart,
-                matching: DateComponents(weekday: 2),
-                matchingPolicy: .nextTimePreservingSmallerComponents
-            ) ?? rawStart
-        let startOfLastWeek =
-            calendar.nextDate(
-                after: rawEnd,
-                matching: DateComponents(weekday: 2),
-                matchingPolicy: .nextTimePreservingSmallerComponents
-            ) ?? rawEnd
+        // Since calendar.firstWeekday = 2 (Monday), dateInterval already gives us Monday
+        let startOfFirstWeek = rawStart
+        let startOfLastWeek = rawEnd
 
         var weeks: [[Date]] = []
         var currentWeekStart = startOfFirstWeek

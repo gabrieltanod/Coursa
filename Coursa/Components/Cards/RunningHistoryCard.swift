@@ -35,7 +35,16 @@ struct RunningHistoryCard: View {
                 // Left icon
                 Image(systemName: "figure.run")
                     .font(.system(size: 36, weight: .semibold))
-                    .foregroundStyle(.white.opacity(isSkipped ? 0.5 : 0.9))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.9),
+                                Color.gray.opacity(0.7),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
 
                 // Main content
                 VStack(alignment: .leading, spacing: 6) {
