@@ -650,7 +650,7 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
         }
         
         // Decode optional userMaxHR
-        let userMaxHR = dictionary["userMaxHR"] as? Double
+        let userMaxHR = dictionary["userMaxHR"] as? Double ?? 190.0
         
         let decodedPlan = RunningPlan(
             id: id.uuidString,
@@ -803,6 +803,14 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             return
         }
         
+        var finalMaxHR: Double = 190.0
+            if let storedHR = plan.userMaxHR {
+                finalMaxHR = storedHR
+            } else if let onboarding = OnboardingStore.load() {
+                // Recalculate if missing from the plan object
+                finalMaxHR = TRIMP.maxHeartRate(fromAge: onboarding.personalInfo.age)
+            }
+        
         let data: [String: Any] = [
             "id": plan.id,
             "date": plan.date,
@@ -812,7 +820,8 @@ class SyncService: NSObject, WCSessionDelegate, ObservableObject {
             "targetDistance": plan.targetDistance ?? 0.0,
             "targetHRZone": plan.targetHRZone?.rawValue ?? 0,
             "recPace": plan.recPace ?? "",
-            "timestamp": Date().timeIntervalSince1970
+            "timestamp": Date().timeIntervalSince1970,
+            "userMaxHR": finalMaxHR
         ]
         
         // 2. Send Strategy: Fast (Message) -> Fallback (Context)

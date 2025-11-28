@@ -40,13 +40,23 @@ class WorkoutManager: NSObject, ObservableObject{
         1: 0, 2: 0, 3: 0, 4: 0, 5: 0
     ]
     private var lastSampleDate: Date?
-    //    private var isWorkoutActive = false
     
     @Published var currentZone: Int = 1
     
-    private var userMaxHeartRate: Double {
-        // Use maxHR synced from iOS via RunningPlan, or fallback to 180
-        return currentPlan?.userMaxHR ?? 180.0
+    @Published var currentPlan: RunningPlan?
+
+    var syncService: SyncService?
+
+    var userMaxHeartRate: Double {
+        if let syncedMax = syncService?.plan?.userMaxHR {
+            return syncedMax
+        }
+        
+        if let localMax = currentPlan?.userMaxHR {
+            return localMax
+        }
+        
+        return 190.0
     }
     
     private var hapticTimer: Timer?
@@ -55,13 +65,10 @@ class WorkoutManager: NSObject, ObservableObject{
     @Published var isCountingDown = false
     @Published var countdownValue = 3
     @Published var isRunning = false
-    @Published var currentPlan: RunningPlan?
+    
     private var countdownTimer: Timer?
     
     @Published var showingSummary: Bool = false
-    
-    // SyncService - can be injected from environment or will use own instance
-    @Published var syncService: SyncService?
     
     // Lazy initialization of syncService if not provided
     private func getSyncService() -> SyncService {
@@ -172,13 +179,9 @@ class WorkoutManager: NSObject, ObservableObject{
             }
         }
         
-        // ... rest of your existing code (Timer cleanup, calculations, etc.) ...
-        
         // 3. Clean up timers
         hapticTimer?.invalidate()
         hapticTimer = nil
-        
-        // ... (Keep the rest of your calculation logic exactly the same) ...
         
         // 4. Validation
         let totalTime: TimeInterval
@@ -221,62 +224,6 @@ class WorkoutManager: NSObject, ObservableObject{
         
         return summary
     }
-    
-    //    func stopWorkoutAndReturnSummary() -> RunningSummary? {
-    //
-    //        workoutSession?.end()
-    //
-    //        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
-    //                self.workoutBuilder?.finishWorkout { (workout, error) in
-    //                    if success {
-    //                        print("Watch: ✅ Workout saved to HealthKit successfully.")
-    //                    } else {
-    //                        print("Watch: ❌ Failed to save workout: \(String(describing: error))")
-    //                    }
-    //                }
-    //            }
-    //
-    //        hapticTimer?.invalidate()
-    //        hapticTimer = nil
-    //
-    //        let endDate = Date()
-    //        let totalTime: TimeInterval
-    //        if let start = self.workoutStartDate {
-    //            totalTime = endDate.timeIntervalSince(start)
-    //        } else {
-    //            totalTime = 0
-    //        }
-    //
-    //        guard totalTime > 0 else {
-    //            print("[WorkoutManager] ⚠️ Total time is 0")
-    //            return nil
-    //        }
-    //
-    //        let runId = currentRunId ?? UUID().uuidString
-    //
-    //        let summary = RunningSummary(
-    //            id: runId,
-    //            totalTime: totalTime,
-    //            totalDistance: self.distance,
-    //            averageHeartRate: self.averageHeartRate,
-    //            averagePace: self.averagePace,
-    //            zoneDuration: zoneDurationTracker
-    //        )
-    //
-    //        print("Watch: 📤 Sending summary to iOS...")
-    //        sendSummaryToiOS(summary)
-    //
-    //        DispatchQueue.main.async {
-    //            self.finalSummary = summary
-    //            self.showingSummary = true
-    //            self.isRunning = false
-    //            self.isCountingDown = false
-    //        }
-    //
-    //        self.resetWorkoutData()
-    //
-    //        return summary
-    //    }
     
     func endWorkout() {
         print("Watch: WorkoutManager stopping session...")
@@ -362,17 +309,22 @@ class WorkoutManager: NSObject, ObservableObject{
         
         if newZone > 2 {
             if hapticTimer == nil {
+                
                 playHighZoneHaptic()
+                
                 hapticTimer = Timer.scheduledTimer(
-                    withTimeInterval: 5.0,
+                    withTimeInterval: 30.0,
                     repeats: true
                 ) { [weak self] _ in
                     self?.playHighZoneHaptic()
                 }
             }
         } else {
-            hapticTimer?.invalidate()
-            hapticTimer = nil
+            if hapticTimer != nil {
+                print("✅ Recovered to Safe Zone. Stopping Alerts.")
+                hapticTimer?.invalidate()
+                hapticTimer = nil
+            }
         }
     }
     
