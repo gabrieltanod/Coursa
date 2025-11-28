@@ -37,6 +37,7 @@ struct PlanDetailView: View {
 
     // Inside PlanDetailView struct
     @State private var showDuringRunView = false  // <--- ADD THIS
+    @State private var showWatchConfirmation = false
 
     @ObservedObject var syncService = SyncService.shared
     @State private var plan: RunningPlan?
@@ -183,15 +184,12 @@ struct PlanDetailView: View {
             if Calendar.current.isDate(plan?.date ?? Date.distantPast, inSameDayAs: Date()) {
                 VStack {
                     Button("Let's go!") {
-                        // 1. ✅ Clear previous summary so the sheet doesn't pop up immediately
                         syncService.summary = nil
-
-                        startCountdownSequence()
-
+                        
                         if let plan = plan {
-                            print("🚀 Starting run: \(plan.name)")
-                            syncService.sendPlanToWatchOS(plan: plan)
-                            syncService.sendStartWorkoutCommand(planID: plan.id)
+                            print("🚀 Preparing to start run: \(plan.name)")
+                            syncService.sendOpenPlanDetailsCommand(plan: plan)
+                            showWatchConfirmation = true
                         } else {
                             print("❌ No plan available to start.")
                         }
@@ -249,11 +247,24 @@ struct PlanDetailView: View {
         .fullScreenCover(isPresented: $showDuringRunView) {
             DuringRunView(syncService: syncService, plan: plan)
         }
+        .navigationDestination(isPresented: $showWatchConfirmation) {
+            if let plan = plan {
+                WatchConfirmationView(run: run, onStartRun: {
+                    showWatchConfirmation = false
+                    
+                    startCountdownSequence()
+                    
+                    print("🚀 Starting run: \(plan.name)")
+                    syncService.sendPlanToWatchOS(plan: plan)
+                    syncService.sendStartWorkoutCommand(planID: plan.id)
+                })
+                .navigationBarBackButtonHidden(true)
+            }
+        }
         .onChange(of: syncService.summary) { oldValue, newValue in
             if newValue != nil {
                 print("iOS: 🏁 Summary received! Closing 'During Run' screen...")
                 showDuringRunView = false
-                // Dismiss PlanDetailView to return to the main view
                 dismiss()
             }
         }
