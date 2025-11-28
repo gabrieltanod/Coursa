@@ -9,12 +9,13 @@ import SwiftUI
 
 struct SummaryHRPaceView: View {
     @ObservedObject var viewModel: SummaryPageViewModel
+    @EnvironmentObject var workoutManager: WorkoutManager
     
     private var currentZone: Int {
         let hr = Double(viewModel.formattedAverageHR) ?? 0
         
         // Use maxHR from synced plan if available, otherwise fallback
-        let maxHeartRate: Double = viewModel.currentPlan?.userMaxHR ?? 195.0
+        let maxHeartRate: Double = workoutManager.userMaxHeartRate
         
         guard maxHeartRate.isFinite && maxHeartRate > 0,
               hr.isFinite && hr >= 0 else { return 0 }

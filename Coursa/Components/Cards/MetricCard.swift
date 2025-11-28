@@ -84,9 +84,10 @@ struct MetricDetailCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text(title)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.custom("Helvetica Neue", size: 18, relativeTo: .headline))
                         .foregroundStyle(Color("white-700"))
                         .lineLimit(2, reservesSpace: true)
+                        .minimumScaleFactor(0.6)
                     
                     Spacer()
                     
@@ -104,8 +105,11 @@ struct MetricDetailCard: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(primaryValue)
-                        .font(.system(size: 30, weight: .medium))
+                        .font(.custom("Helvetica Neue", size: 30, relativeTo: .title))
                         .foregroundStyle(Color("white-500"))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.6)
+
                     
                     if let trend = comparisonTrend, trend != .same {
                         Image(systemName: trend == .better ? "arrow.up" : "arrow.down")
