@@ -259,7 +259,26 @@ struct StatisticsView: View {
                             .minimumScaleFactor(0.4)
                     }
                 }
-                
+
+            if topThree.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 64, weight: .regular))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.9), Color.gray.opacity(0.7),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    Text("No Recent Activity")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(Color("white-500"))
+                }
+                .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 379)
+            } else {
                 ForEach(topThree) { run in
                     NavigationLink {
                         RunningSummaryView(run: run)
@@ -272,6 +291,7 @@ struct StatisticsView: View {
                 }
             }
         }
+    }
     }
     
     private func totalZone2SecondsForWeek(offset: Int) -> Int {
