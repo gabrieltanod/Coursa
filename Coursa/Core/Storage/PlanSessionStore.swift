@@ -115,6 +115,10 @@ final class PlanSessionStore: ObservableObject {
         run.actual.avgHR = Int(summary.averageHeartRate)
         run.actual.avgPaceSecPerKm = Int(summary.averagePace)
         run.actual.zoneDuration = summary.zoneDuration
+        
+        // Update the date to reflect the actual start time
+        // Assuming 'now' is roughly when the run finished
+        run.date = Date().addingTimeInterval(-summary.totalTime)
 
         plan.runs[index] = run
 
