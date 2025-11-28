@@ -13,7 +13,7 @@ struct AppRootView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     
-    @AppStorage("showPlanGeneratedSheet") var showPlanGeneratedSheet = false
+    @State private var showPlanGeneratedSheet = false
     
     @State private var showSplash = true
     @State private var showHealthPermission = false
@@ -30,14 +30,12 @@ struct AppRootView: View {
                                 }
                                 .onAppear {
                                     planSession.bootstrapIfNeeded(using: existing)
-                                    
-                                    if UserDefaults.standard.bool(forKey: "showPlanGeneratedSheet") {
-                                        
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    if UserDefaults.standard.bool(forKey: "shouldShowPlanGeneratedSheet") {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                             showPlanGeneratedSheet = true
+                                            UserDefaults.standard.set(false, forKey: "shouldShowPlanGeneratedSheet")
                                         }
                                     }
-                                    
                                 }
                         } else {
                             let emptyData = OnboardingData()

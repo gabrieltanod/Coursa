@@ -6,7 +6,7 @@ struct OnboardingFlowView: View {
     @State private var showPlanReady = false
     @State private var showGenerating = false
     @State private var generatingProgress: Double = 0
-
+    
     @ViewBuilder
     private var stepContent: some View {
         switch vm.step {
@@ -50,15 +50,17 @@ struct OnboardingFlowView: View {
                     }
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    showGenerating = false
-                    onFinished(vm.data)
+                    UserDefaults.standard.set(true, forKey: "shouldShowPlanGeneratedSheet")
+                    withAnimation {
+                        onFinished(vm.data)
+                    }
                 }
             })
             .padding(.horizontal, 24)
             .background(Color("black-500"))
         }
     }
-
+    
     var body: some View {
         ZStack {
             // Main content based on current step
@@ -127,6 +129,6 @@ private struct GeneratingOverlay: View {
                 }
             }
             .padding(20)
-          }
+        }
     }
 }
