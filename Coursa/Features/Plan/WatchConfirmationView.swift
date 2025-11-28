@@ -66,17 +66,17 @@ struct WatchConfirmationView: View {
                 // Start Run button
                 Button(action: onStartRun) {
                     Text("Start Run")
+                        .padding(16)
                         .font(.custom("Helvetica Neue", size: 17, relativeTo: .body))
-                        .fontWeight(.semibold)
+                        .fontWeight(.medium)
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color(red: 0.78, green: 1.0, blue: 0.0))
-                        .cornerRadius(28)
+                        .background(Color("green-500"))
+                        .cornerRadius(20)
                 }
             }
+            .padding(.horizontal, 24)
         }
-//        .frame(width: 440, height: 956)
         .background(Color(red: 0.13, green: 0.12, blue: 0.12))
     }
 }

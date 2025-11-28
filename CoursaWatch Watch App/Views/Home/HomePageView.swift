@@ -109,5 +109,16 @@ struct HomePageView: View {
             workoutManager.requestAuthorization()
             workoutManager.syncService = syncService
         }
+        .onReceive(syncService.$plan) { newPlan in
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("OpenPlanDetails"))) { notification in
+            if let planId = notification.userInfo?["planId"] as? String,
+               let plan = syncService.plan,
+               plan.id == planId {
+                print("watchOS: Received OpenPlanDetails command for plan: \(plan.name)")
+                // Navigate to plan details
+                navPath.append(NavigationRoute.workoutDetail(plan))
+            }
+        }
     }
 }
