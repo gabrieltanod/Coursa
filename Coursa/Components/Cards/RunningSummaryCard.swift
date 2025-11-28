@@ -19,8 +19,8 @@ struct RunningSummaryCard: View {
                 .day(.defaultDigits)
                 .month(.abbreviated)
                 .year()
-                .hour()
-                .minute()
+//                .hour()
+//                .minute()
         )
     }
     
