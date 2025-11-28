@@ -43,18 +43,12 @@ struct RunningSessionCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(formattedDate)
-                        .font(.custom("Helvetica Neue", size: 13, relativeTo: .footnote))
-                        .fontWeight(.medium)
+                        .font(.system(size: 13, weight: .light))
                         .foregroundStyle(.white.opacity(0.95))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
 
                     Text(run.title)
-                        .font(.custom("Helvetica Neue", size: 20, relativeTo: .title3))
-                        .fontWeight(.medium)
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
 
                     HStack {
                         badge(run.subtitle)
@@ -64,13 +58,12 @@ struct RunningSessionCard: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
-                    .fontWeight(.semibold)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
             }
             .padding(.horizontal, 20)
         }
-        .frame(maxWidth: 392, minHeight: 109/*, maxHeight: 110*/)
+        .frame(maxWidth: 392, minHeight: 109, maxHeight: 110)
         .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
@@ -121,10 +114,8 @@ struct RunningSessionCard: View {
     @ViewBuilder
     private func badge(_ text: String) -> some View {
         Text(text)
-            .font(.custom("Helvetica Neue", size: 16, relativeTo: .body))
+            .font(.caption)
             .foregroundStyle(.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.4)
     }
 }
 
