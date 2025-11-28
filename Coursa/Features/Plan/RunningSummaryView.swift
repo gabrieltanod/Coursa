@@ -33,7 +33,7 @@ struct RunningSummaryView: View {
         targetDurationSec: 1800,
         targetDistanceKm: nil,
         targetHRZone: .z2,
-        notes: "Keep your heart rate steady and enjoy the view.", recPace: 450.0
+        notes: "Keep your heart rate steady and enjoy the view."
     )
 
     let sampleRun = ScheduledRun(
