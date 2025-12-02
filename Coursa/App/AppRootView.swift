@@ -62,7 +62,7 @@ struct AppRootView: View {
                 .navigationDestination(for: Route.self) { route in
                     switch route {
                     case .plan(let data):
-                        StatisticsView()
+                        StatisticsView(viewModel: StatisticsViewModel(planSession: planSession))
                     case .home:
                         HomeView()
                     case .coreApp(let data):

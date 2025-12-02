@@ -10,6 +10,7 @@ import SwiftUI
 struct CoreTabView: View {
     let onboardingData: OnboardingData
     @AppStorage("selectedTab") private var selectedTab: Int = 0
+    @EnvironmentObject var planSession: PlanSessionStore
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -22,7 +23,7 @@ struct CoreTabView: View {
             .tag(0)
 
             NavigationStack {
-                StatisticsView()
+                StatisticsView(viewModel: StatisticsViewModel(planSession: planSession))
             }
             .tabItem {
                 Label("Statistics", systemImage: "square.grid.2x2.fill")
