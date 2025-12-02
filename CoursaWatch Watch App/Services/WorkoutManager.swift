@@ -71,15 +71,15 @@ class WorkoutManager: NSObject, ObservableObject{
     @Published var showingSummary: Bool = false
     
     // Lazy initialization of syncService if not provided
-    private func getSyncService() -> SyncService {
-        if let service = syncService {
-            return service
-        }
-        // Create a new instance if not provided (fallback)
-        let service = SyncService()
-        syncService = service
-        return service
-    }
+//    private func getSyncService() -> SyncService {
+//        if let service = syncService {
+//            return service
+//        }
+//        // Create a new instance if not provided (fallback)
+//        let service = SyncService()
+//        syncService = service
+//        return service
+//    }
     
     // MARK: Authorization
     func requestAuthorization() {
