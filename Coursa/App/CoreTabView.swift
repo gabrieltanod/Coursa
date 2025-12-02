@@ -11,6 +11,7 @@ struct CoreTabView: View {
     let onboardingData: OnboardingData
     @AppStorage("selectedTab") private var selectedTab: Int = 0
     @EnvironmentObject var planSession: PlanSessionStore
+    @EnvironmentObject var router: AppRouter
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -31,7 +32,7 @@ struct CoreTabView: View {
             .tag(1)
             
             NavigationStack {
-                SettingsView()
+                SettingsView(viewModel: SettingsViewModel(router: router, planSession: planSession))
             }
             .tabItem {
                 Label("Settings", systemImage: "gearshape.fill")

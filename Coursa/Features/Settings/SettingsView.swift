@@ -9,52 +9,27 @@ import SwiftUI
 import HealthKit
 
 struct SettingsView: View {
+    @StateObject private var viewModel: SettingsViewModel
+    
+    // Keep these if they are needed for other child views or if we want to keep them available
+    // But since we moved logic to VM, we might not need them here directly if VM handles everything.
+    // However, `router` and `planSession` are passed to VM.
+    // `syncService` and `planManager` were unused in the View logic previously (only declared).
+    // We can keep them if we want to be safe, or remove if unused.
+    // Let's keep them as EnvironmentObjects to ensure they are available if child views need them implicitly,
+    // though explicit injection is better.
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject var planSession: PlanSessionStore
-    // WatchConnectivity + Plan manager from environment
     @EnvironmentObject private var syncService: SyncService
     @EnvironmentObject private var planManager: PlanManager
+    
     @AppStorage("selectedTab") private var selectedTab: Int = 0
     
-    // Local sheets for actions
-    private enum ActiveSheet: Identifiable {
-        case privacy
-        case healthConnected
-        
-        var id: String { String(describing: self) }
+    init(viewModel: SettingsViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
-    @State private var activeSheet: ActiveSheet?
 
     /// The main content view for the settings screen.
-    ///
-    /// This computed property returns a SwiftUI view hierarchy that displays the settings interface
-    /// with a dark theme and various configuration options for the user.
-    ///
-    /// ## Layout Structure
-    /// - **Background**: Full-screen dark background using "black-500" color
-    /// - **Header**: "Settings" title with large, semibold typography
-    /// - **Settings Cards**: Three interactive cards for different settings categories:
-    ///   - Apple Watch connectivity with pairing functionality
-    ///   - Apple Health integration with HealthKit authorization
-    ///   - Privacy policy access through a modal sheet
-    /// - **Debug Section**: Development-only reset functionality for testing
-    ///
-    /// ## Interactive Elements
-    /// - Tappable settings cards that trigger different actions (sheets, authorization requests)
-    /// - Sheet presentations for Apple Watch setup and privacy notes
-    /// - Debug reset button (DEBUG builds only) for clearing app state
-    ///
-    /// ## Data Flow
-    /// - Uses environment objects for navigation (AppRouter), sync services, and plan management
-    /// - Manages local state for sheet presentations through `ActiveSheet` enumeration
-    /// - Integrates with HealthKit for health data authorization
-    ///
-    /// ## Accessibility
-    /// - Supports dark color scheme preference
-    /// - Uses semantic colors that adapt to system settings
-    /// - Provides clear visual hierarchy with appropriate font weights and sizes
-    ///
-    /// - Returns: A SwiftUI `View` containing the complete settings interface
     var body: some View {
         ZStack {
             Color("black-500").ignoresSafeArea()
@@ -72,7 +47,7 @@ struct SettingsView: View {
                         title: "Apple Health",
                         subtitle: "Connect with Apple's Health app."
                     ) {
-                        handleHealthKitTap()
+                        viewModel.handleHealthKitTap()
                     }
 
                     SettingsCard(
@@ -81,7 +56,7 @@ struct SettingsView: View {
                         title: "Privacy Notes",
                         subtitle: "See how your data is utilized."
                     ) {
-                        activeSheet = .privacy
+                        viewModel.openPrivacyNotes()
                     }
                 }
 
@@ -94,8 +69,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color("white-500").opacity(0.6))
 
                     Button(role: .destructive) {
-                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                        router.reset(hard: true, planSession: planSession)
+                        viewModel.resetApp()
                     } label: {
                         HStack {
                             Image(systemName: "arrow.clockwise.circle.fill")
@@ -124,7 +98,7 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             // Fast run
                             Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 420, zone2Percentage: 0.80)
+                                viewModel.simulateRun(paceSecPerKm: 420, zone2Percentage: 0.80)
                             } label: {
                                 VStack(spacing: 4) {
                                     Image(systemName: "hare.fill")
@@ -146,7 +120,7 @@ struct SettingsView: View {
                             
                             // Slow run
                             Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 540, zone2Percentage: 0.75)
+                                viewModel.simulateRun(paceSecPerKm: 540, zone2Percentage: 0.75)
                             } label: {
                                 VStack(spacing: 4) {
                                     Image(systemName: "tortoise.fill")
@@ -168,7 +142,7 @@ struct SettingsView: View {
                             
                             // Poor Z2
                             Button {
-                                planSession.simulateCompletedRun(paceSecPerKm: 450, zone2Percentage: 0.40)
+                                viewModel.simulateRun(paceSecPerKm: 450, zone2Percentage: 0.40)
                             } label: {
                                 VStack(spacing: 4) {
                                     Image(systemName: "exclamationmark.triangle.fill")
@@ -197,7 +171,7 @@ struct SettingsView: View {
             .padding(.top, 16)
         }
         .preferredColorScheme(.dark)
-        .sheet(item: $activeSheet) { sheet in
+        .sheet(item: $viewModel.activeSheet) { sheet in
             switch sheet {
             case .privacy:
                 PrivacyNotesView()
@@ -211,71 +185,9 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(viewModel: SettingsViewModel(router: AppRouter(), planSession: PlanSessionStore()))
         .environmentObject(AppRouter())
         .environmentObject(SyncService.shared)
         .environmentObject(PlanManager())
         .preferredColorScheme(.dark)
-}
-
-// MARK: - Helpers
-private extension SettingsView {
-    func handleHealthKitTap() {
-        // Check if HealthKit is already authorized
-        let isAuth = HealthKitManager.shared.isAuthorized()
-        print("HealthKit isAuthorized: \(isAuth)")
-        
-        if isAuth {
-            // Show the connected view with instructions to disable via Settings
-            print("Showing HealthKit connected sheet")
-            DispatchQueue.main.async {
-                activeSheet = .healthConnected
-            }
-        } else {
-            print("Requesting HealthKit authorization")
-            // Request authorization
-            requestHealthKitAuthorization()
-        }
-    }
-    
-    func requestHealthKitAuthorization() {
-        // HealthKit is optional on device; guard capability first
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        let store = HKHealthStore()
-        // Minimal read/write types as placeholders; adjust as needed
-        let toShare: Set = [HKObjectType.workoutType()]
-        let toRead: Set = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
-        ]
-        store.requestAuthorization(toShare: toShare, read: toRead) { success, error in
-            if let error = error { print("HealthKit auth error: \(error)") }
-            print("HealthKit auth success: \(success)")
-        }
-    }
-    
-    func setupScenario2() {
-        // 1. Reset the router to prepare for navigation
-        router.path = NavigationPath()
-        
-        // 2. Set up mock onboarding data
-        let mockData = OnboardingStore.mock()
-        OnboardingStore.save(mockData)
-        
-        // 3. Mark onboarding as completed
-        router.didOnboard = true
-        UserDefaults.standard.set(true, forKey: "hasSeenWelcome")
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-        
-        // 4. Generate a plan with runs for today and next 2 days, plus some history
-//        planSession.loadScenario2Data()
-        
-        // 5. Bootstrap the plan session to ensure everything is properly set up
-        planSession.bootstrapIfNeeded(using: mockData)
-        
-        // 6. Switch to the Plan tab (HomeView) - Tab 0
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            selectedTab = 0  // Plan tab
-        }
-    }
 }
