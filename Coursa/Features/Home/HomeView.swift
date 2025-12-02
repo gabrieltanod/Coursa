@@ -696,7 +696,7 @@ private extension Date {
     let planSession = PlanSessionStore(
         planStore: UserDefaultsPlanStore.shared
     )
-    let syncService = SyncService()
+    let syncService = SyncService.shared
 
     NavigationStack {
         HomeView()

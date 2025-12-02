@@ -213,7 +213,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(AppRouter())
-        .environmentObject(SyncService())
+        .environmentObject(SyncService.shared)
         .environmentObject(PlanManager())
         .preferredColorScheme(.dark)
 }

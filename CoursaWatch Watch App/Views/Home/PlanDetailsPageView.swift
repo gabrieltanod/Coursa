@@ -31,7 +31,7 @@ struct PlanDetailsPageView: View {
     
     @State private var countdownStep: CountdownStep = .idle
     @EnvironmentObject var workoutManager: WorkoutManager
-    @StateObject private var syncService = SyncService()
+    @ObservedObject var syncService = SyncService.shared
     
     var body: some View {
         ZStack {
