@@ -17,8 +17,11 @@ struct SettingsView: View {
     @AppStorage("selectedTab") private var selectedTab: Int = 0
     
     // Local sheets for actions
-    private enum ActiveSheet: Identifiable { case privacy
-        var id: String { String(self.hashValue) }
+    private enum ActiveSheet: Identifiable {
+        case privacy
+        case healthConnected
+        
+        var id: String { String(describing: self) }
     }
     @State private var activeSheet: ActiveSheet?
 
@@ -69,7 +72,7 @@ struct SettingsView: View {
                         title: "Apple Health",
                         subtitle: "Connect with Apple's Health app."
                     ) {
-                        requestHealthKitAuthorization()
+                        handleHealthKitTap()
                     }
 
                     SettingsCard(
@@ -110,24 +113,7 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                     
-                    Button {
-                        loadPaceRecommendationDebug()
-                    } label: {
-                        HStack {
-                            Image(systemName: "gauge.with.dots.needle.67percent")
-                                .font(.system(size: 18, weight: .semibold))
-                            Text("Test Pace Recommendation")
-                                .font(.system(size: 15, weight: .medium))
-                            Spacer()
-                        }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.green.opacity(0.15))
-                        )
-                        .foregroundColor(.green)
-                    }
-                    .buttonStyle(.plain)
+                    
                     
                     // Simulation buttons for testing pace updates
                     VStack(alignment: .leading, spacing: 8) {
@@ -216,6 +202,9 @@ struct SettingsView: View {
             case .privacy:
                 PrivacyNotesView()
                     .presentationDetents([.medium, .large])
+            case .healthConnected:
+                HealthKitConnectedView()
+                    .presentationDetents([.medium, .large])
             }
         }
     }
@@ -224,13 +213,31 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(AppRouter())
-        .environmentObject(SyncService())
+        .environmentObject(SyncService.shared)
         .environmentObject(PlanManager())
         .preferredColorScheme(.dark)
 }
 
 // MARK: - Helpers
 private extension SettingsView {
+    func handleHealthKitTap() {
+        // Check if HealthKit is already authorized
+        let isAuth = HealthKitManager.shared.isAuthorized()
+        print("HealthKit isAuthorized: \(isAuth)")
+        
+        if isAuth {
+            // Show the connected view with instructions to disable via Settings
+            print("Showing HealthKit connected sheet")
+            DispatchQueue.main.async {
+                activeSheet = .healthConnected
+            }
+        } else {
+            print("Requesting HealthKit authorization")
+            // Request authorization
+            requestHealthKitAuthorization()
+        }
+    }
+    
     func requestHealthKitAuthorization() {
         // HealthKit is optional on device; guard capability first
         guard HKHealthStore.isHealthDataAvailable() else { return }
@@ -270,20 +277,5 @@ private extension SettingsView {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             selectedTab = 0  // Plan tab
         }
-    }
-    
-    func loadPaceRecommendationDebug() {
-        print("🏃 Loading Pace Recommendation Debug Data...")
-        
-        // Load the debug data
-        planSession.loadPaceRecommendationDebugData()
-        
-        // Switch to the Plan tab to see the runs
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            selectedTab = 0  // Plan tab (HomeView)
-        }
-        
-        print("✅ Navigate to 'Today's Easy Run' detail page to see the recommended pace!")
-        print("📊 Expected: ~8:10/km (based on historical 8:00/km average + 10 sec buffer)")
     }
 }
