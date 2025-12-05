@@ -115,13 +115,12 @@ struct HealthPermissionView: View {
     // MARK: - Actions
     func handleSetUp() {
         isRequesting = true
-        HealthKitManager.shared.requestAuthorization()
-        
-        // Delay to allow HealthKit dialog to show, then dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isRequesting = false
-            hasCompletedOnboarding = true
-            dismiss()
+        HealthKitManager.shared.requestAuthorization { success, error in
+            DispatchQueue.main.async {
+                self.isRequesting = false
+                self.hasCompletedOnboarding = true
+                self.dismiss()
+            }
         }
     }
 }

@@ -27,7 +27,7 @@ import SwiftUI
 //                let summary = RunningSummary(
 //                    id: testRunId,
 //                    totalTime: 1800,          // 30 min
-//                    totalDistance: 5.0,       // 5 km
+//                    totalDistance: 5.0,    w   // 5 km
 //                    averageHeartRate: 140,
 //                    averagePace: 360          // 6:00 / km
 //                )

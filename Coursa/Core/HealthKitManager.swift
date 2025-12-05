@@ -14,7 +14,7 @@ class HealthKitManager: NSObject, ObservableObject {
     static let shared = HealthKitManager()
     let healthStore = HKHealthStore()
     
-    func requestAuthorization() {
+    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
         // These MUST match the types you requested on WatchOS exactly
         let typesToShare: Set = [
             HKObjectType.workoutType()
@@ -33,6 +33,7 @@ class HealthKitManager: NSObject, ObservableObject {
             } else {
                 print("iOS: ❌ HealthKit Authorization failed: \(String(describing: error))")
             }
+            completion(success, error)
         }
     }
     

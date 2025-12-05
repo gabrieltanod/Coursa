@@ -825,7 +825,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "CoursaWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = CoursaWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = Coursa;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your workout and heart rate data to build safe running plans and show progress.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app writes your running workouts and saves training progress to Health.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Allows pace and distance tracking when the screen is off during runs.";
@@ -834,6 +834,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "Six-Men.Coursa";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -866,7 +867,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "CoursaWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = CoursaWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = Coursa;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your workout and heart rate data to build safe running plans and show progress.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app writes your running workouts and saves training progress to Health.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Allows pace and distance tracking when the screen is off during runs.";
@@ -875,6 +876,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "Six-Men.Coursa";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

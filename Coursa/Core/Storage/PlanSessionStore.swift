@@ -130,7 +130,7 @@ final class PlanSessionStore: ObservableObject {
 }
 
 
-#if DEBUG
+//#if DEBUG
 extension PlanSessionStore {
     func loadDebugSampleDataForStatistics() {
         let cal = Calendar.current
@@ -497,4 +497,4 @@ extension PlanSessionStore {
         generatedPlan = plan
     }
 }
-#endif
+//#endif

@@ -45,7 +45,7 @@ struct PlanDetailsPageView: View {
                         .font(.helveticaNeue(size: 17))
                         .foregroundColor(Color("secondary"))
                     
-                    Text("7:30/KM")
+                    Text(plan.recPace ?? "7:30/KM")
                         .font(.helveticaNeue(size: 30))
                         .foregroundColor(Color("secondary"))
                 }

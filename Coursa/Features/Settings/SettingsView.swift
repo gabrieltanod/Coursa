@@ -62,7 +62,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                #if DEBUG
+//                #if DEBUG
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Debug")
                         .font(.system(size: 13, weight: .semibold))
@@ -165,7 +165,7 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                #endif
+//                #endif
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)

@@ -7,5 +7,9 @@
 		<key>UIImageName</key>
 		<string></string>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Coursa uses your health data to track your runs and provide personalized training plans.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Coursa saves your running workouts to HealthKit so you can track your progress.</string>
 </dict>
 </plist>

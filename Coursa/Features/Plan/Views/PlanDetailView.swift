@@ -279,7 +279,7 @@ struct PlanDetailView: View {
                 targetDuration: run.template.targetDurationSec,
                 targetDistance: run.template.targetDistanceKm,
                 targetHRZone: run.template.targetHRZone,
-                recPace: nil
+                recPace: recommendedPaceText
             )
         }
     }

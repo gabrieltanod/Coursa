@@ -12,7 +12,7 @@
 
 import Foundation
 
-#if DEBUG
+//#if DEBUG
 
     enum PlanEngineDebug {
 
@@ -80,4 +80,4 @@ import Foundation
         }
     }
 
-#endif
+//#endif

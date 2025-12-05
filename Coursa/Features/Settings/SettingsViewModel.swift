@@ -88,8 +88,8 @@ final class SettingsViewModel: ObservableObject {
     }
     
     func simulateRun(paceSecPerKm: Int, zone2Percentage: Double) {
-        #if DEBUG
+//        #if DEBUG
         planSession.simulateCompletedRun(paceSecPerKm: paceSecPerKm, zone2Percentage: zone2Percentage)
-        #endif
+//        #endif
     }
 }
